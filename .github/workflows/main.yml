@@ -1,7 +1,7 @@
 name: "Latex to PDF"
 
 on:
-  [push, pull_request]
+  [push]
 
 jobs:
   build_latex:
