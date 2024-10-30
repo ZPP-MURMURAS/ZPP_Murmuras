@@ -13,8 +13,12 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: HLD.tex
-      - name: Upload PDF file
-        uses: actions/upload-artifact@v4
-        with:
-          name: PDF
-          path: HLD.pdf
+      - name: Commit and Push PDF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add HLD.pdf
+          git commit -m "Add compiled PDF for ${GITHUB_SHA}"
+          git push origin HEAD:${{ github.ref_name }}
