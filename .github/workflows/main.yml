@@ -13,6 +13,10 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: docs/HLD.tex
+      - name : Move PDF to docs
+        run: |
+          mkdir docs
+          mv HLD.pdf docs/
       - name: Commit and Push PDF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
