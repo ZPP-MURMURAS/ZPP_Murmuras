@@ -6,3 +6,4 @@ seqeval
 evaluate
 numpy
 huggingface_hub
+ipywidgets
