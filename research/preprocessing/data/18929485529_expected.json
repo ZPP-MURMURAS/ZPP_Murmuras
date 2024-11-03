@@ -1,0 +1,60 @@
+{
+    "coupons": [
+        {
+            "discount": "-33%",
+            "new_price": "9.99",
+            "old_price": "14.99",
+            "product_name": "JOHNNIE WALKER Red Label Blended Scotch",
+            "validity": "2024-09-07"
+        },
+        {
+            "discount": "-24%",
+            "new_price": "0.75",
+            "old_price": "0.99",
+            "product_name": "SAN MIGUEL Especial",
+            "validity": "2024-09-07"
+        },
+        {
+            "discount": "-7%",
+            "new_price": "2.79",
+            "old_price": "2.99",
+            "product_name": "FELIX Knabber Mix 12 x 85 g",
+            "validity": "2024-09-07"
+        },
+        {
+            "discount": "-7%",
+            "new_price": "2.79",
+            "old_price": "3.89",
+            "product_name": "FELIX Knabber Mix 200 g",
+            "validity": "2024-09-07"
+        },
+        {
+            "discount": "N/A",
+            "new_price": "N/A",
+            "old_price": "3.89",
+            "product_name": "FELIX So gut wie es aussieht in Gelee",
+            "validity": "2024-09-07"
+        },
+        {
+            "discount": "-35%",
+            "new_price": "5.85",
+            "old_price": "8.99",
+            "product_name": "CHANTRÉ Weinbrand",
+            "validity": "2024-09-07"
+        },
+        {
+            "discount": "-11%",
+            "new_price": "2.49",
+            "old_price": "2.79",
+            "product_name": "PENNY Gouda-Scheiben",
+            "validity": "2024-09-07"
+        },
+        {
+            "discount": "-37%",
+            "new_price": "0.69",
+            "old_price": "1.09",
+            "product_name": "KINDER Überraschungs-Ei",
+            "validity": "2024-09-07"
+        }
+    ]
+}
