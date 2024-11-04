@@ -23,10 +23,10 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if git diff -s --exit-code docs/HLD.tex; then
+            echo "No changes detected. Skipping commit."
+          else
             echo "Changes detected. Committing..."
             git add docs/HLD.pdf
             git commit -m "Add compiled PDF for ${GITHUB_SHA}"
             git push origin HEAD:${{ github.ref_name }}
-          else
-            echo "No changes detected. Skipping commit."
           fi
