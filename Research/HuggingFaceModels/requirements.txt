@@ -7,3 +7,5 @@ evaluate
 numpy
 huggingface_hub
 ipywidgets
+pprint
+memory_profiler
