@@ -19,147 +19,77 @@
 
 \section*{Wprowadzenie}
 
-Celem projektu jest stworzenie uniwersalnego rozwiązania do analizy danych tekstowych, który w przyszłości będzie można rozszerzyć na inne rodzaje danych zbieranych przez urządzenia mobilne, takie jak dane lokalizacyjne (GPS) czy dane multimedialne (zdjęcia, filmy, dźwięki). System ten ma umożliwić pozyskiwanie i analizę informacji dotyczących treści odbieranych i generowanych przez użytkowników, wspierając tym samym analizy o charakterze komercyjnym i społecznym. \\
+Celem projektu jest stworzenie uniwersalnego rozwiązania do procesowania danych uzyskanych z ekranu smartfonu (wspierany system: Android 9 wzwyż), takich jak lokalizacja elementu na ekranie, jego typ (tekst, zdjęcie itp), jego zawartość. Dane te reprezentują zawartość widzianą przez użytkownika - posty na mediach społecznościowych, reklamy na witrynach, itp. System ten ma umożliwić analizę informacji dotyczących treści obserwowanych przez użytkowników, wspierając tym samym badania o charakterze komercyjnym i społecznym. \\
 
-Przykładowymi zastosowaniami systemu to (1) analiza danych o oglądanych przez użytkownika reklamach oraz (2) badanie poglądów politycznych i społecznych. \\
+Przykładowymi zastosowaniami danych przetowrzonych przez system są (1) analiza danych o oglądanych przez użytkownika reklamach oraz (2) badanie poglądów politycznych i społecznych. \\
 
-(1) System będzie umożliwiał zbieranie danych o wyświetlanych przez użytkownika reklamach oraz analizowanie tych danych z perspektywy strategii reklamowych i rynkowych. Dane takie jak liczba kliknięć i czas poświęcony na interakcję lub wyświetlanie reklam umożliwi ocenianie efektywności kampanii reklamowych oraz dostosowanie strategii marketingowych do preferencji użytkowników. Dzięki temu możliwe będzie lepsze targetowanie reklam, optymalizacja budżetów marketingowych oraz zwiększenie zaangażowania odbiorców poprzez prezentowanie bardziej trafnych i interesujących treści reklamowych. \\
+(1) System będzie umożliwiał wygodne badanie zasięgów kuponów promocyjnych. Dzięki temu będziemy mogli sprawdzić, jak dany kupon radzi sobie na tle innych, oraz jak radzi sobie konkurencja. Może to być pomocne w planowaniu przyszłych akcji marketingowych. \\
 
-(2) System będzie umożliwiał lokalną analizę danych prywatnych takich jak prywatne wiadomości użytkownika, dając unikalną możliwość zbierania wiarygodnych danych o poglądach politycznych i społecznych. Ze względu na wrażliwość takich informacji, dane takie będą musiały być z~dużą dokładnością anonimizowane, na przykład implementując rozwiązania z~zakresu \emph{differential privacy}.
+(2) System będzie umożliwiał lokalną analizę danych prywatnych takich jak konwersacje użytkowników. Dostarczy to wiarygodnych danych trudno dostępnych innymi metodami, na przykład poglądów politycznych i społecznych.
 
 
 \section*{Istniejące rozwiązania}
+DOZRO
 
-jakie już toole istnieją i jaką mają efektywność? murmuras ma jakiegoś wstępnego solva, napisać o jego limitacjach i co chcemy poprawić wględem ich solva
-
-
-\section*{Zastosowania biznesowe}
-
-We wprowadzeniu podane zostały przykłady zostosowań biznesowych tego systemu. W następującej sekcji zostanie to doprecyzowane.
-
+\section*{Rozwiązanie Murmurasa}
+Istniejące prototypowe rozwiązanie korzysta z danych dostarczonych w postaci tekstu wykrytego na zrzutach ekranu w połączeniu z metadanymi, takimi jak lokalizacja pola tekstowego na ekranie. Następnie dane te są poddawane bardzo podstawowej obróbce (usuwanie pustych kolumn itp), a następnie są przetwarzanie przez ChatGPT4o-mini (za pomocą prompt-engineeringu). Rozwiązanie to ma dwa zasadnicze problemy: nie działa ono lokalnie na urządzeniu mobilnym (model jest za duży), a dane są często opisywane niepoprawnie (np. objętość jest traktowana jak cena produktu).
 
 \section*{Specyfikacja skończonego projektu}
-wymagania klienta oraz jak planujemy to zaadresować
+Jako podstawową częśc projektu planujemy zaimplementowanie wspomnianego rozwiązania jedynie do usecase z reklamami. Problem z wykrywaniem poglądów pozostawiamy jako opcjonalny kierunek rozwojowy.
+1. Wymagane jest narzędzie, które przeprocesuje dane wyekstraktowane z urządzenia w postać nadającą się do użycia przez model. \\
+2. Wymagane jest użycie narzędzia z dziedziny Machine Learningu do ekstrakcji interesujących z naszej perspektywy danych. \\
+3. Opcjonalne jest narzędzie do postprocessingu danych wyjściowych narzędzia z punktu 2 do wspólnego formatu. \\
+4. Wymagany jest deployment powyższych trzech narzędzi na urządzenie mobilne.
 
 \section*{Wyzwania}
-\subsection{Ograniczenia prawne}
 
-\subsection{Zapewnianie prywatności użytkowników}
-Zapewnienie prywatności danych prywatnych użytkowników poprzez \emph{differential privacy} oraz skuteczne rozróżnienie danych prywatnych od półprywatnych lub publicznych
+\subsection*{Zapewnianie prywatności użytkowników}
+DOZRO (do doprezyzowania z Murmurasem;)
 
-\subsection{Wymagania sprzętowe}
-Wymagania sprzętowe LLMów mogą okazać się zbyt duże na analizę zebranych danych w czasie rzeczywistym, zatem koniecznym może się okazać przetwarzanie danych w nocy.  
+\subsection*{Wymagania sprzętowe}
+\subsubsection*{Moc obliczeniowa i pamięć operacyjna}
+Zarówno współczesne LLMy jak i algorytmy preprocessingu danych wymagają często dużej ilości zasobów; jednoczesnie chcemy aby wszystko działało lokalnie na urzadzeniu mobilnym. Wyzwaniem więc będzie dobór narzędzi które nie będą zbyt zasobożerne. 
 
-\subsection{Zaimplementowanie modelu spełniające wymagania}
-Zapewnienie prywatności danych prywatnych użytkowników poprzez \emph{differential privacy} oraz skuteczne rozróżnienie danych prywatnych od półprywatnych lub publicznych.
-Zaimplementowanie \emph{federated learning}, aby dotrenowywać model.
-Zrozumienie kontekstu treści, wykrywając niuanse językowe oraz intencje autora.
-Zapewnienie wysokiej jakości analizy danych oraz dokładne wyniki, szczególnie przy analizie niejednoznacznych bądź niepełnych danych.
+\subsubsection*{pamięć dyskowa}
+Funkcjonowanie aplikacji będzie wymagać użycia dużej przestrzeni dyskowej. Zakładamy że nie będzie to problemem dla uzytkownika ze względu na model biznesowy firmy (uzytkownicy są wynagradzani za zainstalowanie rozwiązania na telefonie)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\subsection*{Benchmarkowanie}
+W celu oceny jakości naszego rozwiązania obecnie planujemy posługiwać się benchmarkiem zapewnionym nam przez Murmuras. Bazuje on na obliczaniu funkcji podobieństwa między wynikiem użytego modelu a wynikiem modelu wzorcowego (obecnie jest to GPT4o-mini). Benchmark ten może okazać się niewystarczająco dokładny i miarodajny także może pojawić się konieczność zaproponowania alternatywy, przykładowo testowania systemu na sztucznie wygenerowanych i poetykietowanych danych.
 
 \section*{Propozycja rozwiązania}
-\subsection*{Ogólny zarys}
-Aplikacja mobilna zbierająca dane w urządzeniu i~douczająca lokalny modelklasyfikacyjny/rozpoznający interesujące nas sekcje.
+W implementacji naszego rozwiązania wyróżniamy następujące 4 główne moduły: \\
+\subsection*{Preprocessing danych}
+Na ten moment rozpatrujemy trzy możliwe rozwiązania: użycie rozwiązań z zakresu uczenia maszynowego, w szczególności klastryzacji, algorytmów niezwiązanych z MLem lub pominięcie jakiegokolwiek preprocessingu. \\
+\subsection*{Processing danych}
+W tym celu wykorzystamy prawdopodobnie wybrany LLM, ale technicznie rzecz biorąc nie jesteśmy w tym temacie ograniczeni. Na tem moment prawdopodobnie będziemy korzostać z narzędzi HuggingFace; zapewniają one proste i wygodne użycie wielu ogólnodostępnych modeli. \\ 
+\paragraph{Wybór modelu}
+Po wstępnym researchu postanowiliśmy skupić się na modelach typu transformer o liczbie parametrów z zakresu 10 do około 100 milionów. Większośc wybranych przez nas opcji to pochodne modelu BERT\cite{devlin2019bertpretrainingdeepbidirectional}. 3 główne podtypy to: \\
+1. Bert ~100mln parametrów \\
+2. DistilBert ~65mln parametrów \\
+3. AlBert ~11 mln parametrów \\
+\subsection*{Postprocessing}
+DOZRO \\
+\subsection*{Deployment na urządzeniu mobilnym}
+Stworzymy aplikację mobilną bądź dodamy funkcjonalność do istniejącej w ramach której zaimplementujemy powyższe punkty. Utworzymy service działający w tle i przetwarzający nadpływające dane w czasie rzeczywistym. Jeśli okaże się że przetwarzanie w czasie rzeczywistym jest zbyt kosztowne zaimplementujemy przechowywanie danych (DOZRO: ile danych per day) z ekranu i ich analizę w nocy, gdy użytkownik nie korzysta z urządzenia. Planujemy wykorzystać framework TensorFlow Lite (TensorFlow dla urządzeń mobilnych), ewentualnie PyTorch bądź ONNX ze względu na łatwą integrację z aplikacjami rozwijanymi w Android Studio. Chcemy by aplikacja była kompatybilna z Androidem 9+. Nie jest wymagane by aplikacja działała na wszystkich urządzeniach.\\
+DOZRO - gdzie wysyłamy zebrane dane
+\section*{Kamienie Milowe}
+\subsection*{Research}
+\textbf{Planowane ukończenie 30.11}\\
+Do końca listopada chcecmy mieć wybraną architekturę i konkretny model, chcemy mieć propozycje algorytmów odpowiedzialnych za preprocessing i postprocessing.
+\subsection*{Proof of Concept}
+\textbf{Planowane ukończenie 31.12}\\
+Chcemy stworzyć prototypową aplikację demonstrującą całościową funkcjonalność. 
+\subsection*{Sesja/zbieranie pomysłów na ulepszenia}
+\textbf{Planowane ukończenie 31.01}\\
+Styczeń będzie miesiącem w trakcie którego nie planujemy bardzo intensywnej pracy nad projektem ze względu na sesję. Przeznaczymy ten czas na ewentualne dokończenie poprzednich kamieni milowych oraz na przemyślenie kierunku projektu.
+\subsection*{Rozwój docelowego rozwiązania}
+\textbf{Planowane ukończenie 30.04}\\
+Na tym etapie zajmiemy się ulepszeniem rozwiązania, usunięciem błędów i testowaniem. 
+\subsection*{Praca Licencjacka}
+\textbf{Planowane ukończenie 30.06}\\
+Skupimy się na napisaniu i dopracowaniu pracy licencjackiej.
 
-\subsubsection*{Zbieranie widoków z~ekranu smartfonu}
-\begin{itemize}
-    \item Android Accessibility API - istniejące narzędzie wewnątrz firmy, wymagana integracja
-    \item Maskowanie danych prywatnych - NER (Named Entity Recognition), modele językowe
-\end{itemize}
 
-\subsubsection*{Preprocessing widoków}
-Standaryzacja danych umożliwiająca uczenie maszynowe na tych danych.
-
-\subsubsection*{Przetwarzanie z~wykorzystaniem MLa}
-\begin{itemize}
-    \item Klasyfikacja sekcji - webscraping
-    \item Wykorzystanie LLM (ewentualnie alternatywy) do pozyskania z~tekstu oznaczonych i~ustrukturyzowanych informacji
-    \item Aktualizacja globalnego modelu - \emph{federated learning}
-\end{itemize}
-
-\section*{Rozwinięcie planu implementacji}
-
-\subsection*{Aplikacja mobilna}
-\begin{itemize}
-    \item Zbieranie danych: TBD
-\end{itemize}
-
-\subsubsection*{Narzędzia}
-\begin{itemize}
-    \item Android Studio: \url{https://developer.android.com/studio}
-    \item Android accessibility services: \url{https://developer.android.com/guide/topics/ui/accessibility/service}
-    \item Wewnętrzny tool firmy: Android Accessibility API
-\end{itemize}
-
-\subsection*{Modele ML}
-
-\subsubsection*{Use Cases}
-\begin{itemize}
-    \item Klasyfikacja
-    \item Scraping
-\end{itemize}
-
-\subsubsection*{Architektury}
-\begin{itemize}
-    \item LLM (transformers): elastyczność, potencjalna multimodalność kosztem dużych wymagań sprzętowych
-    \item RNN: lightweightowy, prosty w samodzielnej implementacji, mniejsza elastyczność
-    \item Federated learning: rozproszenie procesu trenowania między urządzenia i synchronizowanie modeli co jakiś czas
-\end{itemize}
-
-\subsubsection*{Frameworki}
-\begin{itemize}
-    \item TensorFlow Federated: prosty flow od stworzenia modelu poprzez jego konwersję na TensorFlow Lite aż do deploymentu, ale nie wiadomo na ten moment, czy wspiera heterogeniczny FL.
-    \item HeteroFL (licencja MIT): Framework pozwalający na Federated Learning przy heterogenicznych modelach lokalnych, co pozwoli na deployment rozwiązania na większej liczbie urządzeń.
-\end{itemize}
-
-\subsection*{Wyzwania}
-\begin{itemize}
-    \item Wymagania sprzętowe LLMów mogą okazać się zbyt duże na analizę zebranych danych w~czasie rzeczywistym - możliwe rozwiązanie: przetwarzanie danych w~nocy.
-    \item Pozyskanie danych i~zasobów do trenowania modelu. Opracowanie algorytmu przetwarzającego dane zbierane na urządzeniach w~dowolnej sytuacji.
-    \item Zapewnienie prywatności danych prywatnych użytkowników poprzez \emph{differential privacy} oraz skuteczne rozróżnienie danych prywatnych od półprywatnych lub publicznych.
-    \item Zaimplementowanie \emph{federated learning}, aby dotrenowywać model.
-    \item Zrozumienie kontekstu treści, wykrywając niuanse językowe oraz intencje autora.
-    \item Zapewnienie wysokiej jakości analizy danych oraz dokładne wyniki, szczególnie przy analizie niejednoznacznych bądź niepełnych danych.
-\end{itemize}
-
-\section*{Kolejne kroki pracy}
-\begin{itemize}
-    \item Implementacja algorytmu standaryzacji danych: Dane które otrzymamy mają strukturę drzewiastą; trzeba te dane posegregować (np. ze względu na głębokość drzewa, ojców, etc.) i~ułożyć w~formę, którą łatwo będzie zaserwować modelowi do nauki.
-    \item Prototyp możliwy do utworzenia poza urządzeniami docelowymi; pozyskanie danych treningowych - otrzymane od firmy, w~miarę możliwości samodzielnie wygenerowane.
-    \item Wybór modelu: Interesują nas modele, które będziemy w~stanie uruchomić i~trenować na telefonie.
-    \item Istniejący wewnątrz firmy prototyp korzysta z~prompt engineeringu w~Chat-GPT, ale jest to model zbyt duży i wymagający; jedną z~opcji jest model bez promptów, gdyż wpływają one negatywnie na wymagania modelu, bądź wyjście poza LLM.
-    \item Chcemy, aby nasz model był kompatybilny z frameworkami Federated Learning, takimi jak TensorFlow oraz HeteroFL.
-    \item Przetestujemy i~porównamy różne modele poza urządzeniem docelowym.
-    \item Mamy dwie opcje odnośnie ternowania mocelu: trenować cały model lokalnie na telefonach, 
-    dzięki czemu dane prywatne będą miały większy wpływ na wynik, albo wytrenować podstawowy model na serwerze i~dotrenowywać go na urządzeniach końcowych, co jest tańsze obliczeniowo.
-    \item Integracja modelu z~aplikacją.
-\end{itemize}
-
-\section*{Deployment gotowego modelu na urządzenia końcowe}
-Model będzie klasyfikował dane do późniejszego użycia. Model powinien być w stanie nadal się uczyć na nowych danych w oparciu o uczenie federacyjne.
-
-\section*{Źródła}
-\begin{itemize}
-    \item LLM finetuning course: \url{https://maven.com/parlance-labs/fine-tuning}
-    \item Huggingface NLP course: \url{https://huggingface.co/learn/nlp-course/en/chapter1/1}
-\end{itemize}
-
+\bibliographystyle{plain}
+\bibliography{refs.bib}
 \end{document}
