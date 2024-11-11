@@ -7,5 +7,5 @@ evaluate
 numpy
 huggingface_hub
 ipywidgets
-pprint
+pprintpp
 memory_profiler
