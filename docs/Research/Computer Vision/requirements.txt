@@ -4,3 +4,5 @@ transformers
 PIL
 torch
 requests
+numpy
+pillow
