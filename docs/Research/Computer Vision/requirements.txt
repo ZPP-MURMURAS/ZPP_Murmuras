@@ -1,2 +1,6 @@
 einops
 torchvision
+transformers
+PIL
+torch
+requests
