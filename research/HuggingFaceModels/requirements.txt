@@ -1,0 +1,12 @@
+datasets
+torch
+transformers[torch]
+transformers
+seqeval
+evaluate
+numpy
+huggingface_hub
+ipywidgets
+pprintpp
+memory_profiler
+Jupyter
