@@ -1,0 +1,92 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+
+# Android-specific
+.gradle/
+.idea/
+build/
+app/build/
+local.properties
+*.iml
+*.hprof
+
+# Files for the IntelliJ IDE
+.idea/
+*.ipr
+*.iws
+*.bak
+*.tmp
+*.swp
+*.orig
+*.log
+out/
+
+# Gradle files
+.gradle/
+**/build/
+
+# APK Files
+*.apk
+*.ap_
+
+# Proguard and Log Files
+proguard/
+proguard-*.txt
+*.log
+
+# Keystore Files (DO NOT VERSION CONTROL PRIVATE KEYS)
+*.jks
+*.keystore
+
+# Android Studio 3+
+captures/
+
+# Generated Files
+gen/
+bin/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+*.class
+*.war
+*.ear
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+*.dylib
+*.exe
+
+# Kotlin/Java
+*.kt-meta
+*.jar
+*.java~
+
+# Lint
+lint/intermediates/
+lint/generated/
+
+# Crashlytics and Fabric
+crashlytics.properties
+fabric.properties
+
+# Firebase
+google-services.json
