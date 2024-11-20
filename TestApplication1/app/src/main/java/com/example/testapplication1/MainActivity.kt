@@ -31,8 +31,8 @@ class MainActivity : AppCompatActivity() {
         startRepeatingToast()
         startSimpleWorker()
 
-        val intent = Intent(this, FibonacciService::class.java)
-        startService(intent)
+//        val intent = Intent(this, FibonacciService::class.java)
+//        startService(intent)
     }
 
     private fun startSimpleWorker() {

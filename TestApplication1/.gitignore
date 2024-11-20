@@ -1,92 +1,47 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-
-
-# Android-specific
-.gradle/
-.idea/
-build/
-app/build/
-local.properties
-*.iml
-*.hprof
-
-# Files for the IntelliJ IDE
-.idea/
-*.ipr
-*.iws
-*.bak
-*.tmp
-*.swp
-*.orig
-*.log
-out/
-
 # Gradle files
 .gradle/
-**/build/
+build/
+local.properties
 
-# APK Files
-*.apk
-*.ap_
+# IntelliJ IDEA/Android Studio files
+*.iml
+.idea/
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries/
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
 
-# Proguard and Log Files
-proguard/
-proguard-*.txt
-*.log
+# Project-specific caches
+.cxx/
+.externalNativeBuild/
 
-# Keystore Files (DO NOT VERSION CONTROL PRIVATE KEYS)
-*.jks
-*.keystore
+# Mac system files
+.DS_Store
 
-# Android Studio 3+
+# Capture output
 captures/
 
-# Generated Files
-gen/
-bin/
+# Logs
+*.log
 
-# OS-specific files
-.DS_Store
-Thumbs.db
+# Generated files
+*.apk
+*.ap_
+*.dex
+*.class
+
+# Crashlytics and Firebase
+fabric.properties
+crashlytics.properties
 
 # Miscellaneous
-*.class
-*.war
-*.ear
-*.pyc
-*.pyo
-*.pyd
-*.so
-*.dll
-*.dylib
-*.exe
+/.gradle/
+*.tmp
+*.temp
+*.swp
 
-# Kotlin/Java
-*.kt-meta
-*.jar
-*.java~
-
-# Lint
-lint/intermediates/
-lint/generated/
-
-# Crashlytics and Fabric
-crashlytics.properties
-fabric.properties
-
-# Firebase
-google-services.json
