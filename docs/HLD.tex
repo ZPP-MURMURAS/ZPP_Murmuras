@@ -19,11 +19,13 @@
 
 \section*{Wprowadzenie}
 
-Celem projektu jest stworzenie uniwersalnego rozwiązania do procesowania danych uzyskanych z ekranu smartfonu (wspierany system: Android 9 wzwyż), takich jak lokalizacja elementu na ekranie, jego typ (tekst, zdjęcie itp), jego zawartość. Dane te reprezentują zawartość widzianą przez użytkownika - posty na mediach społecznościowych, reklamy na witrynach, itp. System ten ma umożliwić analizę informacji dotyczących treści obserwowanych przez użytkowników, wspierając tym samym badania o charakterze komercyjnym i społecznym. \\
+Celem projektu jest stworzenie uniwersalnego rozwiązania do procesowania danych uzyskanych z ekranu smartfonu (wspierany system: Android 9 wzwyż), takich jak lokalizacja elementu na ekranie, jego typ (tekst, zdjęcie itp), jego zawartość.
+Dane te reprezentują zawartość widzianą przez użytkownika - posty na mediach społecznościowych, reklamy na witrynach, itp.
+System ten ma umożliwić analizę informacji dotyczących treści obserwowanych przez użytkowników, wspierając tym samym badania o charakterze komercyjnym i społecznym.
 
-Przykładowymi zastosowaniami danych przetowrzonych przez system są (1) analiza danych o oglądanych przez użytkownika reklamach oraz (2) badanie poglądów politycznych i społecznych. \\
+Przykładowymi zastosowaniami danych przetowrzonych przez system są (1) analiza danych o oglądanych przez użytkownika reklamach oraz (2) badanie poglądów politycznych i społecznych.
 
-(1) System będzie umożliwiał wygodne badanie zasięgów kuponów promocyjnych. Dzięki temu będziemy mogli sprawdzić, jaka jest częstotliwość wyświetlania danego kuponu oraz zbadać działania konkurencji. Może to być pomocne w planowaniu przyszłych akcji marketingowych. \\
+(1) System będzie umożliwiał wygodne badanie zasięgów kuponów promocyjnych. Dzięki temu będziemy mogli sprawdzić, jaka jest częstotliwość wyświetlania danego kuponu oraz zbadać działania konkurencji. Może to być pomocne w planowaniu przyszłych akcji marketingowych.
 
 (2) System będzie umożliwiał lokalną analizę danych prywatnych takich jak konwersacje użytkowników. Dostarczy to wiarygodnych danych trudno dostępnych innymi metodami, na przykład poglądów politycznych i społecznych.
 
@@ -55,22 +57,24 @@ Zarówno współczesne LLMy jak i algorytmy preprocessingu danych wymagają czę
 Funkcjonowanie aplikacji będzie wymagać użycia dużej przestrzeni dyskowej. Zakładamy że nie będzie to problemem dla uzytkownika ze względu na model biznesowy firmy (uzytkownicy są wynagradzani za zainstalowanie rozwiązania na telefonie)
 
 \subsection*{Benchmarking}
-W celu oceny jakości naszego rozwiązania obecnie planujemy posługiwać się benchmarkiem zapewnionym nam przez Murmuras. Bazuje on na obliczaniu funkcji podobieństwa między wynikiem użytego modelu a wynikiem modelu wzorcowego (obecnie jest to GPT4o-mini). Benchmark ten może okazać się niewystarczająco dokładny i miarodajny. Może także pojawić się konieczność zaproponowania alternatywy, przykładowo testowania systemu na sztucznie wygenerowanych i poetykietowanych danych.
+W celu oceny jakości naszego rozwiązania obecnie planujemy posługiwać się benchmarkiem zapewnionym nam przez Murmuras.
+Bazuje on na obliczaniu funkcji podobieństwa między wynikiem użytego modelu a wynikiem modelu wzorcowego (obecnie jest to GPT4o-mini).
+Benchmark ten może okazać się niewystarczająco dokładny i miarodajny. Może także pojawić się konieczność zaproponowania alternatywy, przykładowo testowania systemu na sztucznie wygenerowanych i poetykietowanych danych.
 
 \section*{Propozycja rozwiązania}
-W implementacji naszego rozwiązania wyróżniamy następujące 4 główne moduły: \\
+W implementacji naszego rozwiązania wyróżniamy następujące 4 główne moduły:
 \subsection*{Preprocessing danych}
-Na ten moment rozpatrujemy trzy możliwe rozwiązania: użycie rozwiązań z zakresu uczenia maszynowego, w szczególności klastryzacji, algorytmów niezwiązanych z MLem lub pominięcie jakiegokolwiek preprocessingu. \\
+Na ten moment rozpatrujemy trzy możliwe rozwiązania: użycie rozwiązań z zakresu uczenia maszynowego, w szczególności klastryzacji, algorytmów niezwiązanych z MLem lub pominięcie jakiegokolwiek preprocessingu.
 \subsection*{Processing danych}
-W tym celu wykorzystamy prawdopodobnie wybrany LLM, ale technicznie rzecz biorąc nie jesteśmy w tym temacie ograniczeni. Na ten moment prawdopodobnie będziemy korzostać z narzędzi HuggingFace; zapewniają one proste i wygodne użycie wielu ogólnodostępnych modeli. \\
+W tym celu wykorzystamy prawdopodobnie wybrany LLM, ale technicznie rzecz biorąc nie jesteśmy w tym temacie ograniczeni. Na ten moment prawdopodobnie będziemy korzostać z narzędzi HuggingFace; zapewniają one proste i wygodne użycie wielu ogólnodostępnych modeli.
 \paragraph{Wybór modelu}
-Po wstępnym researchu postanowiliśmy skupić się na modelach typu transformer o liczbie parametrów z zakresu 10 do około 100 milionów. Większość wybranych przez nas opcji to pochodne modelu BERT\cite{devlin2019bertpretrainingdeepbidirectional}. 3 główne podtypy to: \\
+Po wstępnym researchu postanowiliśmy skupić się na modelach typu transformer o liczbie parametrów z zakresu 10 do około 100 milionów. Większość wybranych przez nas opcji to pochodne modelu BERT\cite{devlin2019bertpretrainingdeepbidirectional}. 3 główne podtypy to:
 1. Bert ~100mln parametrów \\
 2. DistilBert ~65mln parametrów \\
 3. AlBert ~11 mln parametrów \\
 Ich zaletą jest bardzo mały rozmiar; przeprowadzono eksperymenty\cite{LLMmobile2024} w których na urządzeniach mobilnych uruchamiano model Llama-2 z 7 miliardami parametrów. Modele z rodziny BERT są rzędy wielkości mniejsze.
 \subsection*{Postprocessing}
-DOZRO \\
+DOZRO
 \subsection*{Deployment na urządzeniu mobilnym}
 Stworzymy aplikację mobilną bądź dodamy funkcjonalność do istniejącej w ramach której zaimplementujemy powyższe punkty. Utworzymy service działający w tle i przetwarzający napływające dane w czasie rzeczywistym. Jeśli okaże się, że przetwarzanie w czasie rzeczywistym jest zbyt kosztowne zaimplementujemy przechowywanie danych (DOZRO: ile danych per day) z ekranu i ich analizę w nocy, gdy użytkownik nie korzysta z urządzenia. Planujemy wykorzystać framework TensorFlow Lite (TensorFlow dla urządzeń mobilnych), ewentualnie PyTorch bądź ONNX ze względu na łatwą integrację z aplikacjami rozwijanymi w Android Studio.
 Ciekawą opcją wydaje się także narzędzie Llama.cpp, którego użycie jest udokumentowane naukowo\cite{LLMmobile2024}. Na ten moment wymaga to jednak więcej badań. Chcemy, by aplikacja była kompatybilna z Androidem 9+. Nie jest wymagane, by aplikacja działała na wszystkich urządzeniach.\\
