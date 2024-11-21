@@ -12,7 +12,9 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: docs/HLD.tex
+          root_file: |
+            docs/HLD.tex
+            docs/refs.bib
       - name : Move PDF to docs
         run: |
           mv HLD.pdf docs/
