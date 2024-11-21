@@ -24,6 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git fetch
           git diff --quiet origin/main -- docs/HLD.tex
           echo $?
           git diff origin/main -- docs/HLD.tex
