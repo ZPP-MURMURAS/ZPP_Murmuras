@@ -24,12 +24,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git diff --quiet docs/HLD.tex
+          git diff --quiet origin/main -- docs/HLD.tex
           echo $?
-          git diff docs/HLD.tex
+          git diff origin/main -- docs/HLD.tex
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet docs/HLD.tex; then
+          if git diff --quiet origin/main -- docs/HLD.tex; then
             echo "No changes detected. Skipping commit."
           else
             echo "Changes detected. Committing..."
