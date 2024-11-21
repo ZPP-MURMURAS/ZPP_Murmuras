@@ -1,5 +1,5 @@
 # Model
-In the `model` directory, there is a `convert_distilbert_qa.py` script to convert the pre-trained BERT model to TorchScript format and output its tokenizer vocabulary.
+In the `model` directory, there is a `convert_distilbert_qa.py` script to convert the pre-trained BERT model to TorchScript format and save it along with its tokenizer vocabulary.
 
 # App
 In the `mobile_app` directory, there is an example of a question-answering mobile app using the model created by the script. You need to copy `model/qa360_quantized.ptl` file and `model/qa360_quantized_tokenizer/vocab.txt` file to the `mobile_app/app/src/main/assets` directory to run the application.
