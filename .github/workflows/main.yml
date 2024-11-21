@@ -26,7 +26,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff -s --exit-code docs/HLD.tex then
+          if git diff --quiet docs/HLD.tex; then
             echo "No changes detected. Skipping commit."
           else
             echo "Changes detected. Committing..."
