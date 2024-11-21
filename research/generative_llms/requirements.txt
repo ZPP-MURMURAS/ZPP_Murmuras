@@ -1,0 +1,4 @@
+transformers~=4.46.2
+ipywidgets~=8.1.5
+outlines~=0.1.2
+pydantic~=2.9.2
