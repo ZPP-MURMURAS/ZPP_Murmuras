@@ -1,7 +1,6 @@
 # ONNX Tutorial App: Mobile Deployment Success
 
-I successfully launched the ONNX Runtime tutorial application on my mobile device and deployed a model using the Android platform. This milestone demonstrates the capability of ONNX Runtime to facilitate efficient AI model inference on mobile platforms.
-
+I successfully launched the ONNX Runtime tutorial application on my mobile device and deployed a model using the Android platform. This milestone demonstrates the capability of ONNX Runtime to facilitate efficient AI model inference on mobile platforms. It is not perfect as seen on this ![Screenshot](screenshots/thimble.jpg) but sometimes it does work quite well. It was able to give an answer in real time to visual input from my camera, however it often did not correctly identify the object. I have not tested it on a custom model so perhaps it will work better if the model receives text data and has time to process it. 
 
 ## Project Overview
 
