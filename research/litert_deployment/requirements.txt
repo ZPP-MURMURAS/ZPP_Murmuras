@@ -1,0 +1,8 @@
+packaging
+keras
+keras-nlp
+tensorflow_datasets
+ai_edge_torch
+torch
+transformers
+tf-keras
