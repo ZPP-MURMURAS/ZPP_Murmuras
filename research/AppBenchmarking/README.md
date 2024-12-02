@@ -1,11 +1,9 @@
 # Benchmarking android apps
 This folder contains a very simple app utilizing Android benchmarking library, called Jetpack.
 
-IMPORTANT: This app works with the emulator on which we are not supposed to run benchmarking tests. \
-Ideally we should run this app on a real device, and while there exists a configuration that made it possible for me \
-to run this app on my smartphone, this app follows guidelines from Google (described later), and I found out a hard way \
-that there are many issues regarding benchmarking on Xiaomi-distributed devices. So I would love a feedback whether \
-this app runs smoothly on your device.
+IMPORTANT: There are issues with the benchmarking library on XIAOMI devices. \
+Because of that I was only able to test the app on the emulator (which is not advised).
+According to Kamil, this works on Samsung Galaxy A25.
 
 ## Project structure:
 As you can see, the project is split into three modules:
