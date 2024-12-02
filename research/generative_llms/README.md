@@ -11,6 +11,6 @@ Make rust available in current shell instance
 Note: this behaves strangely if you have Rust already installed. I recommend reinstalling it (I had problems with Rust installed via `apt`).
 ### Dependencies install
 ```shell
-pip install -r research/generativeLlms/requirements.txt
+pip install -r research/generative_llms/requirements.txt
 ```
 or whether your working dir is
