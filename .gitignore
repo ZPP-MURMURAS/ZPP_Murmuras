@@ -190,3 +190,6 @@ fabric.properties
 
 # datasets
 datasets/**
+
+# google drive credentials
+tools/gdrive_credentials.json
