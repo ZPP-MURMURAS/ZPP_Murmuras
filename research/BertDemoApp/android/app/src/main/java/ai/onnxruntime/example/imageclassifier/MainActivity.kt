@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 // After countless hours of debugging, blood, sweat, and tears, I was able to get the code to run on my Android device.
 // Admittedly, it doesn't really work as intended however I don't have the knowledge to fix it at the moment.
 // This code does SOMETHING, I don't think it does anything worthwhile though.
