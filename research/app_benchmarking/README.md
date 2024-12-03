@@ -37,7 +37,7 @@ There you can load the file from your PC and browse its contents (example json a
 At first, the number of things that Perfetto can show you can be overwhelming. It basically shows you the whole system, \
 but with the search option you can find a specific app. For example, below you can see memory usage of the benchmarking app:
 
-![img.png](PerfectoPtrScr/memUsage.png)
+![img.png](perfecto_ptrscr/mem_usage.png)
 
 On the left there is a menu with different options (e.g. convertion to different formats or Metrics). In metrics we can examine different data
 in a specific format (e.g. json).
@@ -88,7 +88,7 @@ I didn't add the script to the PATH, so for me it was:
 ```
 
 Command-line view:
-![Query](PerfectoPtrScr/query.png)
+![Query](perfecto_ptrscr/query.png)
 
 Example json file can be also found in the data_dump.zip.
 
