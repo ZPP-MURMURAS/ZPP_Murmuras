@@ -16,7 +16,7 @@
 \maketitle
 
 \section*{Introduction}
-The goal of the project is to create a universal solution for processing phone screen content, such as social media posts, advertisements on websites, and more. The data that we will be working with is mostly:
+The goal of the project is to create a universal solution for processing phone screen content, such as social media posts and advertisements on websites. In addition, the processing must occur locally on the user's device to protect sensitive data. The data that we will be working with is mostly:
 \begin{itemize}
     \item the location of an element on the screen,
     \item its type (text, image, etc.),
@@ -27,18 +27,16 @@ The system aims to enable the analysis of information related to content observe
 \begin{enumerate}
     \item \textbf{Analysis of advertisements viewed by users}
 
-    The system will facilitate the analysis of the reach of promotional coupons. This will allow us to examine the frequency of a particular coupon’s display and study competitor actions.
-These insights can be useful for planning future marketing campaigns.
+    The system will facilitate the analysis of the reach of promotional coupons. This will allow us to examine the frequency of a particular coupon’s display and study competitor actions. These insights can be useful for planning future marketing campaigns.
     \item \textbf{Research on political and social opinions}
 
-    The system will enable local analysis of private data such as user conversations. This feature will provide reliable data that is difficult to obtain by other methods, for example,
-insights into political opinions, and insights into social opinions.
+    The system will enable local analysis of private data such as user conversations. This feature will provide reliable data that is difficult to obtain by other methods, for example, insights into political opinions and insights into social opinions.
 \end{enumerate}
 
 \section*{Existing Solutions}
-We are not aware of any publicly available solutions that directly address this problem. The closest comparable approaches might be existing multimodal models. On one hand, there are widely available models such as ChatGPT, Gemini, and others. However, as the example of ChatGPT demonstrates, these models are not highly precise solutions for this task. A notable drawback of such models is their very large number of parameters. On the other hand, there are Computer Vision models that focus on extracting text and bounding boxes from user screen images. Microsoft's OmniParser appears to perform very well in this regard, but its output would still require preprocessing solutions similar to those we are investigating. Furthermore, OmniParser requires CUDA technology for execution, which makes it unsuitable for deployment on mobile devices.
+We are not aware of any publicly available solutions that directly address this problem. The closest comparable approaches might be existing multimodal models. On one hand, there are widely available models such as ChatGPT, Gemini, and others. However, as the example of ChatGPT demonstrates, these models are not highly precise solutions for this task. A notable drawback of such models is their very large number of parameters; for example, GPT-3 has 175 billion parameters \cite{brown2020languagemodelsfewshotlearners}. On the other hand, there are Computer Vision models that focus on extracting text and bounding boxes from user screen images. Microsoft's OmniParser \cite{lu2024omniparserpurevisionbased} appears to perform very well in this regard, but its output would still require preprocessing solutions similar to those we are investigating. Furthermore, based on our experiments running OmniParser locally, it appears that it requires CUDA technology for execution, which makes it unsuitable for deployment on mobile devices.
 
-\section*{Murmuras Solution}
+\section*{Murmuras' Solution}
 The existing prototype solution developed by Murmuras uses data in CSV format that describes the screen's content. This data is then subjected to very basic processing (e.g., removal of empty columns), and subsequently processed by ChatGPT-4 mini into JSON format. This solution has two main issues: it does not run locally on mobile devices, as the model is not available for local execution, and the data is often described incorrectly (e.g., volume is treated as the product's price).
 
 \subsection*{Development Opportunities}
@@ -47,10 +45,10 @@ There is a theoretical possibility to solve these problems. There are Python mod
 \section*{Specification of the Completed Project}
 As the core part of the project, we plan to implement the mentioned solution solely for use with coupons.
 \begin{enumerate}
-    \item A tool is required to process the data extracted from the device into a format suitable for use by the model.
-    \item A Machine Learning tool is required for extracting the data that is of interest to us.
+    \item A tool to process the data extracted from the device into a format suitable for use by the model.
+    \item A Machine Learning tool for extracting the data that is of interest to us.
     \item An optional tool for postprocessing the output data from the tool in point 2 into a common format.
-    \item An optional step is to deploy the above three tools on a mobile device.
+    \item An application that runs the above three tools on a mobile device. (Optional)
 \end{enumerate}
 
 \section*{Challenges}
@@ -116,7 +114,6 @@ At this stage, we will focus on improving the solution, fixing bugs, and testing
 \subsection*{Bachelor's Thesis}
 \textbf{Planned Completion: 30.06}\\
 We will focus on writing and refining the bachelor's thesis.
-
 
 \bibliographystyle{plain}
 \bibliography{refs}
