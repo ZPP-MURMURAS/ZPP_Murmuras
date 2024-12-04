@@ -237,3 +237,5 @@ Thumbs.db
 .idea/datasources.xml
 .idea/dataSources.ids
 
+*.onnx
+.onnx

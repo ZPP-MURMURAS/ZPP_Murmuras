@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var vocab: Map<String, Long>
 
     private val backgroundExecutor: ExecutorService by lazy { Executors.newSingleThreadExecutor() }
-    private val scope = CoroutineScope(Job() + Dispatchers.Main)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private var ortEnv: OrtEnvironment? = null
     private var enableQuantizedModel: Boolean = false
@@ -50,11 +50,14 @@ class MainActivity : AppCompatActivity() {
             setORTAnalyzer()
         }
 
+//        println("------> Starting ORT Analyzer")
+
         binding.analyzeButton.setOnClickListener {
             val inputText = binding.textInput.text.toString()
             if (inputText.isNotEmpty()) {
                 scope.launch {
                     try {
+//                        println("------> Analyzing text")
                         val result = analyzeText(inputText)
                         updateUI(result)
                     } catch (e: Exception) {
@@ -83,6 +86,7 @@ class MainActivity : AppCompatActivity() {
             val session = createOrtSession()
             if (session != null) {
                 try {
+//                    println("------> Running inference")
                     val result = runInference(session, inputText)
                     result
                 } catch (e: Exception) {
@@ -134,17 +138,20 @@ class MainActivity : AppCompatActivity() {
             val inputs = mapOf(
                 "input_ids" to inputTensor,
                 "attention_mask" to attentionMaskTensor,
-                "token_type_ids" to tokenTypeTensor
+//                "token_type_ids" to tokenTypeTensor
             )
 
 //            DEBUGGING
 //            println("Input Tensor Shape: ${inputTensor.info.shape.contentToString()}")
 //            println("Att mask Tensor Shape: ${attentionMaskTensor.info.shape.contentToString()}")
 //            println("Token Type Tensor Shape: ${tokenTypeTensor.info.shape.contentToString()}")
+//            println("Input Tensor Data Type: ${inputs["input_ids"]}")
 
             val output = session?.run(inputs)
             val resultTensor = output?.get(0)
             val resultScores = resultTensor?.value as? Array<Array<FloatArray>>
+
+//            println("Result Scores: ${resultScores?.size}")
 
             if (resultScores.isNullOrEmpty()) {
                 Log.e(TAG, "Empty output from model")
@@ -156,7 +163,7 @@ class MainActivity : AppCompatActivity() {
             val flattenedScores = FloatArray(totalSize ?: 0)
 
             var index = 0
-            for (batch in resultScores!!) {
+            for (batch in resultScores) {
                 for (sequence in batch) {
                     for (score in sequence) {
                         flattenedScores[index] = score
@@ -336,30 +343,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun readModel(): ByteArray = withContext(Dispatchers.IO) {
-        val modelID =
-            if (enableQuantizedModel) R.raw.mobilebert else R.raw.bert_model_quantized
+        val modelID = R.raw.distilbert_base_uncased_quantized
         resources.openRawResource(modelID).readBytes()
     }
 
     private fun updateUI(result: Result) {
-        runOnUiThread {
-            var text = "Top results:\n"
-            for (item in result.topResults) {
-                text += "${item.tokenStr}: ${item.score}\n"
-            }
+        if (!isFinishing && !isDestroyed) {
+            runOnUiThread {
+                var text = "Top results:\n"
+                for (item in result.topResults) {
+                    text += "${item.tokenStr}: ${item.score}\n"
+                }
 
-            binding.resultText.text = text
+                binding.resultText.text = text
+            }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        scope.cancel()
         backgroundExecutor.shutdown()
         ortEnv?.close()
     }
 
     companion object {
-        public const val TAG = "ORTTextClassifier"
+        public const val TAG = "ONNX_DEMO"
     }
 
     private fun setORTAnalyzer() {
@@ -386,3 +395,4 @@ class MainActivity : AppCompatActivity() {
 
     data class Result(val topResults: List<ResultItem>)
 }
+
