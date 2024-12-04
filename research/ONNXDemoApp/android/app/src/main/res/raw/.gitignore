@@ -1,4 +1,5 @@
 # model and label files
 *.onnx
 *.ort
+.onnx
 imagenet_classes.txt
