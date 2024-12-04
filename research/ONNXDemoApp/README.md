@@ -10,6 +10,10 @@ Please keep in mind that the following scripts are examples and you can modify t
 ```
 pip install transformers onnx onnxruntime onnxruntime-tools
 ```
+It can also help to run 
+```
+pip install -U accelerate
+```
 Then run the scripts in the `onnx_model_scripts` directory in alphabetical order (A-export-model-to-onnx.py, B-...). Move the .onnx file into the app/src/main/res/raw directory. Change the file names in the code if necessary. Now the project should come with .onnx files so you don't have to change anything.
 
 Download any missing libraries etc. 
