@@ -19,5 +19,6 @@ inside root dir. </br>
 Currently available datasets:
 * `ads_1`: views from youtube, tiktok and instagram provided as sample of data with adverts
 * `coupons_0`: example coupon data, copied from coupon_extraction_demo
+* `coupons_1`: new dataset on coupons, mostly video, various apps
 
 # More to come
