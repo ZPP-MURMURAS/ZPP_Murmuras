@@ -76,7 +76,7 @@ Conclusion: I think this is worth our time since it seems to be easy to work wit
 # API credits from OpenAI
 - https://openai.com/api/pricing/ 
 - https://platform.openai.com/docs/models 
-Seems to just be about training GPTs and other models they offer. I can’t find any way to upload my own model which is worrying. If we want to train a GPT model then this would be the way to go in my opinion. However, this platform does not seem to be versatile and does not allow for easy uploading of our own models etc. 
+Seems to just be about training GPTs and other models they offer. I can’t find any way to upload my own model which is worrying. If we want to train a GPT model then this would be the way to go in my opinion as they provide updates to the models. However, this platform does not seem to be versatile and does not allow for easy uploading of our own models etc. 
 
 # BrainTrust
 - https://www.braintrust.dev/ 
