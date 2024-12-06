@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@color/semi_transparent_white">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/logo_36" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Text Input Section -->
+    <LinearLayout
+        android:id="@+id/textInputSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/textInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter text to classify"
+            android:inputType="textMultiLine"
+            android:lines="4"
+            android:maxLines="6"
+            android:scrollbars="vertical" />
+
+        <Button
+            android:id="@+id/analyzeButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Analyze Text"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+
+    <!-- Results Display Section -->
+    <LinearLayout
+        android:id="@+id/resultsSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/textInputSection"
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:padding="16dp">
+
+        <!-- Inference Result -->
+        <TextView
+            android:id="@+id/resultText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Result: Waiting for analysis..."
+            android:textSize="16sp"
+            android:textColor="@android:color/black" />
+
+        <!-- Inference Time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/black"
+                android:text="Inference Time:"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/inferenceTimeValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/black"
+                android:text="Enable Quantized Model"
+                android:textSize="16sp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/enable_quantizedmodel_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:checked="false" />
+        </LinearLayout>
+
+        <!-- Quantized Model Toggle -->
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
