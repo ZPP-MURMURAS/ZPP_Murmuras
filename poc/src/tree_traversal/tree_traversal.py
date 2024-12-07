@@ -2,26 +2,52 @@ import pandas as pd
 import sys
 from typing import Any
 
-def validate_input(file_path: str, row_index: Any) -> tuple:
-    if not file_path.endswith('.csv'):
-        exit("File must be a CSV file.")
 
+'''
+Args: index: Any
+Validates the index and returns the index adjusted into a 0-based index.
+'''
+def validate_index(index: Any) -> int:
     try:
-        row_index = int(row_index) - 2
-        if row_index < 0:
+        index = int(index) - 2
+        if index < 0:
             exit("Row index must be an integer greater than 1.")
     except ValueError:
         exit("Row index must be an integer.")
     
+    return index
+
+
+'''
+Args: file_path: Any, row_index: Any
+row_index is the index of the row in the CSV file.
+Returns: tuple containing the file path and the row index adjusted into a 0-based index.
+'''
+def validate_input(file_path: Any, row_index: Any) -> tuple:
+    if not file_path.endswith('.csv'):
+        exit("File must be a CSV file.")
+
+    row_index = validate_index(row_index)
     return file_path, row_index 
 
-def find_parent(file_path: Any, index: Any) -> pd.Series:
+
+'''
+Args: file_path: Any, index: Any
+Validates the input and returns the DataFrame of the parent to the given row index.
+You can pass either the file path or the DataFrame.
+'''
+def find_parent(file_path_or_df: Any, index: Any) -> pd.Series:
     """
     Find the parent of the given row index.
     """
 
-    file_path, index = validate_input(file_path, index)
-    df = to_df(file_path)
+    if isinstance(file_path_or_df, pd.DataFrame):
+        df = file_path_or_df
+        index = validate_index(index)
+    else:
+        file_path, index = validate_input(file_path_or_df, index)
+        df = to_df(file_path)
+ 
     current_depth = df.loc[index, 'view_depth']
 
     for i in range(index - 1, -1, -1):
@@ -30,13 +56,23 @@ def find_parent(file_path: Any, index: Any) -> pd.Series:
 
     return None
 
-def find_children(file_path: str, index: int) -> list:
+
+'''
+Args: file_path: Any, index: Any
+Finds the children of the given row index. 
+You can pass either the file path or the DataFrame.
+'''
+def find_children(file_path_or_df: Any, index: Any) -> list:
     """
     Find the children of the given row index.
     """
-    
-    file_path, index = validate_input(file_path, index)
-    df = to_df(file_path)
+
+    if isinstance(file_path_or_df, pd.DataFrame):
+        df = file_path_or_df
+        index = validate_index(index)
+    else:
+        file_path, index = validate_input(file_path_or_df, index)
+        df = to_df(file_path)
 
     current_depth = df.loc[index, 'view_depth']
     children = []
@@ -49,7 +85,12 @@ def find_children(file_path: str, index: int) -> list:
 
     return children if children else None
 
-def to_df(file_path):
+'''
+Args: file_path: Any, args: Any
+Loads the CSV file and returns the DataFrame with only the necessary columns.
+Args define the columns that must be present in the CSV file.
+'''
+def to_df(file_path, columns=['view_depth', 'view_class_name']):
     """
     Load the CSV file and return the DataFrame with only the necessary columns.
     """
@@ -57,9 +98,10 @@ def to_df(file_path):
     if 'view_depth' not in df.columns or 'view_class_name' not in df.columns:
         exit("CSV file must contain 'view_depth' and 'view_class_name' columns.")
         
-    df = df[['view_depth', 'view_class_name']]
+    df = df[columns]
 
     return df
+
 
 if __name__ == "__main__":
     '''
