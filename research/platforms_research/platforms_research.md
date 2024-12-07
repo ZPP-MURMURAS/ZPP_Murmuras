@@ -150,10 +150,9 @@ What they offer: evaluations of our models. It does not seem to be as advanced a
 
 GPUs: nothing mentioned
 
-Notes: There is a prompt playground which could be useful if we need to do prompt engineering at some point.
+Notes: There is a prompt playground which could be useful if we need to do prompt engineering at some point. There is some possibility for [fine-tuning](https://www.braintrust.dev/docs/cookbook/recipes/AISearch#fine-tuning) but it is not well documented.
 
-Conclusion: What is unique to this site is their prompt engineering playground which could be useful if we want to make ChatGPT generate our data sets. This does not seem to fit our needs as I could not find any information on whether or not we can fine-tune a model on this site. 
-
+Conclusion: What is unique to this site is their prompt engineering playground which could be useful if we want to make ChatGPT generate our data sets. This does not seem to fit our needs as the fine tuning options are not well developed or documented.
 
 # Google Colab
 ## Useful links
