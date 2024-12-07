@@ -1,0 +1,7 @@
+notebook
+openai
+python-dotenv
+pandas
+datasets
+ipywidgets
+tqdm
