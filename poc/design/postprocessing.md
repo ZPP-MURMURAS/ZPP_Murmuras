@@ -29,4 +29,4 @@ Finally, we classify nodes where merging stopped AND whose sets have both produc
   * more sophisticated context analysis:
     * that would require some NLP model to parse all the texts that are "close" in XML tree to coupon candidate. By "close" we mean ancestors and their uncles
 * Selecting prices from a set
-  * In some coupons there are several prices such as price per unit, price per item, price per 100ml (for example). We would require BERT classification to return whether a price is a normal price or price per unit, etc. Based on that we would prefer normal pricer rather than price per unit. Alternatively regular expressions could be used to match price per unit, but that would be sensitive to new data formats.
+  * In some coupons there are several prices such as price per unit, price per item, price per 100ml (for example). We would require BERT classification to return whether a price is a normal price or price per unit, etc. Based on that we would prefer the normal price rather than price per unit. Alternatively regular expressions could be used to match price per unit, but that would be sensitive to new data formats.
