@@ -39,7 +39,12 @@ def labeled_data_to_extra_csv_column(csv_content_path: str, csv_coupons_path: st
     content_frame.to_csv(save_path, index=False)
 
 
-def merge_subsequent_product_names(in_csv: str, out_csv: Optional[str] = None):
+def merge_subsequent_text_fields(in_csv: str, out_csv: Optional[str] = None):
+    """
+    Takes csv with splitted texts and concatenates ones coming from single textfield.
+    :param in_csv: path to csv with screen content and splitted text fields
+    :param out_csv: output path. if not provided, will use in_csv.
+    """
     if out_csv is None:
         out_csv = in_csv
     frame = pd.read_csv(in_csv)
@@ -51,4 +56,4 @@ def merge_subsequent_product_names(in_csv: str, out_csv: Optional[str] = None):
 
 if __name__ == '__main__':
     labeled_data_to_extra_csv_column("rossmann_content.csv", "rossmann_coupons.csv", "rossmann_labels.csv")
-    merge_subsequent_product_names("rossmann_labels.csv", "rossmann_final.csv")
+    merge_subsequent_text_fields("rossmann_labels.csv", "rossmann_final.csv")
