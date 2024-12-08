@@ -1,4 +1,7 @@
 from constants import Label
+import re
+from typing import Any
+
 
 '''
 Args: prices: list: a list of tuples containing the price and the discount type.
@@ -19,7 +22,27 @@ def select_prices(prices: list) -> tuple:
     if not filtered_prices:
         return None
     
-    filtered_prices = [float(price) for price in filtered_prices]
+    def parse_price(price: Any):
+        '''
+        Args: price: Any: a string containing the price.
+        Returns: float: the price as a float. If the price is a float or an int,
+        it casts it to a float and returns it. If the price is a string, it extracts
+        the numerical value from the string and returns it as a float. If the price as 
+        a string contains no numerical value, it returns None.
+        '''
+
+        if isinstance(price, int) or isinstance(price, float):
+            return float(price)
+        elif isinstance(price, str):
+            # Returns the first numerical value in the string. This is a heuristic
+            # and may not work for all cases.
+            match = re.search(r'\d+(\.\d+)?', price)
+            if match:
+                return float(match.group())
+        return None
+
+    parsed_prices = [parse_price(price) for price in filtered_prices]
+    filtered_prices = [price for price in parsed_prices if price is not None]
 
     highest_price = max(filtered_prices)
     lowest_price = min(filtered_prices)
@@ -49,8 +72,10 @@ def classify_prices(classified_inputs: list) -> dict:
     for price, discount_type in classified_inputs:  
         coupon_data[discount_type].append(float(price))
 
-    coupon_data["highest_price"] = max(coupon_data[Label.PRICE])
-    coupon_data["lowest_price"] = min(coupon_data[Label.PRICE])
+    highest_price, lowest_price = select_prices(coupon_data[Label.PRICE])
+
+    coupon_data["highest_price"] = highest_price
+    coupon_data["lowest_price"] = lowest_price
 
     return coupon_data
 
