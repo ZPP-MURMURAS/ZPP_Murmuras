@@ -8,3 +8,7 @@ class Label(Enum):
     OTHER_DISCOUNT = '<OTHER_DISCOUNT>'
     DATE = '<DATE>'
     UNKNOWN = '<UNKNOWN>'
+
+
+LABEL_COLUMN = "label"
+TIMESTAMP_COLUMN = "seen_timestamp"

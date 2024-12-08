@@ -1,10 +1,13 @@
+import re
+import json
+from collections import defaultdict
+from collections.abc import MutableSet
+from marshal import dumps
+from typing import Optional, List
+
 import pandas as pd
 
 from constants import *
-import re
-from collections import defaultdict
-
-from typing import Optional
 
 
 def labeled_data_to_extra_csv_column(csv_content_path: str, csv_coupons_path: str, save_path: str):
@@ -32,7 +35,7 @@ def labeled_data_to_extra_csv_column(csv_content_path: str, csv_coupons_path: st
               else Label.UNKNOWN
               for txt in content_frame["text"]]
 
-    content_frame["label"] = labels
+    content_frame[LABEL_COLUMN] = labels
 
     content_frame = content_frame.assign(text=content_frame["text"].str.split()).explode("text")
 
@@ -41,17 +44,92 @@ def labeled_data_to_extra_csv_column(csv_content_path: str, csv_coupons_path: st
 
 def merge_subsequent_text_fields(in_csv: str, out_csv: Optional[str] = None):
     """
-    Takes csv with splitted texts and concatenates ones coming from single textfield.
+    Takes csv with splitted texts and concatenates ones coming from single textfield. under labels,
+    it produces serialized json representing assignment of tokens
     :param in_csv: path to csv with screen content and splitted text fields
     :param out_csv: output path. if not provided, will use in_csv.
     """
     if out_csv is None:
         out_csv = in_csv
     frame = pd.read_csv(in_csv)
+    frame["label"] += ' '
+    frame["label"] += frame['text']
     aggregators = {col: lambda x: x.iloc[0] for col in frame.columns}
     aggregators["text"] = lambda x: ' '.join(x) if not x.isna().any() else x
+    def strs_labels_to_dict(x: List[str]) -> dict:
+        res = {}
+        if not len(x):
+            return {}
+        curr_label = None
+        curr_text = []
+        for string in x:
+            lbl, txt = string.split()
+            if lbl != curr_label:
+                if curr_label is not None:
+                    res[' '.join(curr_text)] = curr_label
+                curr_label = lbl
+                curr_text = []
+            curr_text.append(txt)
+        res[' '.join(curr_text)] = curr_label
+        return res
+    aggregators[LABEL_COLUMN] = lambda x: json.dumps(strs_labels_to_dict(x)) if not x.isna().any() else "{}"
     frame = frame.groupby(["id", "i"]).agg(aggregators)
     frame.to_csv(out_csv)
+
+
+class MultiSet(MutableSet):
+    """
+    simple implementation of multiset (ofc credits to chatgpt)
+    """
+    def __init__(self, iterable=None):
+        self._elements = defaultdict(int)
+        if iterable is not None:
+            for item in iterable:
+                self.add(item)
+
+    def __contains__(self, item):
+        return self._elements[item] > 0
+
+    def __iter__(self):
+        for item, count in self._elements.items():
+            for _ in range(count):
+                yield item
+
+    def __len__(self):
+        return sum(self._elements.values())
+
+    def add(self, item):
+        self._elements[item] += 1
+
+    def discard(self, item):
+        if self._elements[item] > 0:
+            self._elements[item] -= 1
+            if self._elements[item] == 0:
+                del self._elements[item]
+
+    def __repr__(self):
+        return f"Multiset({list(self)})"
+
+    def count(self, item):
+        """Return the count of the item in the multiset."""
+        return self._elements[item]
+
+    def clear(self):
+        """Remove all elements from the multiset."""
+        self._elements.clear()
+
+    def items(self):
+        """Return a dictionary-like view of items and their counts."""
+        return self._elements.items()
+
+    def __eq__(self, other):
+        if not isinstance(other, MultiSet):
+            return False
+        return self._elements == other._elements
+
+    def union(self, other: 'MultiSet') -> None:
+        for x in other:
+            self.add(x)
 
 
 if __name__ == '__main__':

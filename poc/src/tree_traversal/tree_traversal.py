@@ -36,25 +36,14 @@ Args: file_path: Any, index: Any
 Validates the input and returns the DataFrame of the parent to the given row index.
 You can pass either the file path or the DataFrame.
 '''
-def find_parent(file_path_or_df: Any, index: Any) -> pd.Series:
-    """
-    Find the parent of the given row index.
-    """
+def find_parent(df: Any, index: Any) -> Any:
+    value_at_row = df.loc[index, 'view_depth']
 
-    if isinstance(file_path_or_df, pd.DataFrame):
-        df = file_path_or_df
-        index = validate_index(index)
-    else:
-        file_path, index = validate_input(file_path_or_df, index)
-        df = to_df(file_path)
- 
-    current_depth = df.loc[index, 'view_depth']
-
-    for i in range(index - 1, -1, -1):
-        if df.loc[i, 'view_depth'] < current_depth:
-            return df.loc[i]
-
-    return None
+    above_indices = df.loc[:index].iloc[:-1]  # Use loc to slice by index, then exclude the current row
+    smaller_rows = above_indices[above_indices['view_depth'] < value_at_row]
+    if smaller_rows.empty:
+        return None
+    return smaller_rows.index[-1]
 
 
 '''
@@ -84,6 +73,32 @@ def find_children(file_path_or_df: Any, index: Any) -> list:
             break
 
     return children if children else None
+
+
+def get_children_counts(frame: pd.DataFrame) -> dict:
+    """
+    returns map from node index to number of children of this node
+    """
+    depth_id_stack = []
+    child_no = {}
+    for ix, row in frame.iterrows():
+        child_no[ix] = 0
+        d = row['view_depth']
+        while depth_id_stack and depth_id_stack[-1][0] >= d:
+            depth_id_stack.pop()
+        if depth_id_stack:
+            child_no[depth_id_stack[-1][1]] += 1
+        depth_id_stack.append([d, ix])
+    return child_no
+
+
+def get_leafs(frame: pd.DataFrame) -> list:
+    """
+    returns indexes of the leaf nodes.
+    """
+    series = frame['view_depth']
+    indexes = series[:-1].index[series[:-1].reset_index(drop=True) >= series[1:].reset_index(drop=True)]
+    return indexes.astype(int).tolist()
 
 '''
 Args: file_path: Any, args: Any
