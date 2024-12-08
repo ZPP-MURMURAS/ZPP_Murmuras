@@ -5,3 +5,5 @@ pandas
 datasets
 ipywidgets
 tqdm
+beautifulsoup4
+google
