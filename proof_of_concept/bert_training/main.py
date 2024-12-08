@@ -10,7 +10,7 @@ data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 custom_labels = None
 metric = evaluate.load("seqeval")
 
-# If we don't get tags in form B-tok, I-tok, we need to create them
+# If we don't get tags in form of B-tok, I-tok, we need to create them
 def create_custom_tags(tokens):
     custom_tokens = []
     for token in tokens:
@@ -45,7 +45,6 @@ def align_labels_with_tokens(labels, word_ids):
     return new_labels
 
 
-
 def tokenize_and_align_labels(examples):
     tokenized_inputs = tokenizer(
         examples["tokens"], truncation=True, is_split_into_words=True
@@ -58,6 +57,7 @@ def tokenize_and_align_labels(examples):
 
     tokenized_inputs["labels"] = new_labels
     return tokenized_inputs
+
 
 def compute_metrics(eval_preds):
     logits, labels = eval_preds
@@ -77,53 +77,16 @@ def compute_metrics(eval_preds):
         "accuracy": all_metrics["overall_accuracy"],
     }
 
-if __name__ == '__main__':
-    raw_dataset = load_dataset(
-        'parquet',
-        data_files={
-            'train': 'train-00000-of-00001.parquet',
-            'validation': 'validation-00000-of-00001.parquet',
-            'test': 'test-00000-of-00001.parquet'
-        }
-    )
 
-    print(raw_dataset['train'][0])
-
-    custom_labels = create_custom_tags(raw_dataset["train"].features["ner_tags"].feature.names)
-    #tokenize_and_align_labels(raw_dataset["train"][0])
-
-    tokenized_dataset = raw_dataset.map(
-        tokenize_and_align_labels,
-        batched=True,
-        remove_columns=raw_dataset["train"].column_names,
-    )
-    print(tokenized_dataset)
-    # print(tokenized_dataset['train'][0]['input_ids'])
-    # print(tokenized_dataset['train'][0]['token_type_ids'])
-    # print(tokenized_dataset['train'][0]['attention_mask'])
-    # print(tokenized_dataset['train'][0]['labels'])
-
-    id2label = {i: label for i, label in enumerate(custom_labels)}
-    label2id = {v: k for k, v in id2label.items()}
-
-    print(id2label)
-    print(label2id)
-
-    model = AutoModelForTokenClassification.from_pretrained(
-        model_checkpoint,
-        id2label=id2label,
-        label2id=label2id,
-    )
-    print(model.config.num_labels)
-
+def train_model(model, push_to_hub=False):
     args = TrainingArguments(
         "zpp-murmuras/bert_multiling_cased_test_data_test_1",
-        eval_strategy="epoch",
+        evaluation_strategy="epoch",
         save_strategy="epoch",
         learning_rate=2e-5,
         num_train_epochs=3,
         weight_decay=0.01,
-        push_to_hub=True,
+        push_to_hub=push_to_hub,
     )
 
     trainer = Trainer(
@@ -137,4 +100,28 @@ if __name__ == '__main__':
     )
     trainer.train()
     trainer.evaluate(tokenized_dataset["test"])
-    trainer.push_to_hub("Training completed")
+    if push_to_hub:
+        trainer.push_to_hub("Training completed")
+
+
+if __name__ == '__main__':
+    raw_dataset = load_dataset('zpp-murmuras/training-data-from-csv-1')
+    custom_labels = create_custom_tags(raw_dataset["train"].features["ner_tags"].feature.names)
+
+    tokenized_dataset = raw_dataset.map(
+        tokenize_and_align_labels,
+        batched=True,
+        remove_columns=raw_dataset["train"].column_names,
+    )
+
+    id2label = {i: label for i, label in enumerate(custom_labels)}
+    label2id = {v: k for k, v in id2label.items()}
+
+    model = AutoModelForTokenClassification.from_pretrained(
+        model_checkpoint,
+        id2label=id2label,
+        label2id=label2id,
+    )
+
+    train_model(model)
+
