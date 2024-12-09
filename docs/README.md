@@ -13,7 +13,7 @@ Script requires dependencies from `tools/requirements.txt`. Install them.
 ### Using script
 For downloading dataset into `datasets/<ds_name>` directory run command
 ```bash
-pyhton tools/data_load.py <ds_name>
+python tools/data_load.py <ds_name>
 ```
 inside root dir. </br>
 Currently available datasets:
