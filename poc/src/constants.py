@@ -13,4 +13,3 @@ class Label(Enum):
 
 LABEL_COLUMN = "label"
 TIMESTAMP_COLUMN = "seen_timestamp"
-CLASS_NAME_COLUMN = "view_class_name"
