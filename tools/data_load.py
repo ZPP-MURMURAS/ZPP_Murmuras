@@ -7,7 +7,7 @@ from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
 
 
-CREDENTIALS_PATH = 'tools/gdrive_credentials.json'
+CREDENTIALS_PATH = 'gdrive_credentials.json'
 DATASETS_PATH = 'datasets/'
 
 
