@@ -7,7 +7,7 @@
 6. Datasets given to us by Murmuras should not be pushed to repo. There is separate tool for downloading them described below.
 ## Datasets
 ### Getting credentials
-Datasets are stored on google drive with limited access. To download them ask SzymonKozl for credentials and put them inside `tools/gdrive_credentials.json` file.
+Datasets are stored on google drive with limited access. To download them ask SzymonKozl for credentials and put them inside `gdrive_credentials.json` file.
 ### Dependencies install
 Script requires dependencies from `tools/requirements.txt`. Install them.
 ### Using script
