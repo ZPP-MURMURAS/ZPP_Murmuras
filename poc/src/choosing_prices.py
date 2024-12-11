@@ -98,4 +98,26 @@ def classify_prices(classified_inputs: list) -> dict:
     return coupon_data
 
 
+'''
+# Demo of how to use the function 
 
+test_inputs = [
+    ("10.99 euro", Label.PRICE),
+    ("5.99", Label.PRICE),
+    ("20%", Label.PERCENT),
+    ("10%", Label.PERCENT),
+    ("2.99", Label.PRICE_PER_UNIT),
+    ("3.99", Label.PRICE_PER_UNIT),
+    ("10%", Label.OTHER_DISCOUNT),
+    ("20%", Label.OTHER_DISCOUNT),
+    ("2022-12-31", Label.DATE),
+    ("2022-12-31", Label.DATE),
+    ("Product Name", Label.PRODUCT_NAME),
+    ("Product Name copy", Label.PRODUCT_NAME),
+    ("bla", Label.UNKNOWN),
+    ("blabla", Label.UNKNOWN),
+]
+
+classified = classify_prices(test_inputs)
+print(classified)
+'''
