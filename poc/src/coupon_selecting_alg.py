@@ -20,7 +20,6 @@ class ProtoCoupon:
     percents: List[str] = field(default_factory=list)
     other_discounts: List[str] = field(default_factory=list)
     dates: List[str] = field(default_factory=list)
-    images: List[str] = field(default_factory=list)
 
 
 def is_label_set_coupon(labels: MultiSet) -> bool:
@@ -40,7 +39,6 @@ def proto_coupons_from_frame(
         frame: pd.DataFrame,
         label_col: str = LABEL_COLUMN,
         timestamp_col: str = TIMESTAMP_COLUMN,
-        widget_col: str = CLASS_NAME_COLUMN
 ) -> List[ProtoCoupon]:
     """
     this function takes dataframe containing column with mapped fragments of text to tokens (ex output of
@@ -59,10 +57,9 @@ def proto_coupons_from_frame(
         children_no = tt.get_children_counts(subframe)
         label_sets = {ix: MultiSet(json.loads(frame[label_col][ix]).values()) for ix in frame.index}
         texts = {ix: json.loads(frame[label_col][ix]) for ix in frame.index}
-        images = {ix: json.loads(frame[widget_col][ix]) for ix in frame.index}
         while leafs:
             leaf = leafs.pop()
-            if is_label_set_coupon(label_sets[leaf]) and len(images[leaf]) > 0:
+            if is_label_set_coupon(label_sets[leaf]):
                 coupon_info = defaultdict(list)
                 for txt, lbl in texts[leaf].items():
                     if lbl != Label.UNKNOWN:
@@ -74,7 +71,6 @@ def proto_coupons_from_frame(
                     percents=coupon_info['Label.OTHER_DISCOUNT'],
                     other_discounts=coupon_info['Label.OTHER_DISCOUNT'],
                     dates=coupon_info['Label.DATE'],
-                    images=images[leaf]
                 ))
                 continue
             parent = tt.find_parent(subframe, leaf)
@@ -83,7 +79,6 @@ def proto_coupons_from_frame(
                 parent = int(parent)
                 children_no[parent] -= 1
                 label_sets[parent].union(label_sets[leaf])
-                images[parent].update(image for image in images[leaf] if "image" in image.lower())
                 texts[parent].update(texts[leaf])
                 if children_no[parent] == 0:
                     leafs.append(parent)
