@@ -20,6 +20,7 @@ class ProtoCoupon:
     percents: List[str] = field(default_factory=list)
     other_discounts: List[str] = field(default_factory=list)
     dates: List[str] = field(default_factory=list)
+    images: List[str] = field(default_factory=list)
 
 
 def is_label_set_coupon(labels: MultiSet) -> bool:
@@ -39,6 +40,7 @@ def proto_coupons_from_frame(
         frame: pd.DataFrame,
         label_col: str = LABEL_COLUMN,
         timestamp_col: str = TIMESTAMP_COLUMN,
+        widget_col: str = CLASS_NAME_COLUMN
 ) -> List[ProtoCoupon]:
     """
     this function takes dataframe containing column with mapped fragments of text to tokens (ex output of
@@ -46,9 +48,11 @@ def proto_coupons_from_frame(
     :param frame: dataftame with data
     :param label_col: name of column containing serialized json mapping from texts to labels
     :param timestamp_col: name of column with timestamp in which element has been seen
+    :param widget_col: name of column with widget type
     """
     assert label_col in frame.columns
     assert timestamp_col in frame.columns
+    assert widget_col in frame.columns
     res = []
     frame = frame[frame[timestamp_col] > 0]
     for ts, subframe in frame.groupby(timestamp_col):
@@ -56,13 +60,22 @@ def proto_coupons_from_frame(
         children_no = tt.get_children_counts(subframe)
         label_sets = {ix: MultiSet(json.loads(frame[label_col][ix]).values()) for ix in frame.index}
         texts = {ix: json.loads(frame[label_col][ix]) for ix in frame.index}
+        images = {}
+
+        for ix in frame.index:
+            images[ix] = []
+            if "image" in frame[widget_col][ix].lower():
+                images[ix] = [frame[widget_col][ix]]                
+
         while leafs:
             leaf = leafs.pop()
-            if is_label_set_coupon(label_sets[leaf]):
+            if is_label_set_coupon(label_sets[leaf]) and len(images[leaf]) > 0:
                 coupon_info = defaultdict(list)
                 for txt, lbl in texts[leaf].items():
                     if lbl != Label.UNKNOWN:
                         coupon_info[lbl].append(txt)
+                if not len(coupon_info['Label.PRODUCT_NAME']) == 1:
+                    continue
                 assert len(coupon_info['Label.PRODUCT_NAME']) == 1
                 res.append(ProtoCoupon(
                     product_name=coupon_info['Label.PRODUCT_NAME'][0],
@@ -70,6 +83,7 @@ def proto_coupons_from_frame(
                     percents=coupon_info['Label.OTHER_DISCOUNT'],
                     other_discounts=coupon_info['Label.OTHER_DISCOUNT'],
                     dates=coupon_info['Label.DATE'],
+                    images=images[leaf]
                 ))
                 continue
             parent = tt.find_parent(subframe, leaf)
@@ -78,6 +92,7 @@ def proto_coupons_from_frame(
                 parent = int(parent)
                 children_no[parent] -= 1
                 label_sets[parent].union(label_sets[leaf])
+                images[parent] += [image for image in images[leaf] if "image" in image.lower()]
                 texts[parent].update(texts[leaf])
                 if children_no[parent] == 0:
                     leafs.append(parent)
