@@ -10,20 +10,19 @@ import pandas as pd
 from constants import *
 
 
-def labeled_data_to_extra_csv_column(csv_content_path: str, csv_coupons_path: str, save_path: str):
+def labeled_data_to_extra_csv_column(content_frame: pd.DataFrame, coupons_frame: pd.DataFrame) -> pd.DataFrame:
     """
     Function for early testing of postprocessing.
-    Having csv file and associated coupons list, split text views to rows containing single word each
-    and new column with label assigned to word. At this moment any form of quantitative description of
-    discount (price, percentage, '2 in price of 1') are labeled as price as this does not require extra
-    processing of data and these values are treated by splitting algorithm as equivalent.
-    Dates are currently recognised in very primitive manner, but ig for our purposes it is enough.
-    :param csv_content_path: path to csv file with encoded xml of phone screen content
-    :param csv_coupons_path: path to csv file with discount coupons present in screen content
-    :param save_path: path to save processed xml with added labels and split texts
+    Having frame with phone screen content and frame with associated coupons split
+    text views to rows containing single word each  and new column with label
+    assigned to word. At this moment any form of quantitative description of
+    discount (price, percentage, '2 in price of 1') are labeled as price as this
+    does not require extra processing of data and these values are treated by
+    splitting algorithm as equivalent. Dates are currently recognised in very primitive
+    manner, but ig for our purposes it is enough.
+    :param content_frame: frame with encoded xml of phone screen content
+    :param coupons_frame: frame with discount coupons present in screen content
     """
-    coupons_frame = pd.read_csv(csv_coupons_path)
-    content_frame = pd.read_csv(csv_content_path)
 
     names = coupons_frame["product_text"].dropna().tolist()
     discount_texts = coupons_frame["discount_text"].dropna().tolist()
@@ -35,26 +34,25 @@ def labeled_data_to_extra_csv_column(csv_content_path: str, csv_coupons_path: st
               else Label.UNKNOWN
               for txt in content_frame["text"]]
 
-    content_frame[LABEL_COLUMN] = labels
+    labels = [str(lbl) for lbl in labels]
 
+    content_frame = content_frame.copy(deep=True)
+    content_frame[LABEL_COLUMN] = labels
     content_frame = content_frame.assign(text=content_frame["text"].str.split()).explode("text")
 
-    content_frame.to_csv(save_path, index=False)
+    return content_frame
 
 
-def merge_subsequent_text_fields(in_csv: str, out_csv: Optional[str] = None):
+def merge_subsequent_text_fields(labeled_content_frame: pd.DataFrame) -> pd.DataFrame:
     """
-    Takes csv with splitted texts and concatenates ones coming from single textfield. under labels,
+    Takes csv with split texts and concatenates ones coming from single textfield. under labels,
     it produces serialized json representing assignment of tokens
-    :param in_csv: path to csv with screen content and splitted text fields
-    :param out_csv: output path. if not provided, will use in_csv.
+    :param labeled_content_frame: frame with screen content and split text fields alongside with labels
     """
-    if out_csv is None:
-        out_csv = in_csv
-    frame = pd.read_csv(in_csv)
-    frame["label"] += ' '
-    frame["label"] += frame['text']
-    aggregators = {col: lambda x: x.iloc[0] for col in frame.columns}
+    labeled_content_frame = labeled_content_frame.copy(deep=True)
+    labeled_content_frame["label"] += ' '
+    labeled_content_frame["label"] += labeled_content_frame['text']
+    aggregators = {col: lambda x: x.iloc[0] for col in labeled_content_frame.columns}
     aggregators["text"] = lambda x: ' '.join(x) if not x.isna().any() else x
     def strs_labels_to_dict(x: List[str]) -> dict:
         res = {}
@@ -73,8 +71,8 @@ def merge_subsequent_text_fields(in_csv: str, out_csv: Optional[str] = None):
         res[' '.join(curr_text)] = curr_label
         return res
     aggregators[LABEL_COLUMN] = lambda x: json.dumps(strs_labels_to_dict(x)) if not x.isna().any() else "{}"
-    frame = frame.groupby(["id", "i"]).agg(aggregators)
-    frame.to_csv(out_csv)
+    labeled_content_frame = labeled_content_frame.groupby(["id", "i"], as_index=False).agg(aggregators)
+    return labeled_content_frame
 
 
 class MultiSet(MutableSet):
@@ -130,8 +128,3 @@ class MultiSet(MutableSet):
     def union(self, other: 'MultiSet') -> None:
         for x in other:
             self.add(x)
-
-
-if __name__ == '__main__':
-    labeled_data_to_extra_csv_column("rossmann_content.csv", "rossmann_coupons.csv", "rossmann_labels.csv")
-    merge_subsequent_text_fields("rossmann_labels.csv", "rossmann_final.csv")
