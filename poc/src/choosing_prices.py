@@ -57,13 +57,9 @@ def select_prices(prices: list) -> tuple:
 Args: classified_inputs: list: a list of tuples containing the classified traits 
 of a coupon.
 Returns: dict: a dictionary containing the classified traits of a coupon as well as 
-the highest and lowest prices.
+the highest and lowest prices. The 
 '''
-def classify_prices(classified_inputs: list) -> dict:
-    """
-    Classifies the input into a dictionary of lists, where the keys are the labels.
-    """
-    
+def classify_prices(classified_inputs: list) -> dict:    
     if not classified_inputs:
         return {"coupons": []}
     
@@ -71,9 +67,6 @@ def classify_prices(classified_inputs: list) -> dict:
     coupon = {}
     prices = []
     seen_labels = set()
-
-    for label in Label:
-        coupon_data[label] = list()
 
     for item, item_type in classified_inputs:
         if item_type not in Label or item_type in seen_labels:
@@ -83,7 +76,7 @@ def classify_prices(classified_inputs: list) -> dict:
         if item_type == Label.PRODUCT_NAME:
             coupon["product_name"] = item
         elif item_type == Label.PRICE:
-            prices += item
+            prices.append((item, item_type))
         elif item_type == Label.PERCENT:
             coupon["percent"] = item
         elif item_type == Label.PRICE_PER_UNIT:      
@@ -100,4 +93,9 @@ def classify_prices(classified_inputs: list) -> dict:
     coupon["old_price"] = highest_price
     coupon["new_price"] = lowest_price
 
+    coupon_data["coupons"].append(coupon)
+
     return coupon_data
+
+
+
