@@ -40,6 +40,7 @@ def proto_coupons_from_frame(
         frame: pd.DataFrame,
         label_col: str = LABEL_COLUMN,
         timestamp_col: str = TIMESTAMP_COLUMN,
+        include_images: bool = False,
         widget_col: str = CLASS_NAME_COLUMN
 ) -> List[ProtoCoupon]:
     """
@@ -52,7 +53,10 @@ def proto_coupons_from_frame(
     """
     assert label_col in frame.columns
     assert timestamp_col in frame.columns
-    assert widget_col in frame.columns
+
+    if include_images:
+        assert widget_col in frame.columns
+
     res = []
     frame = frame[frame[timestamp_col] > 0]
     for ts, subframe in frame.groupby(timestamp_col):
@@ -60,22 +64,29 @@ def proto_coupons_from_frame(
         children_no = tt.get_children_counts(subframe)
         label_sets = {ix: MultiSet(json.loads(frame[label_col][ix]).values()) for ix in frame.index}
         texts = {ix: json.loads(frame[label_col][ix]) for ix in frame.index}
-        images = {}
 
-        for ix in frame.index:
-            images[ix] = []
-            if "image" in frame[widget_col][ix].lower():
-                images[ix] = [frame[widget_col][ix]]                
+        if include_images:
+            images = {}
+
+            for ix in frame.index:
+                images[ix] = []
+                if "image" in frame[widget_col][ix].lower():
+                    images[ix] = [frame[widget_col][ix]]                
 
         while leafs:
             leaf = leafs.pop()
-            if is_label_set_coupon(label_sets[leaf]) and len(images[leaf]) > 0:
+            
+            valid_coupon = is_label_set_coupon(label_sets[leaf]) 
+            if include_images:
+                valid_coupon = valid_coupon and len(images[leaf]) > 0
+
+            if valid_coupon:
                 coupon_info = defaultdict(list)
+
                 for txt, lbl in texts[leaf].items():
                     if lbl != Label.UNKNOWN:
                         coupon_info[lbl].append(txt)
-                if not len(coupon_info['Label.PRODUCT_NAME']) == 1:
-                    continue
+
                 assert len(coupon_info['Label.PRODUCT_NAME']) == 1
                 res.append(ProtoCoupon(
                     product_name=coupon_info['Label.PRODUCT_NAME'][0],
@@ -83,7 +94,7 @@ def proto_coupons_from_frame(
                     percents=coupon_info['Label.OTHER_DISCOUNT'],
                     other_discounts=coupon_info['Label.OTHER_DISCOUNT'],
                     dates=coupon_info['Label.DATE'],
-                    images=images[leaf]
+                    images=images[leaf] if include_images else []
                 ))
                 continue
             parent = tt.find_parent(subframe, leaf)
@@ -92,7 +103,10 @@ def proto_coupons_from_frame(
                 parent = int(parent)
                 children_no[parent] -= 1
                 label_sets[parent].union(label_sets[leaf])
-                images[parent] += [image for image in images[leaf] if "image" in image.lower()]
+
+                if include_images:
+                    images[parent] += [image for image in images[leaf] if "image" in image.lower()]
+               
                 texts[parent].update(texts[leaf])
                 if children_no[parent] == 0:
                     leafs.append(parent)
@@ -104,4 +118,8 @@ if __name__ == '__main__':
     pd.set_option('display.max_columns', None)
 
     df = pd.read_csv('rossmann_final.csv')
-    print(proto_coupons_from_frame(df))
+
+    # To include images in ProtoCoupon: 
+    # print(proto_coupons_from_frame(df, include_images=True))
+    
+    print(proto_coupons_from_frame(df,))
