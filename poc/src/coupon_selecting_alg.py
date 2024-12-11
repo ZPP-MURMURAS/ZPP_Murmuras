@@ -46,7 +46,6 @@ def proto_coupons_from_frame(
     :param frame: dataftame with data
     :param label_col: name of column containing serialized json mapping from texts to labels
     :param timestamp_col: name of column with timestamp in which element has been seen
-    :param widget_col: name of column with widget type
     """
     assert label_col in frame.columns
     assert timestamp_col in frame.columns
