@@ -1,7 +1,16 @@
 from constants import Label
 import re
 from typing import Any
-import json
+
+# Map from Label to JSON key in the Murmuras coupon format
+label_to_json_map = {
+    Label.PRODUCT_NAME: "product_name",
+    Label.PERCENT: "percent",
+    Label.OTHER_DISCOUNT: "other_discounts",
+    Label.DATE: "validity",
+    Label.PRICE_PER_UNIT: "price_per_unit",
+    Label.UNKNOWN: "unknown"
+}
 
 
 '''
@@ -73,18 +82,11 @@ def classify_prices(classified_inputs: list) -> dict:
             continue
 
         seen_labels.add(item_type)
-        if item_type == Label.PRODUCT_NAME:
-            coupon["product_name"] = item
+
+        if item_type in label_to_json_map:
+            coupon[label_to_json_map[item_type]] = item
         elif item_type == Label.PRICE:
             prices.append((item, item_type))
-        elif item_type == Label.PERCENT:
-            coupon["percent"] = item
-        elif item_type == Label.PRICE_PER_UNIT:      
-            coupon["price_per_unit"] = item
-        elif item_type == Label.OTHER_DISCOUNT:       
-            coupon["other_discount"] = item
-        elif item_type == Label.DATE:      
-            coupon["validity"] = item
         else:
             coupon["other"] = item
 
@@ -99,7 +101,7 @@ def classify_prices(classified_inputs: list) -> dict:
 
 
 '''
-# Demo of how to use the function 
+# Demo of how to use classify_prices()
 
 test_inputs = [
     ("10.99 euro", Label.PRICE),
