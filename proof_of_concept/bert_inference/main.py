@@ -2,6 +2,7 @@ from numpy.f2py.auxfuncs import throw_error
 from sympy.solvers.diophantine.diophantine import length
 from transformers import pipeline
 import pandas as pd
+import json as json_module
 
 model_checkpoint = 'zpp-murmuras/bert_multiling_cased_test_data_test_1'
 csv_file_path = 'test_data_2024_11_25_lidl_plus_content_generic_2024-12-05T07_39_49.726955559+01_00.csv'
@@ -77,24 +78,17 @@ def map_strings_back_to_csv(entries, path):
                 throw_error('example does not start with row text')
 
             tags_iter = 0
-            json = {}
+            json_data = {}  # Renamed to avoid conflict with the imported module
             for tag in example_tags:
                 sentence = tag['word']
                 if sentence in tmp:
-                    json[sentence] = tag['entity_group']
+                    json_data[sentence] = tag['entity_group']
                     tags_iter += 1
             example_tags = example_tags[tags_iter:]
-            df.at[index, 'sex'] = row['text']
-            df.at[index, 'ner_tags'] = json
+            df.at[index, 'ner_tags'] = json_module.dumps(json_data)  # Serializing to valid JSON format
 
     # save to csv
     df.to_csv('output.csv', index=False)
-
-
-
-
-
-
 
 if __name__ == '__main__':
     map_strings_back_to_csv(prepare_csv(csv_file_path), csv_file_path)
