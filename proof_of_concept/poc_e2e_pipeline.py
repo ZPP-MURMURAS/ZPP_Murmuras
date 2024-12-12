@@ -4,7 +4,7 @@ from transformers import pipeline
 from src.constants import *
 import json
 
-csv_path = 'data/ner_data.csv'
+csv_path = 'sex.csv'
 model_checkpoint = 'zpp-murmuras/bert_multiling_cased_test_data_test_1'
 
 labels_mapping = {
@@ -22,6 +22,7 @@ token_classifier = pipeline(
     "token-classification", model=model_checkpoint, aggregation_strategy="simple")
 
 df = map_strings_back_to_csv(bert_input, csv_path, token_classifier)
+df.to_csv('output.csv')
 
 results = []
 for pc in proto_coupons_from_frame(df, 'ner_tags', labels_mapping=labels_mapping):
