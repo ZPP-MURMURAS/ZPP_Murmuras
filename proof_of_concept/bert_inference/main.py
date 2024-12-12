@@ -1,5 +1,4 @@
 from numpy.f2py.auxfuncs import throw_error
-from sympy.solvers.diophantine.diophantine import length
 from transformers import pipeline
 import pandas as pd
 import json as json_module
@@ -46,10 +45,7 @@ def prepare_csv(path):
 
     return prepare_string_list(view_texts_coalesced)
 
-def map_strings_back_to_csv(entries, path):
-    #for entry in entries:
-     #   print(entry)
-
+def map_strings_back_to_csv(entries, path, token_classifier):
     df = pd.read_csv(path)
     df.columns = df.columns.str.replace(' ', '_').str.lower()
 
@@ -57,7 +53,6 @@ def map_strings_back_to_csv(entries, path):
         raise ValueError('no text column in csv')
 
     i = 0
-    df['sex'] = ''
     df['ner_tags'] = ''
     example = entries[i]
     example_tags = token_classifier(example)
@@ -86,10 +81,5 @@ def map_strings_back_to_csv(entries, path):
                     tags_iter += 1
             example_tags = example_tags[tags_iter:]
             df.at[index, 'ner_tags'] = json_module.dumps(json_data)  # Serializing to valid JSON format
-
-    # save to csv
-    df.to_csv('output.csv', index=False)
-
-if __name__ == '__main__':
-    map_strings_back_to_csv(prepare_csv(csv_file_path), csv_file_path)
+    return df
 
