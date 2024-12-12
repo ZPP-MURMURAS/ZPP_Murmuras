@@ -2,12 +2,10 @@
 
 \usepackage{hyperref}
 \usepackage[T1]{fontenc}
-\usepackage[polish]{babel}
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
-\selectlanguage{polish}
 
 \title{ZPP Murmuras - HLD}
 \author{Gustaw Blachowski \and Szymon Kozłowski \and Natalia Junkiert \and Kamil Dybek}
@@ -17,85 +15,105 @@
 
 \maketitle
 
-\section*{Wprowadzenie}
+\section*{Introduction}
+The goal of the project is to create a universal solution for processing phone screen content, such as social media posts and advertisements on websites. In addition, the processing must occur locally on the user's device to protect sensitive data. The data that we will be working with is mostly:
+\begin{itemize}
+    \item the location of an element on the screen,
+    \item its type (text, image, etc.),
+    \item its content.
+\end{itemize}
 
-Celem projektu jest stworzenie uniwersalnego rozwiązania do procesowania danych uzyskanych z ekranu smartfonu (wspierany system: Android 9 wzwyż), takich jak lokalizacja elementu na ekranie, jego typ (tekst, zdjęcie itp), jego zawartość.
-Dane te reprezentują zawartość widzianą przez użytkownika - posty na mediach społecznościowych, reklamy na witrynach, itp.
-System ten ma umożliwić analizę informacji dotyczących treści obserwowanych przez użytkowników, wspierając tym samym badania o charakterze komercyjnym i społecznym.
+The system aims to enable the analysis of information related to content observed by users, thereby supporting research of both commercial and social nature. Examples of applications include:
+\begin{enumerate}
+    \item \textbf{Analysis of advertisements viewed by users}
 
-Przykładowymi zastosowaniami danych przetowrzonych przez system są (1) analiza danych o oglądanych przez użytkownika reklamach oraz (2) badanie poglądów politycznych i społecznych.
+    The system will facilitate the analysis of the reach of promotional coupons. This will allow us to examine the frequency of a particular coupon’s display and study competitor actions. These insights can be useful for planning future marketing campaigns.
+    \item \textbf{Research on political and social opinions}
 
-(1) System będzie umożliwiał wygodne badanie zasięgów kuponów promocyjnych. Dzięki temu będziemy mogli sprawdzić, jaka jest częstotliwość wyświetlania danego kuponu oraz zbadać działania konkurencji. Może to być pomocne w planowaniu przyszłych akcji marketingowych.
+    The system will enable local analysis of private data such as user conversations. This feature will provide reliable data that is difficult to obtain by other methods, for example, insights into political opinions and insights into social opinions.
+\end{enumerate}
 
-(2) System będzie umożliwiał lokalną analizę danych prywatnych takich jak konwersacje użytkowników. Dostarczy to wiarygodnych danych trudno dostępnych innymi metodami, na przykład poglądów politycznych i społecznych.
+\section*{Existing Solutions}
+We are not aware of any publicly available solutions that directly address this problem. The closest comparable approaches might be existing multimodal models. On one hand, there are widely available models such as ChatGPT, Gemini, and others. However, as the example of ChatGPT demonstrates, these models are not highly precise solutions for this task. A notable drawback of such models is their very large number of parameters; for example, GPT-3 has 175 billion parameters \cite{brown2020languagemodelsfewshotlearners}. On the other hand, there are Computer Vision models that focus on extracting text and bounding boxes from user screen images. Microsoft's OmniParser \cite{lu2024omniparserpurevisionbased} appears to perform very well in this regard, but its output would still require preprocessing solutions similar to those we are investigating. Furthermore, based on our experiments running OmniParser locally, it appears that it requires CUDA technology for execution, which makes it unsuitable for deployment on mobile devices.
 
+\section*{Murmuras' Solution}
+The existing prototype solution developed by Murmuras uses data in CSV format that describes the screen's content. This data is then subjected to very basic processing (e.g., removal of empty columns), and subsequently processed by ChatGPT-4 mini into JSON format. This solution has two main issues: it does not run locally on mobile devices, as the model is not available for local execution, and the data is often described incorrectly (e.g., volume is treated as the product's price).
 
-\section*{Istniejące rozwiązania}
-Na ten moment nie wiadomo nam nic o rozwiązaniach bezpośrednio tego problemu. Najbliższe im mogą być istniejące modele multimodalne.
-Z jednej strony mamy właśnie ChatGPT, Gemini i wiele innych ogólnodostępnych modeli, lecz przykład ChatGPT pokazuje że nie jest to rozwiązanie bardzo dokładne, a modele tego typu są zbyt duże dla urządzen mobilnych. Z drugiej strony mamy też modele Computer Vision, które skupiają się na ekstrakcji tekstu i bounding boxów z obrazów ekranu użytkownika. OmniParser od Microsoftu wydaje się sprawować w tej kwestii bardzo dobrze, ale wynik jego działania wymagałby podobnych rozwiązań do tych, które badamy w ramach preprocessingu. Do tego wymaga on technologii CUDA do uruchomienia więc nie będzie możliwe uruchomienie go na urządzeniu mobilnym.
+\subsection*{Development Opportunities}
+There is a theoretical possibility to solve these problems. There are Python modules such as \textit{outlines}\cite{willard2023efficient} or \textit{LangChain}\cite{Chase_LangChain_2022}, which allow for enforcing structured output in models. The first of these works with models from \textit{HuggingFace}.
 
-\section*{Rozwiązanie Murmurasa}
-Istniejące prototypowe rozwiązanie korzysta z danych w formacie CSV opisujących tekst wykryty na zrzutach ekranu w połączeniu z metadanymi, takimi jak lokalizacja pola tekstowego na ekranie.  Następnie dane te są poddawane bardzo podstawowej obróbce (usuwanie pustych kolumn itp), a następnie są przetwarzane przez ChatGPT4o-mini (za pomocą prompt-engineeringu). Rozwiązanie to ma dwa zasadnicze problemy: nie działa ono lokalnie na urządzeniu mobilnym (model jest za duży), a dane są często opisywane niepoprawnie (np. objętość jest traktowana jak cena produktu).
+\section*{Specification of the Completed Project}
+As the core part of the project, we plan to implement the mentioned solution solely for use with coupons.
+\begin{enumerate}
+    \item A tool to process the data extracted from the device into a format suitable for use by the model.
+    \item A Machine Learning tool for extracting the data that is of interest to us.
+    \item An optional tool for postprocessing the output data from the tool in point 2 into a common format.
+    \item An application that runs the above three tools on a mobile device. (Optional)
+\end{enumerate}
 
-\subsection*{Możliwości rozwoju}
-Istnieje teoretycznie możliwość na rozwiązanie tych problemów. Istnieją moduły w języku Python takie jak outlines\cite{willard2023efficient} bądź LangChain\cite{Chase_LangChain_2022}, pozwalające na wymuszenie w modelach ustrukturyzowanego outputu, z czego pierwsza z nich działa z modelami z HuggingFace. Kwestią otwartą jest przeniesienie tk utworzonego modelu na urządzenie mobilne. Jednakże pierwsze eksperymenty wykazały niezadowalającą efektywność modeli mających około lub poniżej miliarda parametrów w tym zadaniu, nawet przy uproszczonym formacie danych wejściowych.
+\section*{Challenges}
 
-\section*{Specyfikacja skończonego projektu}
-Jako podstawową część projektu planujemy zaimplementowanie wspomnianego rozwiązania jedynie do zastosowania z reklamami. Problem z wykrywaniem poglądów pozostawiamy jako opcjonalny kierunek rozwojowy.\\
-1. Wymagane jest narzędzie, które przetworzy dane wyekstrahowane z urządzenia do postaci nadającej się do użycia przez model. \\
-2. Wymagane jest użycie narzędzia z dziedziny Machine Learningu do ekstrakcji interesujących z naszej perspektywy danych. \\
-3. Opcjonalne jest narzędzie do postprocessingu danych wyjściowych narzędzia z punktu 2 do wspólnego formatu. \\
-4. Wymagane jest wdrożenie powyższych trzech narzędzi na urządzenie mobilne.
+\subsection*{Hardware Requirements}
 
-\section*{Wyzwania}
+\subsubsection*{Computational Power and RAM}
+Both modern LLMs and data preprocessing algorithms often require significant resources \cite{LLMmobile2024}. At the same time, we want everything to run locally on the mobile device. Therefore, the challenge will be selecting tools that are not too resource-intensive.
 
-\subsection*{Wymagania sprzętowe}
-\subsubsection*{Moc obliczeniowa i pamięć operacyjna}
-Zarówno współczesne LLMy jak i algorytmy preprocessingu danych wymagają często dużej ilości zasobów; jednoczesnie chcemy aby wszystko działało lokalnie na urzadzeniu mobilnym. Wyzwaniem więc będzie dobór narzędzi które nie będą zbyt zasobożerne.
-
-\subsubsection*{Pamięć dyskowa}
-Funkcjonowanie aplikacji będzie wymagać użycia dużej przestrzeni dyskowej. Zakładamy że nie będzie to problemem dla uzytkownika ze względu na model biznesowy firmy (uzytkownicy są wynagradzani za zainstalowanie rozwiązania na telefonie)
+\subsubsection*{Disk Storage}
+The operation of the application will require a large amount of disk space. We assume that this will not be an issue for the user due to the company's business model. Users are rewarded for installing the solution on their phones.
 
 \subsection*{Benchmarking}
-W celu oceny jakości naszego rozwiązania obecnie planujemy posługiwać się benchmarkiem zapewnionym nam przez Murmuras.
-Bazuje on na obliczaniu funkcji podobieństwa między wynikiem użytego modelu a wynikiem modelu wzorcowego (obecnie jest to GPT4o-mini).
-Benchmark ten może okazać się niewystarczająco dokładny i miarodajny. Może także pojawić się konieczność zaproponowania alternatywy, przykładowo testowania systemu na sztucznie wygenerowanych i poetykietowanych danych.
+To evaluate the quality of our solution, we currently plan to use the benchmark provided by Murmuras. It is based on calculating the similarity function between the output of the used model and the output of the reference model (currently GPT4o-mini). This benchmark may prove to be insufficiently accurate and reliable. There may also be a need to propose an alternative, such as testing the system on artificially generated and labeled data.
 
-\section*{Propozycja rozwiązania}
-W implementacji naszego rozwiązania wyróżniamy następujące 4 główne moduły:
-\subsection*{Preprocessing danych}
-Na ten moment rozpatrujemy trzy możliwe rozwiązania: użycie rozwiązań z zakresu uczenia maszynowego, w szczególności klastryzacji, algorytmów niezwiązanych z MLem lub pominięcie jakiegokolwiek preprocessingu.
-\subsection*{Processing danych}
-W tym celu wykorzystamy prawdopodobnie wybrany LLM, ale technicznie rzecz biorąc nie jesteśmy w tym temacie ograniczeni. Na ten moment prawdopodobnie będziemy korzostać z narzędzi HuggingFace; zapewniają one proste i wygodne użycie wielu ogólnodostępnych modeli.
-\paragraph{Wybór modelu}
-Po wstępnym researchu postanowiliśmy skupić się na modelach typu transformer o liczbie parametrów z zakresu 10 do około 100 milionów. Większość wybranych przez nas opcji to pochodne modelu BERT\cite{devlin2019bertpretrainingdeepbidirectional}. 3 główne podtypy to:
-1. Bert ~100mln parametrów \\
-2. DistilBert ~65mln parametrów \\
-3. AlBert ~11 mln parametrów \\
-Ich zaletą jest bardzo mały rozmiar; przeprowadzono eksperymenty\cite{LLMmobile2024} w których na urządzeniach mobilnych uruchamiano model Llama-2 z 7 miliardami parametrów. Modele z rodziny BERT są rzędy wielkości mniejsze.
+\section*{Proposed Solution}
+In the implementation of our solution, we distinguish the following main modules:
+
+\subsection*{Data Acquisition}
+We will use raw data provided to us by the company Murmuras. The problem is that they are not labeled, so they will not be suitable for use by BERT-based models. Therefore, we will label the data using ChatGPT. Among the mentioned data, we can distinguish .CSV files representing screen views and user session recordings.
+
+\subsection*{Data Preprocessing}
+We will divide the screen representation in .CSV format into segments corresponding to logical parts (e.g., a single coupon). We will either use a clustering algorithm we have developed or, through fine-tuning, train the LLM model for this task.
+
+\subsection*{Token Labeling}
+Using a fine-tuned model from the BERT family \cite{devlin2019bertpretrainingdeepbidirectional}, we will assign classes to individual tokens corresponding to the attributes of interest in the coupons (e.g., price before, price after, etc.).
+    
+\subsection*{Model Selection}
+After preliminary research, we decided to focus on transformer models with parameter counts ranging from 10 million to around 500 million. Most of the options we selected are derivatives of the BERT model \cite{devlin2019bertpretrainingdeepbidirectional}. The three main subtypes are:
+\begin{enumerate}
+    \item Bert: \textasciitilde100 million parameters,
+    \item DistilBert: \textasciitilde65 million parameters,
+    \item AlBert: \textasciitilde11 million parameters.
+\end{enumerate}
+Their advantage lies in their very small size; experiments \cite{LLMmobile2024} have been conducted where the Llama-2 model with 7 billion parameters was run on mobile devices. Models from the BERT family are an order of magnitude smaller.
+
 \subsection*{Postprocessing}
-DOZRO
-\subsection*{Deployment na urządzeniu mobilnym}
-Stworzymy aplikację mobilną bądź dodamy funkcjonalność do istniejącej w ramach której zaimplementujemy powyższe punkty. Utworzymy service działający w tle i przetwarzający napływające dane w czasie rzeczywistym. Jeśli okaże się, że przetwarzanie w czasie rzeczywistym jest zbyt kosztowne zaimplementujemy przechowywanie danych (DOZRO: ile danych per day) z ekranu i ich analizę w nocy, gdy użytkownik nie korzysta z urządzenia. Planujemy wykorzystać framework TensorFlow Lite (TensorFlow dla urządzeń mobilnych), ewentualnie PyTorch bądź ONNX ze względu na łatwą integrację z aplikacjami rozwijanymi w Android Studio.
-Ciekawą opcją wydaje się także narzędzie Llama.cpp, którego użycie jest udokumentowane naukowo\cite{LLMmobile2024}. Na ten moment wymaga to jednak więcej badań. Chcemy, by aplikacja była kompatybilna z Androidem 9+. Nie jest wymagane, by aplikacja działała na wszystkich urządzeniach.\\
-DOZRO - gdzie wysyłamy zebrane dane
-\section*{Kamienie Milowe}
-\subsection*{Research}
-\textbf{Planowane ukończenie 30.11}\\
-Do końca listopada zamierzamy mieć wybraną architekturę, konkretny model i propozycje algorytmów odpowiedzialnych za preprocessing i postprocessing.
-\subsection*{Proof of Concept}
-\textbf{Planowane ukończenie 31.12}\\
-Planujemy stworzyć prototypową aplikację demonstrującą całościową funkcjonalność. 
-\subsection*{Sesja/zbieranie pomysłów na ulepszenia}
-\textbf{Planowane ukończenie 31.01}\\
-Styczeń będzie miesiącem, w trakcie którego nie planujemy bardzo intensywnej pracy nad projektem ze względu na sesję. Przeznaczymy ten czas na ewentualne dokończenie poprzednich kamieni milowych oraz na przemyślenie kierunku projektu.
-\subsection*{Rozwój docelowego rozwiązania}
-\textbf{Planowane ukończenie 30.04}\\
-Na tym etapie zajmiemy się ulepszeniem rozwiązania, usunięciem błędów i testowaniem. 
-\subsection*{Praca Licencjacka}
-\textbf{Planowane ukończenie 30.06}\\
-Skupimy się na napisaniu i dopracowaniu pracy licencjackiej.
+Postprocessing will involve aggregating the results of the model.
+    
+\subsection*{Deployment on Mobile Devices (Optional)}
+We will create a mobile application or add functionality to an existing one, in which we will implement the above points. We will create a service running in the background that processes incoming data in real time. If real-time processing turns out to be too resource-intensive, we will implement data storage (assuming daily use of the coupon application for 15 minutes, we estimate the data size to be 15KB) from the screen and process it at night when the user is not using the device. We plan to use the TensorFlow Lite framework (TensorFlow for mobile devices), possibly PyTorch or ONNX, due to their easy integration with applications developed in Android Studio. An interesting option also seems to be the Llama.cpp tool, which has scientific documentation for its use \cite{LLMmobile2024}. However, this requires further research. 
 
+We aim for the app to be compatible with Android 9+ but do not require it to work on all devices. Data storage and further transmission will be left to the company's app at this time.
+
+\section*{Milestones}
+
+\subsection*{Research}
+\textbf{Planned Completion: 30.11}\\
+By the end of November, we aim to have selected the architecture, a specific model, and proposed algorithms for preprocessing and postprocessing.
+
+\subsection*{Proof of Concept}
+\textbf{Planned Completion: 31.12}\\
+We plan to create a prototype application demonstrating the full functionality.
+
+\subsection*{Idea Gathering for Improvements}
+\textbf{Planned Completion: 31.01}\\
+January will be a month during which we do not plan intensive work on the project due to exams. We will use this time to potentially finish previous milestones and reflect on the project's direction.
+
+\subsection*{Solution Finalization and Testing}
+\textbf{Planned Completion: 30.04}\\
+At this stage, we will focus on improving the solution, fixing bugs, and testing.
+
+\subsection*{Bachelor's Thesis}
+\textbf{Planned Completion: 30.06}\\
+We will focus on writing and refining the bachelor's thesis.
 
 \bibliographystyle{plain}
 \bibliography{docs/refs}
