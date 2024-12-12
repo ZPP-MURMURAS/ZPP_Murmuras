@@ -187,3 +187,9 @@ fabric.properties
 # PyTorch model
 *.pt
 *.ptl
+
+# datasets
+datasets/**
+
+# google drive credentials
+tools/gdrive_credentials.json
