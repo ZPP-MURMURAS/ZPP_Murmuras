@@ -1,1 +1,9 @@
+notebook
+openai
+python-dotenv
 pandas
+datasets
+ipywidgets
+tqdm
+beautifulsoup4
+google
