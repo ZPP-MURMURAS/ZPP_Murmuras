@@ -1,0 +1,120 @@
+\documentclass[12pt]{article}
+
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+\title{ZPP Murmuras - HLD}
+\author{Gustaw Blachowski \and Szymon Kozłowski \and Natalia Junkiert \and Kamil Dybek}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+The goal of the project is to create a universal solution for processing phone screen content, such as social media posts and advertisements on websites. In addition, the processing must occur locally on the user's device to protect sensitive data. The data that we will be working with is mostly:
+\begin{itemize}
+    \item the location of an element on the screen,
+    \item its type (text, image, etc.),
+    \item its content.
+\end{itemize}
+
+The system aims to enable the analysis of information related to content observed by users, thereby supporting research of both commercial and social nature. Examples of applications include:
+\begin{enumerate}
+    \item \textbf{Analysis of advertisements viewed by users}
+
+    The system will facilitate the analysis of the reach of promotional coupons. This will allow us to examine the frequency of a particular coupon’s display and study competitor actions. These insights can be useful for planning future marketing campaigns.
+    \item \textbf{Research on political and social opinions}
+
+    The system will enable local analysis of private data such as user conversations. This feature will provide reliable data that is difficult to obtain by other methods, for example, insights into political opinions and insights into social opinions.
+\end{enumerate}
+
+\section*{Existing Solutions}
+We are not aware of any publicly available solutions that directly address this problem. The closest comparable approaches might be existing multimodal models. On one hand, there are widely available models such as ChatGPT, Gemini, and others. However, as the example of ChatGPT demonstrates, these models are not highly precise solutions for this task. A notable drawback of such models is their very large number of parameters; for example, GPT-3 has 175 billion parameters \cite{brown2020languagemodelsfewshotlearners}. On the other hand, there are Computer Vision models that focus on extracting text and bounding boxes from user screen images. Microsoft's OmniParser \cite{lu2024omniparserpurevisionbased} appears to perform very well in this regard, but its output would still require preprocessing solutions similar to those we are investigating. Furthermore, based on our experiments running OmniParser locally, it appears that it requires CUDA technology for execution, which makes it unsuitable for deployment on mobile devices.
+
+\section*{Murmuras' Solution}
+The existing prototype solution developed by Murmuras uses data in CSV format that describes the screen's content. This data is then subjected to very basic processing (e.g., removal of empty columns), and subsequently processed by ChatGPT-4 mini into JSON format. This solution has two main issues: it does not run locally on mobile devices, as the model is not available for local execution, and the data is often described incorrectly (e.g., volume is treated as the product's price).
+
+\subsection*{Development Opportunities}
+There is a theoretical possibility to solve these problems. There are Python modules such as \textit{outlines}\cite{willard2023efficient} or \textit{LangChain}\cite{Chase_LangChain_2022}, which allow for enforcing structured output in models. The first of these works with models from \textit{HuggingFace}.
+
+\section*{Specification of the Completed Project}
+As the core part of the project, we plan to implement the mentioned solution solely for use with coupons.
+\begin{enumerate}
+    \item A tool to process the data extracted from the device into a format suitable for use by the model.
+    \item A Machine Learning tool for extracting the data that is of interest to us.
+    \item An optional tool for postprocessing the output data from the tool in point 2 into a common format.
+    \item An application that runs the above three tools on a mobile device. (Optional)
+\end{enumerate}
+
+\section*{Challenges}
+
+\subsection*{Hardware Requirements}
+
+\subsubsection*{Computational Power and RAM}
+Both modern LLMs and data preprocessing algorithms often require significant resources \cite{LLMmobile2024}. At the same time, we want everything to run locally on the mobile device. Therefore, the challenge will be selecting tools that are not too resource-intensive.
+
+\subsubsection*{Disk Storage}
+The operation of the application will require a large amount of disk space. We assume that this will not be an issue for the user due to the company's business model. Users are rewarded for installing the solution on their phones.
+
+\subsection*{Benchmarking}
+To evaluate the quality of our solution, we currently plan to use the benchmark provided by Murmuras. It is based on calculating the similarity function between the output of the used model and the output of the reference model (currently GPT4o-mini). This benchmark may prove to be insufficiently accurate and reliable. There may also be a need to propose an alternative, such as testing the system on artificially generated and labeled data.
+
+\section*{Proposed Solution}
+In the implementation of our solution, we distinguish the following main modules:
+
+\subsection*{Data Acquisition}
+We will use raw data provided to us by the company Murmuras. The problem is that they are not labeled, so they will not be suitable for use by BERT-based models. Therefore, we will label the data using ChatGPT. Among the mentioned data, we can distinguish .CSV files representing screen views and user session recordings.
+
+\subsection*{Data Preprocessing}
+We will divide the screen representation in .CSV format into segments corresponding to logical parts (e.g., a single coupon). We will either use a clustering algorithm we have developed or, through fine-tuning, train the LLM model for this task.
+
+\subsection*{Token Labeling}
+Using a fine-tuned model from the BERT family \cite{devlin2019bertpretrainingdeepbidirectional}, we will assign classes to individual tokens corresponding to the attributes of interest in the coupons (e.g., price before, price after, etc.).
+    
+\subsection*{Model Selection}
+After preliminary research, we decided to focus on transformer models with parameter counts ranging from 10 million to around 500 million. Most of the options we selected are derivatives of the BERT model \cite{devlin2019bertpretrainingdeepbidirectional}. The three main subtypes are:
+\begin{enumerate}
+    \item Bert: \textasciitilde100 million parameters,
+    \item DistilBert: \textasciitilde65 million parameters,
+    \item AlBert: \textasciitilde11 million parameters.
+\end{enumerate}
+Their advantage lies in their very small size; experiments \cite{LLMmobile2024} have been conducted where the Llama-2 model with 7 billion parameters was run on mobile devices. Models from the BERT family are an order of magnitude smaller.
+
+\subsection*{Postprocessing}
+Postprocessing will involve aggregating the results of the model.
+    
+\subsection*{Deployment on Mobile Devices (Optional)}
+We will create a mobile application or add functionality to an existing one, in which we will implement the above points. We will create a service running in the background that processes incoming data in real time. If real-time processing turns out to be too resource-intensive, we will implement data storage (assuming daily use of the coupon application for 15 minutes, we estimate the data size to be 15KB) from the screen and process it at night when the user is not using the device. We plan to use the TensorFlow Lite framework (TensorFlow for mobile devices), possibly PyTorch or ONNX, due to their easy integration with applications developed in Android Studio. An interesting option also seems to be the Llama.cpp tool, which has scientific documentation for its use \cite{LLMmobile2024}. However, this requires further research. 
+
+We aim for the app to be compatible with Android 9+ but do not require it to work on all devices. Data storage and further transmission will be left to the company's app at this time.
+
+\section*{Milestones}
+
+\subsection*{Research}
+\textbf{Planned Completion: 30.11}\\
+By the end of November, we aim to have selected the architecture, a specific model, and proposed algorithms for preprocessing and postprocessing.
+
+\subsection*{Proof of Concept}
+\textbf{Planned Completion: 31.12}\\
+We plan to create a prototype application demonstrating the full functionality.
+
+\subsection*{Idea Gathering for Improvements}
+\textbf{Planned Completion: 31.01}\\
+January will be a month during which we do not plan intensive work on the project due to exams. We will use this time to potentially finish previous milestones and reflect on the project's direction.
+
+\subsection*{Solution Finalization and Testing}
+\textbf{Planned Completion: 30.04}\\
+At this stage, we will focus on improving the solution, fixing bugs, and testing.
+
+\subsection*{Bachelor's Thesis}
+\textbf{Planned Completion: 30.06}\\
+We will focus on writing and refining the bachelor's thesis.
+
+\bibliographystyle{plain}
+\bibliography{docs/refs}
+\end{document}
