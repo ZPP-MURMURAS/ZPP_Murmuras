@@ -7,9 +7,9 @@ import re
 
 import pandas as pd
 
-from tree_traversal import tree_traversal as tt
-from constants import *
-from postprocessing_utils import MultiSet
+from src.tree_traversal import tree_traversal as tt
+from src.constants import *
+from src.postprocessing_utils import MultiSet
 
 
 @dataclass()
@@ -76,7 +76,11 @@ def proto_coupons_from_frame(
             if isinstance(frame[label_col][ix], float) and isnan(frame[label_col][ix]):
                 mapping = {}
             else:
-                mapping = json.loads(frame[label_col][ix])
+                string = frame[label_col][ix]
+                if not string:
+                    mapping = {}
+                else:
+                    mapping = json.loads(frame[label_col][ix])
             for k, v in mapping.items():
                 mapping[k] = labels_mapping[v]
             label_sets[ix] = MultiSet(mapping.values())
