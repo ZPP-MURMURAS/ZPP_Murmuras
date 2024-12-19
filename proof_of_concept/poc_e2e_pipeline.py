@@ -4,7 +4,7 @@ from transformers import pipeline
 from src.constants import *
 import json
 
-csv_path = 'sex.csv'
+csv_path = 'data.csv'
 model_checkpoint = 'zpp-murmuras/bert_multiling_cased_test_data_test_1'
 
 labels_mapping = {
