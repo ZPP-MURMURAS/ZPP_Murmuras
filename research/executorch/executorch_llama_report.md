@@ -24,7 +24,7 @@ Models can be quantized using the [torchao](https://github.com/pytorch/ao) libra
 
 # Structured Format Enforcement
 
-I was not able to find any way of enforcing the Llama output to be in a structured format, such as JSON, while retaining ExecuTorch compatibility.
+I was not able to find any straightforward way of enforcing the Llama output to be in a structured format, such as JSON. One possible approach might involve using the [outlines](https://github.com/dottxt-ai/outlines) library and [exporting to ExecuTorch](https://pytorch.org/executorch/stable/tutorials/export-to-executorch-tutorial.html). However, setting everything up could be quite time-consuming, and it's unclear whether this approach would work as intended.
 
 
 # Conclusions
