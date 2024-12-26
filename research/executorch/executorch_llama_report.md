@@ -3,6 +3,11 @@
 The [ExecuTorch repository](https://github.com/pytorch/executorch) provides examples of how to deploy Llama models on mobile devices. This guide offers a concise summary and highlights the most relevant parts of the repository for this project.
 
 
+# Models
+
+Based on my understanding, ExecuTorch allows for the deployment of any model that can be exported using `torch.export`. While deploying a large language model (LLM) can be challenging, the repository offers a complete framework for Llama deployment, including model export scripts and a demo application.
+
+
 # Demo App
 
 There is a [demo Llama application](https://github.com/pytorch/executorch/tree/main/examples/demo-apps/android/LlamaDemo) in the repository. Executorch supports various backends for running models, including [non-CPU backends](https://github.com/pytorch/executorch/blob/main/examples/models/llama/non_cpu_backends.md). I only focused on the CPU-based XNNPACK. I was able to build and run the application with Llama 3.2 1B QAT+LoRA model on Samsung Galaxy A25, using the instructions provided [here](https://github.com/pytorch/executorch/blob/main/examples/demo-apps/android/LlamaDemo/docs/delegates/xnnpack_README.md). The application also supports a multimodal text/vision model [LLaVA](https://huggingface.co/llava-hf/llava-1.5-7b-hf), however I was not able to run it, because the model generation script required more than 32 GB of RAM.
@@ -10,7 +15,7 @@ There is a [demo Llama application](https://github.com/pytorch/executorch/tree/m
 
 # Benchmarking
 
-The repository includes a [benchmarking section](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md#results) where different Llama models are tested on edge devices. By following [these instructions](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md#instructions), I was able to run the benchmark with Llama 3.2 1B QAT+LoRA on Samsung Galaxy A25.
+The repository includes a [benchmarking section](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md) where different Llama models are tested on edge devices using the XNNPACK backend. By following [these instructions](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md#instructions), I was able to run the benchmark with Llama 3.2 1B QAT+LoRA on Samsung Galaxy A25.
 
 
 # Fine-tuning
