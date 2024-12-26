@@ -5,7 +5,7 @@ The [ExecuTorch repository](https://github.com/pytorch/executorch) provides exam
 
 # Models
 
-Based on my understanding, ExecuTorch allows for the deployment of any model that can be exported using `torch.export`. While deploying a large language model (LLM) can be challenging, the repository offers a complete framework for Llama deployment, including model export scripts and a demo application.
+Based on [this page](https://pytorch.org/executorch/stable/intro-how-it-works.html), it appears that ExecuTorch allows for the deployment of any model that can be exported using `torch.export`. While deploying a large language model (LLM) can be challenging, the repository offers a complete framework for Llama deployment, including model export scripts and a demo application.
 
 
 # Demo App
