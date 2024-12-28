@@ -9,6 +9,7 @@ from typing import Optional, List
 # TODO: Import ProtoCoupon directly from the coupon_selecting_alg.py file. I am not sure how to do this.
 from dataclasses import dataclass, field
 
+
 @dataclass()
 class ProtoCoupon:
     """
@@ -29,13 +30,10 @@ PERCENT_WEIGHT = 0.2
 OTHER_DISCOUNT_WEIGHT = 0.2
 VALIDITY_WEIGHT = 0.1
 
-
 # Weights for the prices
 NEW_PRICE_WEIGHT = 0.4
 OLD_PRICE_WEIGHT = 0.4
 OTHER_PRICES_WEIGHT = 0.2
-
-
 """
 This function will compare two lists of prices and return a float value that represents the similarity between them.
 The higher the value, the more similar the lists are. The lower the value, the more different the lists are. The lowest
@@ -46,48 +44,57 @@ The score takes into account the discrepancy in the number of prices between the
 :return: A float value that represents the similarity between the two lists
 """
 
+
 def _compare_prices(generated_prices: list, expected_prices: list) -> float:
     # Case 0: Both lists are either empty or contain only one price, so we can compare them directly
-    if len(expected_prices) == len(generated_prices) and (len(expected_prices) == 0 or len(expected_prices) == 1):
+    if len(expected_prices) == len(generated_prices) and (
+            len(expected_prices) == 0 or len(expected_prices) == 1):
         if len(expected_prices) == 0:
             return 1.0
-        
+
         return 1.0 if expected_prices[0] == generated_prices[0] else 0.0
-    
+
     # Case 1: The generated list is empty, so it is completely different from the expected list or vice versa
-    if (len(generated_prices) == 0 and len(expected_prices) > 0) or (len(generated_prices) > 0 and len(expected_prices) == 0):
+    if (len(generated_prices) == 0
+            and len(expected_prices) > 0) or (len(generated_prices) > 0
+                                              and len(expected_prices) == 0):
         return 0.0
 
-    generated_prices = np.array(sorted([float(price) for price in generated_prices]))
-    expected_prices = np.array(sorted([float(price) for price in expected_prices]))
-    
+    generated_prices = np.array(
+        sorted([float(price) for price in generated_prices]))
+    expected_prices = np.array(
+        sorted([float(price) for price in expected_prices]))
+
     # Calculate the difference between the highest and lowest prices in both lists
     new_prices = [generated_prices[0], expected_prices[0]]
-    old_prices = [generated_prices[-1], expected_prices[-1]] 
+    old_prices = [generated_prices[-1], expected_prices[-1]]
 
     new_price_ratio = 1.0 if new_prices[0] == new_prices[1] else 0.0
     old_price_ratio = 1.0 if old_prices[0] == old_prices[1] else 0.0
 
     # Calculate the weighted absolute error between the two lists
-    gen_trimmed = generated_prices[1:-1] 
-    exp_trimmed = expected_prices[1:-1] 
-    
+    gen_trimmed = generated_prices[1:-1]
+    exp_trimmed = expected_prices[1:-1]
+
     exp_mean = np.mean(expected_prices)
     weights = [abs(val - exp_mean) for val in exp_trimmed]
     # Normalize weights
     weights = [weight / sum(weights) for weight in weights]
-    
+
     error = 0
     for gen, exp, weight in zip(gen_trimmed, exp_trimmed, weights):
         error += weight * abs(gen - exp)
 
-    coupon_difference = (new_price_ratio * NEW_PRICE_WEIGHT) + (old_price_ratio * OLD_PRICE_WEIGHT) + (OTHER_PRICES_WEIGHT) * (1 - error / max(expected_prices))
+    coupon_difference = (new_price_ratio * NEW_PRICE_WEIGHT) + (
+        old_price_ratio * OLD_PRICE_WEIGHT
+    ) + (OTHER_PRICES_WEIGHT) * (1 - error / max(expected_prices))
 
     # Case 2: Both lists have more than one price, so we can compare all the prices
     if len(generated_prices) == len(expected_prices):
         return coupon_difference
-    
-    length_difference = abs(len(generated_prices) - len(expected_prices)) / len(expected_prices)
+
+    length_difference = abs(len(generated_prices) -
+                            len(expected_prices)) / len(expected_prices)
     return max(0, coupon_difference - length_difference * 0.2)
 
 
@@ -98,10 +105,11 @@ The higher the value, the more similar the coupons are. The lower the value, the
 :return: A float value that represents the similarity between the two coupons
 """
 
-def _compare_coupons(coupon_1: Optional[ProtoCoupon], coupon_2: Optional[ProtoCoupon]) -> float:
+
+def compare_coupons(coupon_1: Optional[ProtoCoupon],
+                    coupon_2: Optional[ProtoCoupon]) -> float:
     if coupon_1 is None or coupon_2 is None:
         return 0.0
-    
     """
     product_name: str
     prices: List[str] = field(default_factory=list)
@@ -110,33 +118,56 @@ def _compare_coupons(coupon_1: Optional[ProtoCoupon], coupon_2: Optional[ProtoCo
     dates: List[str] = field(default_factory=list)
     """
 
-    name_ratio = diff.SequenceMatcher(a=coupon_1.product_name, b=coupon_2.product_name).ratio()
-    prices_ratio = _compare_prices(coupon_1.prices, coupon_2.prices)  
+    name_ratio = diff.SequenceMatcher(a=coupon_1.product_name,
+                                      b=coupon_2.product_name).ratio()
+    prices_ratio = _compare_prices(coupon_1.prices, coupon_2.prices)
 
     percents_1 = sorted([str(percent) for percent in coupon_1.percents])
     percents_2 = sorted([str(percent) for percent in coupon_2.percents])
-    percents_ratio = diff.SequenceMatcher(a=percents_1, b=percents_2).ratio() - 0.2 * abs(len(percents_1) - len(percents_2))
+    percents_ratio = diff.SequenceMatcher(
+        a=percents_1,
+        b=percents_2).ratio() - 0.2 * abs(len(percents_1) - len(percents_2))
 
-    discounts_1 = sorted([str(discount) for discount in coupon_1.other_discounts])
-    discounts_2 = sorted([str(discount) for discount in coupon_2.other_discounts])
-    other_discopunts_ratio = diff.SequenceMatcher(a=discounts_1, b=discounts_2).ratio() - 0.2 * abs(len(discounts_1) - len(discounts_2))
+    discounts_1 = sorted(
+        [str(discount) for discount in coupon_1.other_discounts])
+    discounts_2 = sorted(
+        [str(discount) for discount in coupon_2.other_discounts])
+    other_discopunts_ratio = diff.SequenceMatcher(
+        a=discounts_1, b=discounts_2).ratio(
+        ) - 0.2 * abs(len(discounts_1) - len(discounts_2))
 
     dates_1 = sorted([str(date) for date in coupon_1.dates])
     dates_2 = sorted([str(date) for date in coupon_2.dates])
-    dates_ratio = diff.SequenceMatcher(a=dates_1, b=dates_2).ratio() - 0.2 * abs(len(dates_1) - len(dates_2))
+    dates_ratio = diff.SequenceMatcher(
+        a=dates_1, b=dates_2).ratio() - 0.2 * abs(len(dates_1) - len(dates_2))
 
-    return (name_ratio * NAME_WEIGHT) + (prices_ratio * PRICE_WEIGHT) + (percents_ratio * PERCENT_WEIGHT) + (other_discopunts_ratio * OTHER_DISCOUNT_WEIGHT) + (dates_ratio * VALIDITY_WEIGHT)
-    
+    return (name_ratio * NAME_WEIGHT) + (prices_ratio * PRICE_WEIGHT) + (
+        percents_ratio * PERCENT_WEIGHT) + (
+            other_discopunts_ratio * OTHER_DISCOUNT_WEIGHT) + (dates_ratio *
+                                                               VALIDITY_WEIGHT)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Benchmarking script')
-    parser.add_argument('-t', '--time', help='Run benchmark rewarding or punishing the execution speed', action='store_true')
+    parser.add_argument(
+        '-t',
+        '--time',
+        help='Run benchmark rewarding or punishing the execution speed',
+        action='store_true')
     args = parser.parse_args()
 
     if args.time:
         print('Time benchmarking')
 
     # Example usage
-    coupon1 = ProtoCoupon(product_name='Product 1', prices=['10', '20'], percents=['10', '20'], other_discounts=['10', '20'], dates=['10', '20'])
-    coupon2 = ProtoCoupon(product_name='Product 1', prices=['10'], percents=['10', '20'], other_discounts=['10', '20'], dates=['10', '20'])
-    print(_compare_coupons(coupon1, coupon2))
+    coupon1 = ProtoCoupon(product_name='Product 1',
+                          prices=['10', '20'],
+                          percents=['10', '20'],
+                          other_discounts=['10', '20'],
+                          dates=['10', '20'])
+    coupon2 = ProtoCoupon(product_name='Product 1',
+                          prices=['10'],
+                          percents=['10', '20'],
+                          other_discounts=['10', '20'],
+                          dates=['10', '20'])
+    print(compare_coupons(coupon1, coupon2))
