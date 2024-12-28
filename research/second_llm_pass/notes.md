@@ -37,7 +37,7 @@ BERT (and as far as I know Llama too) provides pool of unused tokens that we can
 ##### Converting to JSON
 We encode input to JSON format. This can be done in two ways. The first way is to convert each CSV row to dict and collect these dictionaries in one list. The more sophisticated approach is to represent XML structure in form of JSON tree.
 ## Solutions requiring model training
-Below I present some ideas involving training custom model from scratch. These proposals are obviously more challenging to implement and I suggest treating them as backup option:
+Below I present some ideas involving training custom model from scratch. These proposals are obviously more challenging to implement than fine-tuning a llm and I suggest treating them as backup option:
 ### 1D convolution over text sequence / RNN
 #### 1D convolution
 This solution is conceptually similar to multi-answer QA. For each token we assign a label being `UNKNOWN`, `BEGIN-COUPON` or `MID-COUPON`. This time, however, we will use CNNs. </br>
