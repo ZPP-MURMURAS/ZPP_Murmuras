@@ -9,6 +9,11 @@ from coupon_selecting_alg import proto_coupons_from_frame, parse_proto_coupon
 """
 Simple script demonstrating data flow.
 Mostly for purposes of further integration work.
+This script can perform one of the 2 test cases:
+1. In the first case we load raw content from phone screen and associated coupons in mm
+format. We then label text sections in content and run postprocessing on them.
+2. In the second case we get data returned by LLM (real world scenario)
+In both cases script simply prints extracted coupons.
 """
 
 if __name__ == '__main__':

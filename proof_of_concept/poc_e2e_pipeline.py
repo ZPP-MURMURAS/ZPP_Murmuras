@@ -1,7 +1,7 @@
-from src.coupon_selecting_alg import proto_coupons_from_frame, parse_proto_coupon
+from postprocessing.coupon_selecting_alg import proto_coupons_from_frame, parse_proto_coupon
 from bert_inference.main import prepare_csv, map_strings_back_to_csv
 from transformers import pipeline
-from src.constants import *
+from postprocessing.constants import *
 import json
 
 csv_path = 'data.csv'
