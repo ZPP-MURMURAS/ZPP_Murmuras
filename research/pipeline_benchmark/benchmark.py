@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 
 # TODO: loading and running the pipeline
 
+
 @dataclass()
 class ProtoCoupon:
     """
@@ -42,7 +43,6 @@ VALIDITY_WEIGHT = 0.1
 NEW_PRICE_WEIGHT = 0.5
 OLD_PRICE_WEIGHT = 0.5
 LENGTH_PENALTY = 0.2
-
 """
 This function will extract the discounts from the text of the coupon and return
 them in a structured format. The discounts can be of different types: new price,
@@ -53,6 +53,7 @@ or an empty list if the discount is not found.
 :param discount_text: The text of the coupon
 :return: A tuple with the new price, old price, percentages, and other discounts
 """
+
 
 def _get_discounts(
         discount_text: str) -> Tuple[str, str, List[str], List[str]]:
@@ -228,6 +229,7 @@ def compare_coupons(coupon_1: Optional[ProtoCoupon],
             other_discopunts_ratio * OTHER_DISCOUNT_WEIGHT) + (dates_ratio *
                                                                VALIDITY_WEIGHT)
 
+
 """
 This function will validate the format of the csv file that contains the
 expected coupons. The file must contain the headers defined below. 
@@ -235,11 +237,13 @@ expected coupons. The file must contain the headers defined below.
 :return: True if the file format is valid, False otherwise
 """
 
+
 def _validate_output_file_format(fieldnames: list) -> bool:
     required_headers = [
         "product_text", "discount_text", "discount_details", "validity_text"
     ]
     return all(header in fieldnames for header in required_headers)
+
 
 """
 This function will validate the format of the csv file that contains the
@@ -247,6 +251,7 @@ input data. The file must contain the headers defined below.
 :param fieldnames: The headers of the csv file
 :return: True if the file format is valid, False otherwise
 """
+
 
 def _validate_input_file_format(fieldnames: list) -> bool:
     required_headers = [
@@ -262,40 +267,43 @@ def _validate_folders(input_folder: str, output_folder: str):
     if not os.path.isdir(output_folder):
         raise NotADirectoryError(
             f"The output path {output_folder} is not a directory.")
-    
+
     # Validate the output folder
     for file_name in os.listdir(output_folder):
         file_name_full = os.path.join(output_folder, file_name)
         if not os.path.isfile(file_name_full):
             raise NotADirectoryError(
                 f"The output path {output_folder} is not a directory.")
-        
+
         if not file_name.endswith('.csv'):
             raise ValueError(f"The file {file_name} is not a CSV file.")
-        
+
         with open(file_name_full, 'r') as file:
             reader = csv.DictReader(file)
             if reader.fieldnames is None or not _validate_output_file_format(
                     reader.fieldnames):
-                raise ValueError(f"The file {file_name} has an invalid format.")
-            
+                raise ValueError(
+                    f"The file {file_name} has an invalid format.")
+
     # Validate the input folder
     for file_name in os.listdir(input_folder):
         file_name_full = os.path.join(input_folder, file_name)
         if not os.path.isfile(file_name_full):
             raise NotADirectoryError(
                 f"The input path {input_folder} is not a directory.")
-        
+
         if not file_name.endswith('.csv'):
             raise ValueError(f"The file {file_name} is not a CSV file.")
-        
+
         with open(file_name_full, 'r') as file:
             reader = csv.DictReader(file)
             if reader.fieldnames is None or not _validate_input_file_format(
                     reader.fieldnames):
-                raise ValueError(f"The file {file_name} has an invalid format.")
+                raise ValueError(
+                    f"The file {file_name} has an invalid format.")
 
     return True
+
 
 if __name__ == '__main__':
     # Parse the input arguments and check if the input and output paths are valid
@@ -310,11 +318,14 @@ if __name__ == '__main__':
                         type=str,
                         required=True,
                         help='Path to the folder with the expected coupons')
-    parser.add_argument('-p',
-                        '--pipeline',
-                        type=str,
-                        required=True,
-                        help='Command to run the pipeline (e.g., ./run_pipeline --data <input_path>)')
+    parser.add_argument(
+        '-p',
+        '--pipeline',
+        type=str,
+        required=True,
+        help=
+        'Command to run the pipeline (e.g., ./run_pipeline --data <input_path>)'
+    )
     args = parser.parse_args()
 
     if not _validate_folders(args.input, args.output):
