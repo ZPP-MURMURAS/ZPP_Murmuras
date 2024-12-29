@@ -1,8 +1,10 @@
 import numpy as np
 import argparse
+import subprocess
 import difflib as diff
 import os
 import re
+import json
 import csv
 from typing import Optional, List, Tuple
 from dataclasses import dataclass, field
@@ -231,6 +233,44 @@ def compare_coupons(coupon_1: Optional[ProtoCoupon],
 
 
 """
+This function will run the pipeline with the input data and return the
+generated coupons. The function will return None if the pipeline fails to run.
+:param pipeline_command: The command to run the pipeline
+:param input_folder: The path to the folder with the input data
+:return: A list of ProtoCoupon objects that represent the generated coupons
+        or None if the pipeline fails to run
+"""
+
+
+def run_pipeline(pipeline_command: str,
+                 input_folder: str) -> Optional[List[ProtoCoupon]]:
+    pipeline_command = pipeline_command.replace("<input_path>", input_folder)
+    pipeline_command = pipeline_command + " >> output.json"
+
+    try:
+        subprocess.run(pipeline_command, shell=True, check=True)
+
+        # The pipeline must write the output to a file called output.json
+        proto_coupons = []
+        with open("output.json", "r") as file:
+            coupons = json.load(file)
+
+        for coupon in coupons:
+            proto_coupons.append(
+                ProtoCoupon(product_name=coupon["product_name"],
+                            new_price=coupon["new_price"],
+                            old_price=coupon["old_price"],
+                            percents=coupon["percents"],
+                            other_discounts=coupon["other_discounts"],
+                            dates=coupon["dates"]))
+        return proto_coupons
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error running the pipeline: {e.stderr}")
+        return None
+
+
+"""
 This function will validate the format of the csv file that contains the
 expected coupons. The file must contain the headers defined below. 
 :param fieldnames: The headers of the csv file
@@ -260,7 +300,18 @@ def _validate_input_file_format(fieldnames: list) -> bool:
     return all(header in fieldnames for header in required_headers)
 
 
-def _validate_folders(input_folder: str, output_folder: str):
+"""
+This function will validate the input and output folders. The input folder must
+contain csv files with the format defined in the _validate_input_file_format
+function. The output folder must contain csv files with the format defined in
+the _validate_output_file_format function.
+:param input_folder: The path to the folder with the input data
+:param output_folder: The path to the folder with the expected coupons
+:return: True if the folders are valid, False otherwise
+"""
+
+
+def validate_folders(input_folder: str, output_folder: str) -> bool:
     if not os.path.isdir(input_folder):
         raise NotADirectoryError(
             f"The input path {input_folder} is not a directory.")
@@ -328,12 +379,14 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    if not _validate_folders(args.input, args.output):
+    if not validate_folders(args.input, args.output):
         raise ValueError("The input and output folders are not valid.")
 
     # Get the expected coupons
     expected_coupons = get_expected_coupons(args.output)
-    generated_coupons = []
+    generated_coupons = run_pipeline(args.pipeline, args.input)
+
+    
 
     # Example usage
     coupon1 = ProtoCoupon(product_name='Product 1',
