@@ -4,7 +4,7 @@ import difflib as diff
 import os
 import re
 import csv
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from dataclasses import dataclass, field
 
 # TODO: loading and running the pipeline
@@ -54,10 +54,36 @@ expected coupons. The file must contain the headers defined below.
 
 def _validate_file_format(fieldnames: list) -> bool:
     required_headers = [
-        "product_text", "discount_text",
-        "discount_details", "validity_text"
+        "product_text", "discount_text", "discount_details", "validity_text"
     ]
     return all(header in fieldnames for header in required_headers)
+
+
+def _get_discounts(
+        discount_text: str) -> Tuple[str, str, List[str], List[str]]:
+    new_price = None
+    old_price = None
+    percents = []
+    other_discounts = []
+
+    if discount_text is not None:
+        discounts_found = 0
+        if re.search(PRICE_REGEX, discount_text):
+            prices = re.findall(PRICE_REGEX, discount_text)
+            if len(prices) >= 2:
+                prices = sorted([float(price) for price in prices])
+                new_price = str(prices[0])
+                old_price = str(prices[-1])
+                discounts_found += 1
+
+        if re.search(PERCENT_REGEX, discount_text):
+            percents = re.findall(PERCENT_REGEX, discount_text)
+            discounts_found += 1
+
+        if discounts_found == 0:
+            other_discounts = [discount_text]
+
+    return new_price, old_price, percents, other_discounts
 
 
 """
@@ -87,31 +113,8 @@ def get_expected_coupons(file_path: Optional[str]) -> List[ProtoCoupon]:
                     continue
 
                 for row in reader:
-                    new_price = None
-                    old_price = None
-                    percents = []
-                    other_discounts = []
-
-                    if row[DISCOUNT_TEXT] is not None:
-                        discounts_found = 0
-                        if re.search(PRICE_REGEX, row[DISCOUNT_TEXT]):
-                            prices = re.findall(PRICE_REGEX,
-                                                row[DISCOUNT_TEXT])
-                
-                            if len(prices) >= 2:
-                                prices = sorted(
-                                    [float(price) for price in prices])
-                                new_price = str(prices[0])
-                                old_price = str(prices[-1])
-                                discounts_found += 1
-
-                        if re.search(PERCENT_REGEX, row[DISCOUNT_TEXT]):
-                            percents = re.findall(PERCENT_REGEX,
-                                                  row[DISCOUNT_TEXT])
-                            discounts_found += 1
-
-                        if discounts_found == 0:
-                            other_discounts = [row[DISCOUNT_TEXT]]
+                    new_price, old_price, percents, other_discounts = _get_discounts(
+                        row[DISCOUNT_TEXT])
 
                     coupon = ProtoCoupon(product_name=row[PRODUCT_TEXT],
                                          new_price=new_price,
