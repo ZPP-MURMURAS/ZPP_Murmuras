@@ -232,6 +232,10 @@ def compare_coupons(coupon_1: Optional[ProtoCoupon],
                                                                VALIDITY_WEIGHT)
 
 
+def judge_pipeline(expected_coupons: List[ProtoCoupon], generated_coupons: List[ProtoCoupon]) -> float:
+    return 0.0
+
+
 """
 This function will run the pipeline with the input data and return the
 generated coupons. The function will return None if the pipeline fails to run.
@@ -245,7 +249,7 @@ generated coupons. The function will return None if the pipeline fails to run.
 def run_pipeline(pipeline_command: str,
                  input_folder: str) -> Optional[List[ProtoCoupon]]:
     pipeline_command = pipeline_command.replace("<input_path>", input_folder)
-    pipeline_command = pipeline_command + " >> output.json"
+    pipeline_command = pipeline_command + " > output.json"
 
     try:
         subprocess.run(pipeline_command, shell=True, check=True)
@@ -383,22 +387,7 @@ if __name__ == '__main__':
         raise ValueError("The input and output folders are not valid.")
 
     # Get the expected coupons
-    expected_coupons = get_expected_coupons(args.output)
-    generated_coupons = run_pipeline(args.pipeline, args.input)
+    expected_coupons: List[ProtoCoupon] = get_expected_coupons(args.output)
+    generated_coupons: List[ProtoCoupon] = run_pipeline(args.pipeline, args.input)
 
-    
-
-    # Example usage
-    coupon1 = ProtoCoupon(product_name='Product 1',
-                          new_price='10',
-                          old_price='20',
-                          percents=['10', '20'],
-                          other_discounts=['10', '20'],
-                          dates=['10', '20'])
-    coupon2 = ProtoCoupon(product_name='rtyreyeyteyt',
-                          new_price='10',
-                          old_price=None,
-                          percents=['10', '20'],
-                          other_discounts=['10', '20'],
-                          dates=['10', '20'])
-    print(compare_coupons(coupon1, coupon2))
+    print(judge_pipeline(expected_coupons, generated_coupons))
