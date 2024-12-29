@@ -1,29 +1,37 @@
 import numpy as np
 import argparse
 import difflib as diff
-import json
+import os
+import re
+import csv
 from typing import Optional, List
+from dataclasses import dataclass, field
 
 # TODO: loading and running the pipeline
 # TODO: timing and punishing the pipeline for taking too long
-
-# TODO: Import ProtoCoupon directly from the coupon_selecting_alg.py file. 
-# I am not sure how to do this.
-from dataclasses import dataclass, field
 
 
 @dataclass()
 class ProtoCoupon:
     """
-    Class representing data associated by algorithm with single coupon.
+    Class representing data associated with a single coupon.
     """
     product_name: str
-    prices: List[str] = field(default_factory=list)
+    new_price: Optional[str] = None
+    old_price: Optional[str] = None
     percents: List[str] = field(default_factory=list)
     other_discounts: List[str] = field(default_factory=list)
-    dates: List[str] = field(default_factory=list)
-    images: List[str] = field(default_factory=list)
+    dates: Optional[str] = None
 
+
+# Regex matches to different types of discounts
+PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%\b'
+PRICE_REGEX = r'\b\d+[.,]?\d*\b'
+
+# Column names for the expected coupons
+DISCOUNT_TEXT = 'discount_text'
+PRODUCT_TEXT = 'product_text'
+VALIDITY_TEXT = 'validity_text'
 
 # Weights for each attribute of the coupon
 NAME_WEIGHT = 0.3
@@ -33,39 +41,85 @@ OTHER_DISCOUNT_WEIGHT = 0.2
 VALIDITY_WEIGHT = 0.1
 
 # Weights for the prices
-NEW_PRICE_WEIGHT = 0.4
-OLD_PRICE_WEIGHT = 0.4
-OTHER_PRICES_WEIGHT = 0.2
+NEW_PRICE_WEIGHT = 0.5
+OLD_PRICE_WEIGHT = 0.5
 LENGTH_PENALTY = 0.2
+"""
+This function will validate the format of the csv file that contains the
+expected coupons. The file must contain the headers defined below. 
+:param fieldnames: The headers of the csv file
+:return: True if the file format is valid, False otherwise
+"""
+
+
+def _validate_file_format(fieldnames: list) -> bool:
+    required_headers = [
+        "product_text", "discount_text",
+        "discount_details", "validity_text"
+    ]
+    return all(header in fieldnames for header in required_headers)
 
 
 """
 This function will return a list of ProtoCoupon objects that represent the 
 expected coupons. This function is used to benchmark the pipeline.
-:param file_name: The name of the file containing the expected coupons
+:param file_path: The path to the folder with the expected coupons in csv 
+                format (like in the Murmuras datasets)
 :return: A list of ProtoCoupon objects that represent the expected coupons
 """
 
 
-def get_expected_coupons(file_name: Optional[str]) -> List[ProtoCoupon]:
-    if file_name is None:
-        file_name = 'expected_coupons.json'
-    
-    with open(file_name, 'r') as file:
-        data = json.load(file)
+def get_expected_coupons(file_path: Optional[str]) -> List[ProtoCoupon]:
+    # No file path provided
+    if file_path is None:
+        return []
 
     expected_coupons = []
-    for entry in data:
-        expected_coupons.append(
-            ProtoCoupon(
-                product_name=entry.get('product_name', ''),
-                prices=entry.get('prices', []),
-                percents=entry.get('percents', []),
-                other_discounts=entry.get('other_discounts', []),
-                dates=entry.get('dates', []),
-                images=entry.get('images', [])
-            )
-        )
+
+    for file_name in os.listdir(file_path):
+        file_path_full = os.path.join(file_path, file_name)
+        if os.path.isfile(file_path_full):
+            with open(file_path_full, 'r') as file:
+                reader = csv.DictReader(file)
+
+                if reader.fieldnames is None or not _validate_file_format(
+                        reader.fieldnames):
+                    continue
+
+                for row in reader:
+                    new_price = None
+                    old_price = None
+                    percents = []
+                    other_discounts = []
+
+                    if row[DISCOUNT_TEXT] is not None:
+                        discounts_found = 0
+                        if re.search(PRICE_REGEX, row[DISCOUNT_TEXT]):
+                            prices = re.findall(PRICE_REGEX,
+                                                row[DISCOUNT_TEXT])
+                
+                            if len(prices) >= 2:
+                                prices = sorted(
+                                    [float(price) for price in prices])
+                                new_price = str(prices[0])
+                                old_price = str(prices[-1])
+                                discounts_found += 1
+
+                        if re.search(PERCENT_REGEX, row[DISCOUNT_TEXT]):
+                            percents = re.findall(PERCENT_REGEX,
+                                                  row[DISCOUNT_TEXT])
+                            discounts_found += 1
+
+                        if discounts_found == 0:
+                            other_discounts = [row[DISCOUNT_TEXT]]
+
+                    coupon = ProtoCoupon(product_name=row[PRODUCT_TEXT],
+                                         new_price=new_price,
+                                         old_price=old_price,
+                                         percents=percents,
+                                         other_discounts=other_discounts,
+                                         dates=row[VALIDITY_TEXT])
+                    expected_coupons.append(coupon)
 
     return expected_coupons
 
@@ -86,7 +140,7 @@ pipeline accordingly.
 
 
 def _compare_prices(generated_prices: list, expected_prices: list) -> float:
-    # Case 0: Both lists are either empty or contain only one price, so we can 
+    # Case 0: Both lists are either empty or contain only one price, so we can
     # compare them directly
     if len(expected_prices) == len(generated_prices) and (
             len(expected_prices) == 0 or len(expected_prices) == 1):
@@ -95,7 +149,7 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
 
         return 1.0 if expected_prices[0] == generated_prices[0] else 0.0
 
-    # Case 1: The generated list is empty, so it is completely different from 
+    # Case 1: The generated list is empty, so it is completely different from
     # the expected list or vice versa
     if (len(generated_prices) == 0
             and len(expected_prices) > 0) or (len(generated_prices) > 0
@@ -103,11 +157,13 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
         return 0.0
 
     generated_prices = np.array(
-        sorted([float(price) for price in generated_prices]))
+        sorted(
+            [float(price) for price in generated_prices if price is not None]))
     expected_prices = np.array(
-        sorted([float(price) for price in expected_prices]))
+        sorted(
+            [float(price) for price in expected_prices if price is not None]))
 
-    # Calculate the difference between the highest and lowest prices in 
+    # Calculate the difference between the highest and lowest prices in
     # both lists
     new_prices = [generated_prices[0], expected_prices[0]]
     old_prices = [generated_prices[-1], expected_prices[-1]]
@@ -115,24 +171,10 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
     new_price_ratio = 1.0 if new_prices[0] == new_prices[1] else 0.0
     old_price_ratio = 1.0 if old_prices[0] == old_prices[1] else 0.0
 
-    # Calculate the weighted absolute error between the two lists
-    gen_trimmed = generated_prices[1:-1]
-    exp_trimmed = expected_prices[1:-1]
-
-    exp_mean = np.mean(expected_prices)
-    weights = [abs(val - exp_mean) for val in exp_trimmed]
-    # Normalize weights
-    weights = [weight / sum(weights) for weight in weights]
-
-    error = 0
-    for gen, exp, weight in zip(gen_trimmed, exp_trimmed, weights):
-        error += weight * abs(gen - exp)
-
     coupon_difference = (new_price_ratio * NEW_PRICE_WEIGHT) + (
-        old_price_ratio * OLD_PRICE_WEIGHT
-    ) + (OTHER_PRICES_WEIGHT) * (1 - error / max(expected_prices))
+        old_price_ratio * OLD_PRICE_WEIGHT)
 
-    # Case 2: Both lists have more than one price, so we can compare all 
+    # Case 2: Both lists have more than one price, so we can compare all
     # the prices
     if len(generated_prices) == len(expected_prices):
         return coupon_difference
@@ -165,7 +207,8 @@ def compare_coupons(coupon_1: Optional[ProtoCoupon],
 
     name_ratio = diff.SequenceMatcher(a=coupon_1.product_name,
                                       b=coupon_2.product_name).ratio()
-    prices_ratio = _compare_prices(coupon_1.prices, coupon_2.prices)
+    prices_ratio = _compare_prices([coupon_1.new_price, coupon_1.old_price],
+                                   [coupon_2.new_price, coupon_2.old_price])
 
     percents_1 = sorted([str(percent) for percent in coupon_1.percents])
     percents_2 = sorted([str(percent) for percent in coupon_2.percents])
@@ -193,25 +236,40 @@ def compare_coupons(coupon_1: Optional[ProtoCoupon],
 
 
 if __name__ == '__main__':
+    # Parse the input arguments and check if the input and output paths are valid
     parser = argparse.ArgumentParser(description='Benchmarking script')
-    parser.add_argument(
-        '-t',
-        '--time',
-        help='Run benchmark rewarding or punishing the execution speed',
-        action='store_true')
+    parser.add_argument('-i',
+                        '--input',
+                        type=str,
+                        required=True,
+                        help='Path to the folder with the input data')
+    parser.add_argument('-o',
+                        '--output',
+                        type=str,
+                        required=True,
+                        help='Path to the folder with the expected coupons')
     args = parser.parse_args()
 
-    if args.time:
-        print('Time benchmarking')
+    if not os.path.isdir(args.input):
+        raise NotADirectoryError(
+            f"The input path {args.input} is not a directory.")
+    if not os.path.isdir(args.output):
+        raise NotADirectoryError(
+            f"The output path {args.output} is not a directory.")
+
+    # Get the expected coupons
+    expected_coupons = get_expected_coupons(args.output)
 
     # Example usage
     coupon1 = ProtoCoupon(product_name='Product 1',
-                          prices=['10', '20'],
+                          new_price='10',
+                          old_price='20',
                           percents=['10', '20'],
                           other_discounts=['10', '20'],
                           dates=['10', '20'])
-    coupon2 = ProtoCoupon(product_name='Product 1',
-                          prices=['10'],
+    coupon2 = ProtoCoupon(product_name='rtyreyeyteyt',
+                          new_price='10',
+                          old_price=None,
                           percents=['10', '20'],
                           other_discounts=['10', '20'],
                           dates=['10', '20'])
