@@ -5,12 +5,12 @@ Each pipeline will be rewarded accordingly based on the correctly classified cou
 ---
 
 ### Running the benchmark
-To run the benchmark, the following steps need to be followed: TODO
+To run the benchmark, the following steps need to be followed: 
 
 Input:
 
+
 Output:
-<!-- what to input into this and how to interpret the outputs, how to run the program -->
 
 ---
 
