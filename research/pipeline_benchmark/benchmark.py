@@ -137,6 +137,14 @@ pipeline accordingly.
 
 
 def _compare_prices(generated_prices: list, expected_prices: list) -> float:
+    # Convert the prices to floats and sort them; remove None values
+    generated_prices = np.array(
+        sorted(
+            [float(price) for price in generated_prices if price is not None]))
+    expected_prices = np.array(
+        sorted(
+            [float(price) for price in expected_prices if price is not None]))
+    
     # Case 0: Both lists are either empty or contain only one price, so we can
     # compare them directly
     if len(expected_prices) == len(generated_prices) and (
@@ -152,13 +160,6 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
             and len(expected_prices) > 0) or (len(generated_prices) > 0
                                               and len(expected_prices) == 0):
         return 0.0
-
-    generated_prices = np.array(
-        sorted(
-            [float(price) for price in generated_prices if price is not None]))
-    expected_prices = np.array(
-        sorted(
-            [float(price) for price in expected_prices if price is not None]))
 
     # Calculate the difference between the highest and lowest prices in
     # both lists
@@ -231,9 +232,47 @@ def compare_coupons(coupon_1: Optional[ProtoCoupon],
             other_discopunts_ratio * OTHER_DISCOUNT_WEIGHT) + (dates_ratio *
                                                                VALIDITY_WEIGHT)
 
+"""
+This function will judge the pipeline by comparing the expected coupons with the
+generated ones. The function will return a tuple with the average similarity
+between the coupons and the number of lonely coupons. The average similarity is
+calculated by comparing each expected coupon with the most similar generated
+coupon. The number of lonely coupons is the number of expected coupons that
+could not be matched with any generated coupon and vice versa. 
+:param expected_coupons: A list of ProtoCoupon objects that represent the
+                        expected coupons
+:param generated_coupons: A list of ProtoCoupon objects that represent the
+                        generated coupons
+:return: A tuple with the average similarity between the coupons and the number
+        of lonely coupons
+"""
 
-def judge_pipeline(expected_coupons: List[ProtoCoupon], generated_coupons: List[ProtoCoupon]) -> float:
-    return 0.0
+def judge_pipeline(expected_coupons: List[ProtoCoupon], generated_coupons: List[ProtoCoupon]) -> tuple[float, int]:
+    generated_coupons = dict((i, coupon) for i, coupon in enumerate(generated_coupons))
+    lonely_coupons: int = 0
+    similarities: List[float] = []
+
+    for coupon in expected_coupons:
+        max_similarity = 0.0
+        max_coupon: int = -1
+
+        for i, generated_coupon in generated_coupons.items():
+            similarity = compare_coupons(coupon, generated_coupon)
+            if similarity > max_similarity:
+                max_similarity = similarity
+                max_coupon = i
+        
+        if max_coupon == -1:
+            lonely_coupons += 1
+            continue
+    
+        del generated_coupons[max_coupon]   
+        similarities.append(max_similarity)
+
+    if len(generated_coupons) > 0:
+        lonely_coupons += len(generated_coupons)
+
+    return (np.mean(similarities) if len(similarities) > 0 else 0.0, lonely_coupons)
 
 
 """
@@ -388,6 +427,16 @@ if __name__ == '__main__':
 
     # Get the expected coupons
     expected_coupons: List[ProtoCoupon] = get_expected_coupons(args.output)
+    # Save the expected coupons to a file called a.json in JSON format
+    with open('a.json', 'w') as json_file:
+        json.dump([coupon.__dict__ for coupon in expected_coupons], json_file, indent=4)
     generated_coupons: List[ProtoCoupon] = run_pipeline(args.pipeline, args.input)
 
-    print(judge_pipeline(expected_coupons, generated_coupons))
+    similarity, lonely_coupons = judge_pipeline(expected_coupons, generated_coupons)
+
+    percent_similarity = round(similarity * 100, 3)
+    print(f"Average similarity between the coupons: {percent_similarity}%")
+    print(f"Number of lonely coupons: {lonely_coupons}")
+
+    final_score = max(percent_similarity - 0.1 * lonely_coupons, 0)
+    print(f"Final score: {final_score}%")
