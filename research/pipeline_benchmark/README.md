@@ -32,9 +32,8 @@ The input folder must contain the coupons files that the pipeline will process. 
 The pipeline command must be a command that runs the pipeline. It must output the results in a json format.
 
 #### Benchmarking process
-1. The benchmarking script reads the coupons files from the folder containing the expected results and creates a list of expected coupons.
-2. The script reads the coupons that the pipeline generated and compares them to the expected coupons. 
-
+The benchmarking script reads the coupons files from the folder containing the expected results and creates a list of expected coupons.
+The script reads the coupons that the pipeline generated and compares them to the expected coupons to calculate the accuracy of the pipeline. For each expected coupon, the script finds the most similar generated coupon using the `compare_coupons` function; the similarity score (0 ≤ score ≤ 1) is added to a list. If no match is found (similarity score = 0), the expected coupon is marked as "lonely." Any leftover generated coupons (unmatched after the first pass) are also counted as "lonely." The average similarity score is calculated and the number of lonely coupons is counted; the pipeline is punished accordingly for the number of lonely coupons. 
 
 
 #### Sources 
