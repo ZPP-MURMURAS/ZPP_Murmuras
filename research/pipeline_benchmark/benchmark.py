@@ -279,7 +279,8 @@ def judge_pipeline(expected_coupons: List[ProtoCoupon],
 
 """
 This function will run the pipeline with the input data and return the
-generated coupons. The function will return None if the pipeline fails to run.
+generated coupons. The function will return None if the pipeline fails to run. 
+The result of the pipeline must be written to a file called output.json.
 :param pipeline_command: The command to run the pipeline
 :param input_folder: The path to the folder with the input data
 :return: A list of ProtoCoupon objects that represent the generated coupons
@@ -409,8 +410,8 @@ if __name__ == '__main__':
                         type=str,
                         required=True,
                         help='Path to the folder with the input data')
-    parser.add_argument('-o',
-                        '--output',
+    parser.add_argument('-e',
+                        '--expected',
                         type=str,
                         required=True,
                         help='Path to the folder with the expected coupons')
@@ -424,11 +425,11 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    if not validate_folders(args.input, args.output):
-        raise ValueError("The input and output folders are not valid.")
+    if not validate_folders(args.input, args.expected):
+        raise ValueError("The input and expected folders are not valid.")
 
     # Get the expected coupons
-    expected_coupons: List[ProtoCoupon] = get_expected_coupons(args.output)
+    expected_coupons: List[ProtoCoupon] = get_expected_coupons(args.expected)
     generated_coupons: List[ProtoCoupon] = run_pipeline(
         args.pipeline, args.input)
 
