@@ -9,9 +9,6 @@ import csv
 from typing import Optional, List, Tuple
 from dataclasses import dataclass, field
 
-# TODO: loading and running the pipeline
-
-
 @dataclass()
 class ProtoCoupon:
     """
@@ -144,7 +141,7 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
     expected_prices = np.array(
         sorted(
             [float(price) for price in expected_prices if price is not None]))
-    
+
     # Case 0: Both lists are either empty or contain only one price, so we can
     # compare them directly
     if len(expected_prices) == len(generated_prices) and (
@@ -232,6 +229,7 @@ def compare_coupons(coupon_1: Optional[ProtoCoupon],
             other_discopunts_ratio * OTHER_DISCOUNT_WEIGHT) + (dates_ratio *
                                                                VALIDITY_WEIGHT)
 
+
 """
 This function will judge the pipeline by comparing the expected coupons with the
 generated ones. The function will return a tuple with the average similarity
@@ -247,8 +245,11 @@ could not be matched with any generated coupon and vice versa.
         of lonely coupons
 """
 
-def judge_pipeline(expected_coupons: List[ProtoCoupon], generated_coupons: List[ProtoCoupon]) -> tuple[float, int]:
-    generated_coupons = dict((i, coupon) for i, coupon in enumerate(generated_coupons))
+
+def judge_pipeline(expected_coupons: List[ProtoCoupon],
+                   generated_coupons: List[ProtoCoupon]) -> tuple[float, int]:
+    generated_coupons = dict(
+        (i, coupon) for i, coupon in enumerate(generated_coupons))
     lonely_coupons: int = 0
     similarities: List[float] = []
 
@@ -261,18 +262,19 @@ def judge_pipeline(expected_coupons: List[ProtoCoupon], generated_coupons: List[
             if similarity > max_similarity:
                 max_similarity = similarity
                 max_coupon = i
-        
+
         if max_coupon == -1:
             lonely_coupons += 1
             continue
-    
-        del generated_coupons[max_coupon]   
+
+        del generated_coupons[max_coupon]
         similarities.append(max_similarity)
 
     if len(generated_coupons) > 0:
         lonely_coupons += len(generated_coupons)
 
-    return (np.mean(similarities) if len(similarities) > 0 else 0.0, lonely_coupons)
+    return (np.mean(similarities) if len(similarities) > 0 else 0.0,
+            lonely_coupons)
 
 
 """
@@ -427,16 +429,17 @@ if __name__ == '__main__':
 
     # Get the expected coupons
     expected_coupons: List[ProtoCoupon] = get_expected_coupons(args.output)
-    # Save the expected coupons to a file called a.json in JSON format
-    with open('a.json', 'w') as json_file:
-        json.dump([coupon.__dict__ for coupon in expected_coupons], json_file, indent=4)
-    generated_coupons: List[ProtoCoupon] = run_pipeline(args.pipeline, args.input)
+    generated_coupons: List[ProtoCoupon] = run_pipeline(
+        args.pipeline, args.input)
 
-    similarity, lonely_coupons = judge_pipeline(expected_coupons, generated_coupons)
+    similarity, lonely_coupons = judge_pipeline(expected_coupons,
+                                                generated_coupons)
 
     percent_similarity = round(similarity * 100, 3)
     print(f"Average similarity between the coupons: {percent_similarity}%")
     print(f"Number of lonely coupons: {lonely_coupons}")
 
+    # For each lonely coupon, we subtract 0.1% from the similarity score
+    # to penalize the pipeline
     final_score = max(percent_similarity - 0.1 * lonely_coupons, 0)
     print(f"Final score: {final_score}%")
