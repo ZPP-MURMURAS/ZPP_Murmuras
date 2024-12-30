@@ -290,7 +290,6 @@ The result of the pipeline must be written to a file called output.json.
 
 def run_pipeline(pipeline_command: str,
                  input_folder: str) -> Optional[List[ProtoCoupon]]:
-    pipeline_command = pipeline_command.replace("<input_path>", input_folder)
     pipeline_command = pipeline_command + " > output.json"
 
     try:
