@@ -273,6 +273,8 @@ def judge_pipeline(expected_coupons: List[ProtoCoupon],
     if len(generated_coupons) > 0:
         lonely_coupons += len(generated_coupons)
 
+    similarities.extend([0.0] * lonely_coupons)
+
     return (np.mean(similarities) if len(similarities) > 0 else 0.0,
             lonely_coupons)
 
@@ -441,5 +443,5 @@ if __name__ == '__main__':
 
     # For each lonely coupon, we subtract 0.1% from the similarity score
     # to penalize the pipeline
-    final_score = max(percent_similarity - 0.1 * lonely_coupons, 0)
+    final_score = max(percent_similarity, 0)
     print(f"Final score: {final_score}%")
