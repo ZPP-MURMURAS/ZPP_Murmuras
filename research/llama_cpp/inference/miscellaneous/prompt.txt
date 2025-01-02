@@ -1,0 +1,9 @@
+{
+  "products": [
+    { "id": 1, "name": "Milk", "price": 2.99 },
+    { "id": 2, "name": "Bread", "price": 1.49 }
+  ]
+}
+
+List of all product names in the given json is:
+
