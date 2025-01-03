@@ -1,4 +1,4 @@
-from benchmark import ProtoCoupon
+from benchmark import Coupon
 import json
 import random
 """
@@ -14,7 +14,7 @@ with open('ideal_data.json', 'r') as file:
 
 coupons = []
 for entry in data:
-    coupon = ProtoCoupon(entry['product_name'], entry['new_price'],
+    coupon = Coupon(entry['product_name'], entry['new_price'],
                          entry['old_price'], entry['percents'],
                          entry['other_discounts'], entry['dates'])
 
