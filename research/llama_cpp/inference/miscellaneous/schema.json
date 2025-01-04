@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Product List Schema",
+  "description": "A schema for validating JSON files that contain product names.",
+  "type": "object",
+  "properties": {
+    "products": {
+      "type": "array",
+      "description": "An array of product objects.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the product."
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["products"],
+  "additionalProperties": false
+}
