@@ -12,12 +12,12 @@ We use HashiCorp vault for storing credentials and API keys. You can access cred
 For if you do not have access please contact SzymonKozl
 ### Access via browser
 Go to our organization page on [portal.cloud.hashicorp.com]. Select the projects' subpage:
-![image](readme_images/hashicorp_browser_1.png)
+![image](readme_images/hashicorp_browser_1.png)<br/>
 And choose `default-project` project.</br>
-Now, scroll down to the "Vault Secrets" widget:
-![image](readme_images/hashicorp_browser_2.png)
-Finally, select our application:
-![image](readme_images/hashicorp_browser_3.png)
+Now, scroll down to the "Vault Secrets" widget:<br/>
+![image](readme_images/hashicorp_browser_2.png)<br/>
+Finally, select our application:<br/>
+![image](readme_images/hashicorp_browser_3.png)<br/>
 Now you can browse our credentials and their values.
 ### Access via CLI:
 HashiCorp provides nice CLI tool for accessing credentials. This can be used for automating secrets downloading.</br>
