@@ -25,7 +25,7 @@ HashiCorp provides nice CLI tool for accessing credentials. This can be used for
 * [retrieving a secret](https://developer.hashicorp.com/hcp/tutorials/get-started-hcp-vault-secrets/hcp-vault-secrets-retrieve-secret)
 ## Datasets
 ### Getting credentials
-Datasets are stored on Google Drive with limited access. To download them ask SzymonKozl for credentials and put them inside `tools/gdrive_credentials.json` file.
+Get `GCLOUD_CREDENTIALS` secret from HashiCorp Vault and put them inside `tools/gdrive_credentials.json` file.
 ### Dependencies install
 Script requires dependencies from `tools/requirements.txt`. Install them.
 ### Using script
