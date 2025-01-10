@@ -177,7 +177,7 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
 
     length_difference = abs(len(generated_prices) -
                             len(expected_prices)) / len(expected_prices)
-    return max(0, coupon_difference - length_difference * LENGTH_PENALTY)
+    return max(0.0, coupon_difference - length_difference * LENGTH_PENALTY)
 
 
 """
@@ -380,7 +380,7 @@ def validate_folders(input_folder: str, output_folder: str) -> bool:
         with open(file_name_full, 'r') as file:
             reader = csv.DictReader(file)
             if reader.fieldnames is None or not _validate_output_file_format(
-                    reader.fieldnames):
+                    list(reader.fieldnames)):
                 raise ValueError(
                     f"The file {file_name} has an invalid format.")
 
@@ -397,12 +397,14 @@ def validate_folders(input_folder: str, output_folder: str) -> bool:
         with open(file_name_full, 'r') as file:
             reader = csv.DictReader(file)
             if reader.fieldnames is None or not _validate_input_file_format(
-                    reader.fieldnames):
+                    list(reader.fieldnames)):
                 raise ValueError(
                     f"The file {file_name} has an invalid format.")
 
     return True
 
+def get_default_datasets():
+    pass
 
 if __name__ == '__main__':
     # Parse the input arguments and check if the input and output paths are valid
