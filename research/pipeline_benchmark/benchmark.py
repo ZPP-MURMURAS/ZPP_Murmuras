@@ -511,7 +511,5 @@ if __name__ == '__main__':
     print(f"Average similarity between the coupons: {percent_similarity}%")
     print(f"Number of lonely coupons: {lonely_coupons}")
 
-    # For each lonely coupon, we subtract 0.1% from the similarity score
-    # to penalize the pipeline
     final_score = max(percent_similarity, 0)
     print(f"Final score: {final_score}%")
