@@ -31,7 +31,13 @@ The expected folder must contain at least one csv file in the format of the "cou
 The input folder must contain the coupons files that the pipeline will process. The files must be in the format of the "content_generic" csv files provided by Murmuras.\
 The pipeline command must be a command that runs the pipeline. It must output the results in a json format.
 
-If the user does not provide expected or input folders, the script will download the default datasets from our Google Drive. Keep in mind that the script will delete all files in the "expected" and "input" folders before downloading the datasets. 
+If the user does not provide the expected or input folders, the script will download the default datasets from our Google Drive. Keep in mind that the script will delete all files in the "expected" and "input" folders before downloading the datasets. 
+
+```bash
+python3 benchmark.py -p "python3 proto_pipeline.py"
+```
+
+The above command will run the benchmarking script with the default datasets that are downloaded from our Google Drive.
 
 #### Benchmarking process
 The benchmarking script reads the coupons files from the folder containing the expected results and creates a list of expected coupons.
