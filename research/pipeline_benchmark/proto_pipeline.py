@@ -1,6 +1,7 @@
-from benchmark import Coupon
+from benchmark import Coupon, get_default_datasets, get_expected_coupons
 import json
 import random
+import os
 """
 This script is used to generate random data for the proto_pipeline 
 benchmark. It reads the ideal_data.json file and generates new data 
@@ -9,6 +10,16 @@ price, percents, other discounts and dates, or removing them.
 This simutales the output of the pipeline. 
 """
 
+expected_coupons = get_expected_coupons("expected/dm/")
+
+# Remove the ideal_data.json file if it exists and create a new one
+if os.path.exists('ideal_data.json'):
+    os.remove('ideal_data.json')
+
+with open('ideal_data.json', 'w') as file:
+    file.write(json.dumps([coupon.__dict__ for coupon in expected_coupons], indent=4))
+
+# Read the ideal_data.json file and generate new data based on it
 with open('ideal_data.json', 'r') as file:
     data = json.load(file)
 
