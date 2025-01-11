@@ -118,8 +118,6 @@ def get_expected_coupons(file_path: Optional[str]) -> List[Coupon]:
                                     dates=row[VALIDITY_TEXT])
                     expected_coupons.append(coupon)
     
-    print(f"Found {len(expected_coupons)} expected coupons.")
-
     return expected_coupons
 
 
@@ -298,7 +296,11 @@ The result of the pipeline must be written to a file called output.json.
 
 def run_pipeline(pipeline_command: str,
                  input_folder: str) -> Optional[List[Coupon]]:
+    if os.path.exists("output.json"):
+        os.remove("output.json")
+
     pipeline_command = pipeline_command + " > output.json"
+    print(f"Running the pipeline with the command: {pipeline_command}")
 
     try:
         subprocess.run(pipeline_command, shell=True, check=True)
@@ -443,7 +445,6 @@ def get_default_datasets() -> Tuple[str, str]:
     import data_load
 
     try:
-        print("Running the data_load.py script to get the default datasets...")
         subprocess.run(['python3', script_path, 'coupons_1'], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while running the script: {e}")
