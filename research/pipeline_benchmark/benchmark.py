@@ -5,9 +5,12 @@ import difflib as diff
 import os
 import re
 import json
+import sys
+import shutil
 import csv
 from typing import Optional, List, Tuple
 from dataclasses import dataclass, field
+
 
 @dataclass()
 class Coupon:
@@ -108,11 +111,11 @@ def get_expected_coupons(file_path: Optional[str]) -> List[Coupon]:
                         row[DISCOUNT_TEXT])
 
                     coupon = Coupon(product_name=row[PRODUCT_TEXT],
-                                         new_price=new_price,
-                                         old_price=old_price,
-                                         percents=percents,
-                                         other_discounts=other_discounts,
-                                         dates=row[VALIDITY_TEXT])
+                                    new_price=new_price,
+                                    old_price=old_price,
+                                    percents=percents,
+                                    other_discounts=other_discounts,
+                                    dates=row[VALIDITY_TEXT])
                     expected_coupons.append(coupon)
 
     return expected_coupons
@@ -306,11 +309,11 @@ def run_pipeline(pipeline_command: str,
         for coupon in coupons:
             proto_coupons.append(
                 Coupon(product_name=coupon["product_name"],
-                            new_price=coupon["new_price"],
-                            old_price=coupon["old_price"],
-                            percents=coupon["percents"],
-                            other_discounts=coupon["other_discounts"],
-                            dates=coupon["dates"]))
+                       new_price=coupon["new_price"],
+                       old_price=coupon["old_price"],
+                       percents=coupon["percents"],
+                       other_discounts=coupon["other_discounts"],
+                       dates=coupon["dates"]))
         return proto_coupons
 
     except subprocess.CalledProcessError as e:
@@ -403,8 +406,69 @@ def validate_folders(input_folder: str, output_folder: str) -> bool:
 
     return True
 
-def get_default_datasets():
-    pass
+
+"""
+This function will get the default datasets from Google Drive and return the
+paths to the input and expected folders. The function will create the folders
+if they do not exist. If the folders already exist, the function will delete the
+files inside them and replace them with the default datasets.
+:return: A tuple with the paths to the input and expected folders
+"""
+
+
+def get_default_datasets() -> Tuple[str, str]:
+    # Default paths to the input and expected folders
+    input_folder = os.path.join(os.getcwd(), "input")
+    expected_folder = os.path.join(os.getcwd(), "expected")
+
+    # Create the folders; if they already exist, delete the files inside them
+    for folder in [input_folder, expected_folder]:
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        else:
+            for file in os.listdir(folder):
+                os.remove(os.path.join(folder, file))
+
+    # Get the default datasets from google drive
+    tools_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '../../', 'tools'))
+    sys.path.append(tools_path)
+    script_path = os.path.join(tools_path, 'data_load.py')
+
+    import data_load
+
+    try:
+        print("Running the data_load.py script to get the default datasets...")
+        subprocess.run(['python3', script_path, 'coupons_1'], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while running the script: {e}")
+    except FileNotFoundError:
+        print(
+            "The data_load.py file was not found. Ensure the path is correct.")
+
+    # Get the path to the datasets folder
+    datasets_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '../../',
+                     'datasets/coupons_1'))
+
+    # Copy the files from the datasets folder to the input and expected folders
+    for root, dirs, files in os.walk(datasets_path):
+        for file in files:
+            # One of the files has a typo in the name hence the check
+            if "coupons" in file.lower() or "cupons" in file.lower():
+                target = os.path.join(expected_folder, file)
+            elif "content_generic" in file.lower():
+                target = os.path.join(input_folder, file)
+            else:
+                continue
+
+            source = os.path.join(root, file)
+
+            shutil.copy(source, target)
+            print(f"Copied {file} to {target}")
+
+    return input_folder, expected_folder
+
 
 if __name__ == '__main__':
     # Parse the input arguments and check if the input and output paths are valid
@@ -412,12 +476,12 @@ if __name__ == '__main__':
     parser.add_argument('-i',
                         '--input',
                         type=str,
-                        required=True,
+                        required=False,
                         help='Path to the folder with the input data')
     parser.add_argument('-e',
                         '--expected',
                         type=str,
-                        required=True,
+                        required=False,
                         help='Path to the folder with the expected coupons')
     parser.add_argument(
         '-p',
@@ -429,13 +493,17 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
+    # If either the input or expected folders are not provided, get the default
+    # datasets
+    if args.input is None or args.expected is None:
+        args.input, args.expected = get_default_datasets()
+
     if not validate_folders(args.input, args.expected):
         raise ValueError("The input and expected folders are not valid.")
 
     # Get the expected coupons
     expected_coupons: List[Coupon] = get_expected_coupons(args.expected)
-    generated_coupons: List[Coupon] = run_pipeline(
-        args.pipeline, args.input)
+    generated_coupons: List[Coupon] = run_pipeline(args.pipeline, args.input)
 
     similarity, lonely_coupons = judge_pipeline(expected_coupons,
                                                 generated_coupons)
