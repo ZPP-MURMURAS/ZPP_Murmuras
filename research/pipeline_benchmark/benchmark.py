@@ -117,6 +117,8 @@ def get_expected_coupons(file_path: Optional[str]) -> List[Coupon]:
                                     other_discounts=other_discounts,
                                     dates=row[VALIDITY_TEXT])
                     expected_coupons.append(coupon)
+    
+    print(f"Found {len(expected_coupons)} expected coupons.")
 
     return expected_coupons
 
@@ -421,13 +423,16 @@ def get_default_datasets() -> Tuple[str, str]:
     input_folder = os.path.join(os.getcwd(), "input")
     expected_folder = os.path.join(os.getcwd(), "expected")
 
-    # Create the folders; if they already exist, delete the files inside them
+    # Create the folders; if they already exist, delete the files and folders inside them
     for folder in [input_folder, expected_folder]:
         if not os.path.exists(folder):
             os.makedirs(folder)
         else:
-            for file in os.listdir(folder):
-                os.remove(os.path.join(folder, file))
+            for root, dirs, files in os.walk(folder):
+                for file in files:
+                    os.remove(os.path.join(root, file))
+                for subdir in dirs:
+                    shutil.rmtree(os.path.join(root, subdir))
 
     # Get the default datasets from google drive
     tools_path = os.path.abspath(
@@ -452,20 +457,28 @@ def get_default_datasets() -> Tuple[str, str]:
                      'datasets/coupons_1'))
 
     # Copy the files from the datasets folder to the input and expected folders
-    for root, dirs, files in os.walk(datasets_path):
-        for file in files:
+    for directory in os.listdir(datasets_path):
+        if not os.path.isdir(os.path.join(datasets_path, directory)):
+            continue
+
+        sub_input_folder = os.path.join(input_folder, directory)
+        sub_expected_folder = os.path.join(expected_folder, directory)
+
+        os.makedirs(sub_input_folder, exist_ok=True)
+        os.makedirs(sub_expected_folder, exist_ok=True)
+
+        
+        for file in os.listdir(os.path.join(datasets_path, directory)):
             # One of the files has a typo in the name hence the check
             if "coupons" in file.lower() or "cupons" in file.lower():
-                target = os.path.join(expected_folder, file)
+                target = os.path.join(sub_expected_folder, file)
             elif "content_generic" in file.lower():
-                target = os.path.join(input_folder, file)
+                target = os.path.join(sub_input_folder, file)
             else:
                 continue
 
-            source = os.path.join(root, file)
-
-            shutil.copy(source, target)
-
+            shutil.copyfile(os.path.join(datasets_path, directory, file), target)
+                
     return input_folder, expected_folder
 
 
@@ -497,19 +510,31 @@ if __name__ == '__main__':
     if args.input is None or args.expected is None:
         args.input, args.expected = get_default_datasets()
 
-    if not validate_folders(args.input, args.expected):
-        raise ValueError("The input and expected folders are not valid.")
+    folder_names = [folder_name for folder_name in os.listdir(args.expected)]
+    percents = []
 
-    # Get the expected coupons
-    expected_coupons: List[Coupon] = get_expected_coupons(args.expected)
-    generated_coupons: List[Coupon] = run_pipeline(args.pipeline, args.input)
+    for folder_name in folder_names:
+        expected_dir = os.path.join(args.expected, folder_name)
+        input_dir = os.path.join(args.input, folder_name)
 
-    similarity, lonely_coupons = judge_pipeline(expected_coupons,
-                                                generated_coupons)
+        if not validate_folders(input_dir, expected_dir):
+            print("The input and expected folders are not valid.")
+            continue
+        
+        # Get the expected coupons
+        expected_coupons: List[Coupon] = get_expected_coupons(expected_dir)
+        generated_coupons: List[Coupon] = run_pipeline(args.pipeline, input_dir)
 
-    percent_similarity = round(similarity * 100, 3)
-    print(f"Average similarity between the coupons: {percent_similarity}%")
-    print(f"Number of lonely coupons: {lonely_coupons}")
+        similarity, lonely_coupons = judge_pipeline(expected_coupons,
+                                                    generated_coupons)
 
-    final_score = max(percent_similarity, 0)
-    print(f"Final score: {final_score}%")
+        percent_similarity = round(similarity * 100, 3)
+        print(f"Average similarity between the coupons: {percent_similarity}%")
+        print(f"Number of lonely coupons: {lonely_coupons}")
+
+        final_score = max(percent_similarity, 0)
+        percents.append(percent_similarity)
+        print(f"Final score: {final_score}%")
+    
+    print(f"Average score: {round(np.mean(percents), 3)}%")
+
