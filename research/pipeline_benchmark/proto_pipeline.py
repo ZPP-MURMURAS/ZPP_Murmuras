@@ -15,8 +15,8 @@ with open('ideal_data.json', 'r') as file:
 coupons = []
 for entry in data:
     coupon = Coupon(entry['product_name'], entry['new_price'],
-                         entry['old_price'], entry['percents'],
-                         entry['other_discounts'], entry['dates'])
+                    entry['old_price'], entry['percents'],
+                    entry['other_discounts'], entry['dates'])
 
     coupon.product_name = coupon.product_name + str(random.randint(
         0, 100)) + ' ' + str(random.randint(0, 100))
