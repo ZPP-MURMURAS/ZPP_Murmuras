@@ -465,7 +465,6 @@ def get_default_datasets() -> Tuple[str, str]:
             source = os.path.join(root, file)
 
             shutil.copy(source, target)
-            print(f"Copied {file} to {target}")
 
     return input_folder, expected_folder
 
