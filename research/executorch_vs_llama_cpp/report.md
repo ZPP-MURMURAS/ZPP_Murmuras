@@ -30,6 +30,4 @@ and I made the model generate 32 tokens.
 
 # Conclusions
 At first glance Llama.cpp seems to outperform ExecuTorch. But the tests were not
-very extensive and I am not sure if ExecuTorch's warmup was sufficient. It was also
-clear that in the case of ExecuTorch's Llama runner a higher temperature parameter
-was used, but the sampling times were negligible in both cases.
+very extensive and I am not sure if ExecuTorch's warmup was sufficient.
