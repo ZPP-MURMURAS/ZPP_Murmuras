@@ -2,7 +2,7 @@
 #### Overview
 `benchmark.py` is a script that benchmarks the accuracy of different pipelines for our project. It aims to provide a measurable and fair comparison between different pipelines by assessing their accuracy on a common dataset. \
 `proto_pipeline.py` is a script that mimics the output of a pipeline. It is used to test the benchmarking script. It reads a file with the expected data and randomly changes some values in the coupons' data to mimic the output of a pipeline. \
-`ideal_data.json` is a file that the user must create to test the benchmarking script using `proto_pipeline.py`. It contains the expected data that the aforementioned script will modify. It must contain data in the following format: 
+`ideal_data.json` is a file that `proto_pipeline.py` file creates to test the benchmarking script. It contains the expected data that the aforementioned script will modify. It must contain data in the following format: 
 ```json
 [
     {
