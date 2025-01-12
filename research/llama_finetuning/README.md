@@ -13,7 +13,7 @@ It also utilizes Unsloth, and it is basically the same code as in the first appr
 run on the server, with the specified image and on specific GPUs.
 
 The last approach can be found in the TO_BE_FILLED_FILE. It utilizes the [Axolotl](https://github.com/axolotl-ai-cloud/axolotl) framework for fine-tuning LLMs. \
-Base version is "codeless" - you specifi your configs in the .yaml file, and then yuo utilize CLI commands to start the fune-tuning. \
+Base version is "codeless" - you specifi your configs in the .yaml file, and then you utilize CLI commands to start the fune-tuning. \
 This makes it difficult to run it with Modal, which is why Modal created an example project which I modified and included here (it has MIT license). \
 I managed to run it with my own model and dataset (by "my", I mean other than the ones prepared in the example project).
 
