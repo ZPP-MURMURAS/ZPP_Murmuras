@@ -442,8 +442,6 @@ def get_default_datasets() -> Tuple[str, str]:
     sys.path.append(tools_path)
     script_path = os.path.join(tools_path, 'data_load.py')
 
-    import data_load
-
     try:
         subprocess.run(['python3', script_path, 'coupons_1'], check=True)
     except subprocess.CalledProcessError as e:
