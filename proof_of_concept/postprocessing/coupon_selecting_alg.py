@@ -7,9 +7,9 @@ import re
 
 import pandas as pd
 
-from src.tree_traversal import tree_traversal as tt
-from src.constants import *
-from src.postprocessing_utils import MultiSet
+from tree_traversal import tree_traversal as tt
+from constants import *
+from postprocessing_utils import MultiSet
 
 
 @dataclass()
