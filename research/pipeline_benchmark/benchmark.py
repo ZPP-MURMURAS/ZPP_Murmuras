@@ -25,6 +25,11 @@ class Coupon:
     dates: Optional[str] = None
 
 
+INCORRECT_DATASETS = [
+    "rewe",
+    "dm",
+]
+
 # Regex matches to different types of discounts
 PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%\b'
 PRICE_REGEX = r'\b\d+[.,]?\d*\b'
@@ -117,7 +122,7 @@ def get_expected_coupons(file_path: Optional[str]) -> List[Coupon]:
                                     other_discounts=other_discounts,
                                     dates=row[VALIDITY_TEXT])
                     expected_coupons.append(coupon)
-    
+
     return expected_coupons
 
 
@@ -460,13 +465,15 @@ def get_default_datasets() -> Tuple[str, str]:
         if not os.path.isdir(os.path.join(datasets_path, directory)):
             continue
 
+        if directory in INCORRECT_DATASETS:
+            continue
+
         sub_input_folder = os.path.join(input_folder, directory)
         sub_expected_folder = os.path.join(expected_folder, directory)
 
         os.makedirs(sub_input_folder, exist_ok=True)
         os.makedirs(sub_expected_folder, exist_ok=True)
 
-        
         for file in os.listdir(os.path.join(datasets_path, directory)):
             # One of the files has a typo in the name hence the check
             if "coupons" in file.lower() or "cupons" in file.lower():
@@ -476,8 +483,9 @@ def get_default_datasets() -> Tuple[str, str]:
             else:
                 continue
 
-            shutil.copyfile(os.path.join(datasets_path, directory, file), target)
-                
+            shutil.copyfile(os.path.join(datasets_path, directory, file),
+                            target)
+
     return input_folder, expected_folder
 
 
@@ -502,7 +510,20 @@ if __name__ == '__main__':
         help=
         'Command to run the pipeline (e.g., ./run_pipeline --data <input_path>)'
     )
+    parser.add_argument(
+        '-invalid',
+        '--invalid',
+        type=str,
+        required=False,
+        help=
+        'List of invalid datasets to exclude from the benchmark. Input them as\
+        a space-separated string.'
+    )
     args = parser.parse_args()
+
+    # Get the names of the invalid datasets
+    if args.invalid is not None:
+        INCORRECT_DATASETS = args.invalid.strip().split()
 
     # If either the input or expected folders are not provided, get the default
     # datasets
@@ -519,10 +540,11 @@ if __name__ == '__main__':
         if not validate_folders(input_dir, expected_dir):
             print("The input and expected folders are not valid.")
             continue
-        
+
         # Get the expected coupons
         expected_coupons: List[Coupon] = get_expected_coupons(expected_dir)
-        generated_coupons: List[Coupon] = run_pipeline(args.pipeline, input_dir)
+        generated_coupons: List[Coupon] = run_pipeline(args.pipeline,
+                                                       input_dir)
 
         similarity, lonely_coupons = judge_pipeline(expected_coupons,
                                                     generated_coupons)
@@ -534,6 +556,5 @@ if __name__ == '__main__':
         final_score = max(percent_similarity, 0)
         percents.append(percent_similarity)
         print(f"Final score: {final_score}%")
-    
-    print(f"Average score: {round(np.mean(percents), 3)}%")
 
+    print(f"Average score: {round(np.mean(percents), 3)}%")

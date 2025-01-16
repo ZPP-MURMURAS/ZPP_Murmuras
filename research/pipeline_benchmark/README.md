@@ -39,6 +39,14 @@ python3 benchmark.py -p "python3 proto_pipeline.py"
 
 The above command will run the benchmarking script with the default datasets that are downloaded from our Google Drive.
 
+#### Handling invalid datasets
+We have become aware that some of the datasets provided by Murmuras contain invalid data. Therefore, the banchmark contains a predefined set of invalid dataset folders as well as providing the option to manually specify the invalid datasets using the `-invalid` flag. This flag is optional and if it is not provided, the benchmark will use the predefined set of invalid datasets. This flag can be used as follows: 
+
+```bash
+python3 benchmark.py -p "python3 proto_pipeline.py" -invalid "lidl rossmann" 
+``` 
+
+
 #### Benchmarking process
 The benchmarking script reads the coupons files from the folder containing the expected results and creates a list of expected coupons.
 The script reads the coupons that the pipeline generated and compares them to the expected coupons to calculate the accuracy of the pipeline. For each expected coupon, the script finds the most similar generated coupon using the `compare_coupons` function; the similarity score (0 ≤ score ≤ 1) is added to a list. If no match is found (similarity score = 0), the expected coupon is marked as "lonely." Any leftover generated coupons (unmatched after the first pass) are also counted as "lonely." The average similarity score is calculated and the number of lonely coupons is counted; the pipeline is punished accordingly for the number of lonely coupons. 
