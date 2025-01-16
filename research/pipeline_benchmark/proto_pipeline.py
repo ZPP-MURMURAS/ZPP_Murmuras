@@ -10,7 +10,7 @@ price, percents, other discounts and dates, or removing them.
 This simutales the output of the pipeline. 
 """
 
-expected_coupons = get_expected_coupons("expected/dm/")
+expected_coupons = get_expected_coupons("expected/rossmann/")
 
 # Remove the ideal_data.json file if it exists and create a new one
 if os.path.exists('ideal_data.json'):
