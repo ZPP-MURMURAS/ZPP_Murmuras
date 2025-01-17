@@ -31,7 +31,7 @@ INCORRECT_DATASETS = [
 ]
 
 # Regex matches to different types of discounts
-PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%\b'
+PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%'
 PRICE_REGEX = r'\b\d+[.,]?\d*\b'
 
 # Column names for the expected coupons
