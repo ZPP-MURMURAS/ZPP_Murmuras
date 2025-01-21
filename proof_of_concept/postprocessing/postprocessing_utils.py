@@ -6,7 +6,7 @@ from typing import List
 
 import pandas as pd
 
-from src.constants import *
+from constants import *
 
 
 def labeled_data_to_extra_csv_column(content_frame: pd.DataFrame, coupons_frame: pd.DataFrame) -> pd.DataFrame:
