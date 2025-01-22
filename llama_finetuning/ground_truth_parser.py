@@ -63,8 +63,12 @@ async def extract_discount_details(coupons_list: list, client: AsyncOpenAI, batc
         res.extend(result_json)
     return res
 
-def extract_discounts(coupons_list: list, client: AsyncOpenAI):
-    chatgpt_output = asyncio.run(extract_discount_details(coupons_list, client))
+def extract_discounts(coupons: pd.DataFrame, client: AsyncOpenAI):
+    discount_list = coupons['discount_text'].tolist()
+    for i in range(len(discount_list)):
+        if str(discount_list[i]) == 'nan':
+            discount_list[i]    = ''
+    chatgpt_output = asyncio.run(extract_discount_details(discount_list, client))
     chatgpt_output_json = json.dumps(chatgpt_output)
     return chatgpt_output_json
 
