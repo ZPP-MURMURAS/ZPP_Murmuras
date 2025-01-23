@@ -28,7 +28,6 @@ def prepare_input_data(path: string):
     data = data[data['seen_timestamp'] != 0]
     data = data[data['is_visible'] != False]
     data.dropna(subset=['text'], inplace=True)
-    data.dropna(subset=['description'], inplace=True)
     data_concat = concat_column_x_by_column_y(X_COLUMN, Y_COLUMN, data)
     return data_concat
 
