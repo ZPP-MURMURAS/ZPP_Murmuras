@@ -10,6 +10,11 @@ def init_client(api_key: string):
     client = AsyncOpenAI(api_key=api_key)
     return client
 
+def load_coupons_from_json(path: string = 'ground_truth_json'):
+    with open(path) as f:
+        data = json.load(f)
+    return data
+
 def load_coupons(file_path: string):
     coupons = pd.read_csv(file_path)
     coupons_list = coupons[COUPON_COLUMN].tolist()
@@ -63,12 +68,11 @@ async def extract_discount_details(coupons_list: list, client: AsyncOpenAI, batc
         res.extend(result_json)
     return res
 
-def extract_discounts(coupons: pd.DataFrame, client: AsyncOpenAI):
-    discount_list = coupons['discount_text'].tolist()
-    for i in range(len(discount_list)):
-        if str(discount_list[i]) == 'nan':
-            discount_list[i]    = ''
-    chatgpt_output = asyncio.run(extract_discount_details(discount_list, client))
+def extract_discounts(coupons: list, client: AsyncOpenAI):
+    for i in range(len(coupons)):
+        if str(coupons[i]) == 'nan':
+            coupons[i]    = ''
+    chatgpt_output = asyncio.run(extract_discount_details(coupons, client))
     chatgpt_output_json = json.dumps(chatgpt_output)
     return chatgpt_output_json
 
