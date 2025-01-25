@@ -42,4 +42,11 @@ def create_training_df(input_dict, gtd_dict):
             res = {'input': value, 'output': ''}
             concatenated_dfs.append(res)
 
-    return pd.DataFrame(concatenated_dfs)
+    # Parsing to make the dict compatible with pandas
+    parse_dict = {'Context': [], 'Response': []}
+    for data in concatenated_dfs:
+        parse_dict['Context'].append(data['input'])
+        parse_dict['Response'].append(data['output'])
+    training_df = pd.DataFrame.from_dict(parse_dict)
+    training_df = training_df.astype({'Context': str, 'Response': str})
+    return training_df
