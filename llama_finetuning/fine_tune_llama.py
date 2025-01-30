@@ -1,0 +1,96 @@
+import modal
+
+app = modal.App("example-fine-tuning")
+
+finetune_image = (
+    modal.Image.debian_slim(python_version="3.10")
+    .apt_install("git")
+    .pip_install("trl")
+    .pip_install("transformers")
+    .pip_install("datasets")
+    .pip_install("unsloth")
+    .pip_install("torch")
+    .pip_install("numpy")
+    .pip_install("pandas")
+    .pip_install("wandb")
+    .env({"HALT_AND_CATCH_FIRE": 0})
+)
+
+def load_model(model_name, max_seq_length):
+    from unsloth import FastLanguageModel
+    import wandb
+    import os
+
+    wandb.login(key='')
+    os.environ["WANDB_PROJECT"] = "test_ft"
+
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=model_name,
+        max_seq_length=max_seq_length,
+        load_in_4bit=False,
+        dtype=None,
+    )
+
+    model = FastLanguageModel.get_peft_model(
+        model,
+        r=16,
+        lora_alpha=16,
+        lora_dropout=0,
+        target_modules=["q_proj", "k_proj", "v_proj", "up_proj", "down_proj", "o_proj", "gate_proj"],
+        use_rslora=True,
+        use_gradient_checkpointing="unsloth",
+        random_state=32,
+        loftq_config=None,
+    )
+
+    return model, tokenizer
+
+def train_model(model, tokenizer, training_data, max_seq_length):
+    from trl import SFTTrainer
+    from transformers import TrainingArguments
+    from unsloth import is_bfloat16_supported
+
+    trainer = SFTTrainer(
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=training_data,
+        dataset_text_field="text",
+        max_seq_length=max_seq_length,
+        dataset_num_proc=2,
+        packing=True,
+        args=TrainingArguments(
+            learning_rate=3e-4,
+            lr_scheduler_type="linear",
+            per_device_train_batch_size=16,
+            gradient_accumulation_steps=8,
+            num_train_epochs=4,
+            fp16=not is_bfloat16_supported(),
+            bf16=is_bfloat16_supported(),
+            logging_steps=1,
+            optim="adamw_8bit",
+            weight_decay=0.01,
+            warmup_steps=10,
+            output_dir="test",
+            seed=0,
+            report_to="wandb"
+        ),
+    )
+
+    trainer.train()
+
+@app.function(image=finetune_image, gpu="H100", timeout=600)
+def wrapper(model_name, hf_token, clearml_secret, clearml_access_token):
+    from datasets import load_dataset
+
+    max_seq_length = 4096
+    model, tokenizer = load_model(model_name, max_seq_length)
+    training_data = load_dataset('zpp-murmuras/one_input_multiple_outputs_wthrequest', token=hf_token, split='train')
+    train_model(model, tokenizer, training_data, max_seq_length)
+
+
+@app.local_entrypoint()
+def main():
+    wrapper.remote('meta-llama/Llama-3.2-1B',
+                   '',
+                   '',
+                   '')
