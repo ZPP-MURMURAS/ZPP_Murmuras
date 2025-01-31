@@ -1,3 +1,5 @@
+import os
+
 import modal
 
 app = modal.App("example-fine-tuning")
@@ -16,13 +18,14 @@ finetune_image = (
     .env({"HALT_AND_CATCH_FIRE": 0})
 )
 
-def load_model(model_name, max_seq_length):
+def load_model(model_name, max_seq_length, wandb_key, name):
     from unsloth import FastLanguageModel
     import wandb
     import os
 
-    wandb.login(key='')
+    wandb.login(key=wandb_key)
     os.environ["WANDB_PROJECT"] = "test_ft"
+    os.environ["WANDB_RUN_ID"] = name
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_name,
@@ -45,7 +48,7 @@ def load_model(model_name, max_seq_length):
 
     return model, tokenizer
 
-def train_model(model, tokenizer, training_data, max_seq_length):
+def train_model(model, tokenizer, dataset_name, training_data, max_seq_length):
     from trl import SFTTrainer
     from transformers import TrainingArguments
     from unsloth import is_bfloat16_supported
@@ -70,7 +73,7 @@ def train_model(model, tokenizer, training_data, max_seq_length):
             optim="adamw_8bit",
             weight_decay=0.01,
             warmup_steps=10,
-            output_dir="test",
+            output_dir=dataset_name,
             seed=0,
             report_to="wandb"
         ),
@@ -79,18 +82,18 @@ def train_model(model, tokenizer, training_data, max_seq_length):
     trainer.train()
 
 @app.function(image=finetune_image, gpu="H100", timeout=600)
-def wrapper(model_name, hf_token, clearml_secret, clearml_access_token):
+def wrapper(model_name, hf_token, wandb_key, dataset_name):
     from datasets import load_dataset
 
     max_seq_length = 4096
-    model, tokenizer = load_model(model_name, max_seq_length)
-    training_data = load_dataset('zpp-murmuras/one_input_multiple_outputs_wthrequest', token=hf_token, split='train')
-    train_model(model, tokenizer, training_data, max_seq_length)
+    model, tokenizer = load_model(model_name, max_seq_length, wandb_key, dataset_name)
+    training_data = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token, split='train')
+    train_model(model, tokenizer, dataset_name, training_data, max_seq_length)
 
 
 @app.local_entrypoint()
 def main():
-    wrapper.remote('meta-llama/Llama-3.2-1B',
-                   '',
-                   '',
-                   '')
+    hf_token = os.getenv('HUGGING_FACE_TOKEN')
+    wandb_key = os.getenv('WANDB_KEY')
+    dataset_name = os.getenv('DATASET_NAME')
+    wrapper.remote('meta-llama/Llama-3.2-1B', hf_token, wandb_key, dataset_name)
