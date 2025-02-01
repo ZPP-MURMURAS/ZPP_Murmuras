@@ -20,7 +20,7 @@ if __name__ == '__main__':
     cg_concat = ip.prepare_input_data(INPUT_PATH)
 
     # This will perform to OpenAI API, and overwrite ground_truth.json.
-    gtd = gtp.extract_discounts(lidl_discount_list, client)
+    #gtd = gtp.extract_discounts(lidl_discount_list, client)
 
     # Said json is produced by the gtp.extract_discounts call and stored under
     # the GROUND_TRUTH_JSON_PATH.
@@ -31,7 +31,9 @@ if __name__ == '__main__':
 
     # Global var of the dt lib.
     dt.EOS_TOKEN = tokenizer.eos_token
+    training_data = dt.run_mapping(training_df, dt.one_input_one_output_wrequest)
+    print(training_data['text'])
     # This loop creates finished datasets, and then pushes it to the hugging face hub.
-    for map_func in dt.MAP_FUNCTIONS:
-        training_data = dt.run_mapping(training_df, map_func)
-        training_data.push_to_hub('zpp-murmuras/' + map_func.__name__, private=True)
+    #for map_func in dt.MAP_FUNCTIONS:
+     #   training_data = dt.run_mapping(training_df, map_func)
+      #  training_data.push_to_hub('zpp-murmuras/' + map_func.__name__, private=True)
