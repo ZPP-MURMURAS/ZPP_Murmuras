@@ -6,7 +6,7 @@ __X_COLUMN = 'text'
 __Y_COLUMN = 'seen_timestamp'
 
 
-def concat_column_x_by_column_y(column_x: string, column_y: string, df: pd.DataFrame) -> dict:
+def __concat_column_x_by_column_y(column_x: string, column_y: string, df: pd.DataFrame) -> dict:
     """
     This function concatenates the values of column_x for each unique value of column_y.
     Example usage (in this case, main purpose) would be to aggregate text data for each
@@ -32,6 +32,8 @@ def concat_column_x_by_column_y(column_x: string, column_y: string, df: pd.DataF
             sub_result = str(row[column_x])
             prev_col_val = row[column_y]
             time = row['time']
+    if sub_result != '':
+        result[time] = sub_result
 
     return result
 
@@ -51,7 +53,7 @@ def prepare_input_data(path: string) -> dict:
     data = data[data['seen_timestamp'] != 0]
     data = data[data['is_visible'] != False]
     data.dropna(subset=['text'], inplace=True)
-    data_concat = concat_column_x_by_column_y(__X_COLUMN, __Y_COLUMN, data)
+    data_concat = __concat_column_x_by_column_y(__X_COLUMN, __Y_COLUMN, data)
     return data_concat
 
 
