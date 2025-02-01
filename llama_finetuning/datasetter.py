@@ -72,6 +72,10 @@ def __parse_to_oimo(df: pd.DataFrame) -> pd.DataFrame:
     for input_ in unique_inputs:
         outputs_per_inputs[input_] = df[df['Context'] == input_]['Response'].tolist()
 
+    # Drop empty strings
+    for key, value in outputs_per_inputs.items():
+        outputs_per_inputs[key] = [x for x in value if x]
+
     concat_outputs = {}
     for key, value in outputs_per_inputs.items():
         concat_outputs[key] = '[' + ', '.join(value) + ']'

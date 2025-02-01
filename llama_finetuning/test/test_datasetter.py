@@ -1,0 +1,36 @@
+import pandas as pd
+from datasets import Dataset
+
+from llama_finetuning.datasetter import __parse_to_oimo as _datasetter__parse_to_oimo
+from llama_finetuning.datasetter import __map_logic as _datasetter__map_logic
+
+class TestDatasetter:
+    prompt = '###Prompting... Input:\n{}\n\n### Response:\n{}'
+    test_dataframe: pd.DataFrame
+    expected_oimo_res: pd.DataFrame
+    mapped_data: dict
+    def setup_method(self):
+        self.test_dataframe = pd.DataFrame({
+            'Context': ['context1', 'context2', 'context2', 'context3', 'context3', 'context4'],
+            'Response': ['response1', 'response2', 'response3', 'response4', '', '']
+        })
+        self.expected_oimo_res = pd.DataFrame({
+            'Context': ['context1', 'context2', 'context3', 'context4'],
+            'Response': ['[response1]', '[response2, response3]', '[response4]', '[]']
+        })
+
+        self.mapped_data = {
+            'Context': ['context1', 'context2', 'context3', 'context4'],
+            'Response': ['[response1]', '[response2, response3]', '[response4]', '[]'],
+            'text': [self.prompt.format('context1', 'response1'), self.prompt.format('context2', 'response2, response3'),
+                        self.prompt.format('context3', 'response4'), self.prompt.format('context4', '')]
+        }
+
+    def test_parse_to_oimo(self):
+        oimo_res = _datasetter__parse_to_oimo(self.test_dataframe)
+        pd.testing.assert_frame_equal(oimo_res, self.expected_oimo_res)
+
+    def test_map_logic(self):
+        ds = Dataset.from_pandas(self.expected_oimo_res)
+        res = _datasetter__map_logic(ds, self.prompt)
+        assert res == self.mapped_data
