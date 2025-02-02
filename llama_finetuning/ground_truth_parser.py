@@ -18,12 +18,23 @@ def init_client(api_key: string) -> AsyncOpenAI:
     return client
 
 
-def load_coupons_from_json(path: string = 'ground_truth_json') -> json:
+def store_coupons_as_json(coupons: json, path: string) -> None:
+    """
+    This function stores the extracted coupon data in a json file under the input path.
+
+    :param coupons: The extracted coupon data in a list of jsons.
+    :param path: The path to the json file where the coupon data will be stored.
+    """
+    with open(path, 'w') as f:
+        f.write(coupons)
+
+
+def load_coupons_from_json(path: string = 'ground_truth_json') -> list:
     """
     This function reads the coupon data processed by the ChatGPT and stored under the input path.
 
     :param path: The path to the json file containing the coupon data.
-    :return data: The coupon data in json format.
+    :return data: The coupon data in a list of jsons.
     """
     with open(path) as f:
         data = json.load(f)
@@ -86,11 +97,11 @@ def __get_prompt(data_list: string) -> string:
                     }},
                     ...
                 ].
-                prices should be a list of string representing prices, followed by the currency.
+                prices should be a list of strings representing prices, followed by the currency.
+                In case there is no price, it should be an empty list.
                 discount should be an integer representing the percentage discount, followed by the percent sign.
-                If a value is not present, it should be "None" string.
-                All fields can be "None".
-                Return only json data.
+                If a discount is not present, it should be "None" string.
+                Return only json data, without any annotations or additional text.
                 Do not skip any entries."""
     return prompt
 
@@ -106,11 +117,16 @@ async def __extract_discount_details(coupons_list: list, client: AsyncOpenAI, ba
     """
     tasks = []
     for j in range(0, len(coupons_list), batch_size):
-        task = asyncio.create_task(__get_data(__get_prompt(coupons_list[j:min(j + 15, len(coupons_list))]), client))
+        task = asyncio.create_task(
+            __get_data(__get_prompt(coupons_list[j:min(j + 15, len(coupons_list))]), client, model='gpt-4o'))
         tasks.append(task)
     results = await asyncio.gather(*tasks)
     res = []
     for result in results:
+        print(result)
+        list_start = result.find('[')
+        list_end = result.rfind(']')
+        result = result[list_start:list_end + 1]
         result_json = json.loads(result)
         res.extend(result_json)
     return res
@@ -134,7 +150,6 @@ def __ground_truth_to_dict(ground_truth_data: list) -> dict:
     return gtd_dict
 
 
-
 def extract_discounts(coupons: list, client: AsyncOpenAI) -> json:
     """
     This function takes the list of coupon data and calls the OpenAI API to extract discount details.
@@ -150,13 +165,13 @@ def extract_discounts(coupons: list, client: AsyncOpenAI) -> json:
     return chatgpt_output_json
 
 
-def prepare_ground_truth_data(ground_truth_json: json, coupons: pd.DataFrame) -> dict:
+def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) -> dict:
     """
     This function prepares the ground truth data by combining the extracted discount details
     with the original coupon data that was not processed by the ChatGPT.
     Then, it calls the ground_truth_to_dict function to convert the data to a dictionary format.
 
-    :param ground_truth_json: The extracted discount details in json format.
+    :param ground_truth_json: The extracted discount details in a list of jsons.
     :param coupons: The original coupon data.
     :return result: The prepared ground truth data in list format.
     """
