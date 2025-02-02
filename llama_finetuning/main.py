@@ -1,4 +1,5 @@
 import os
+import json
 import pandas as pd
 import input_parser as ip
 import ground_truth_parser as gtp
@@ -20,12 +21,13 @@ if __name__ == '__main__':
     cg_concat = ip.prepare_input_data(INPUT_PATH)
 
     # This will perform to OpenAI API, and overwrite ground_truth.json.
-    #gtd = gtp.extract_discounts(lidl_discount_list, client)
+    gtd = gtp.extract_discounts(lidl_discount_list, client)
+    gtp.store_coupons_as_json(gtd, GROUND_TRUTH_JSON_PATH)
 
     # Said json is produced by the gtp.extract_discounts call and stored under
     # the GROUND_TRUTH_JSON_PATH.
-    gtd_json = gtp.load_coupons_from_json(path=GROUND_TRUTH_JSON_PATH)
-    gtd_dict = gtp.prepare_ground_truth_data(gtd_json, lidl_coupons)
+    gtd_list = gtp.load_coupons_from_json(path=GROUND_TRUTH_JSON_PATH)
+    gtd_dict = gtp.prepare_ground_truth_data(gtd_list, lidl_coupons)
 
     training_df = ip.create_training_df(cg_concat, gtd_dict)
 
