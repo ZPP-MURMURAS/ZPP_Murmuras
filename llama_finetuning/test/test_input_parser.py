@@ -1,5 +1,8 @@
+import shutil
+
 import pandas as pd
 import os
+
 import pytest
 
 from llama_finetuning.input_parser import prepare_input_data, create_training_df
@@ -11,6 +14,7 @@ class TestInputParser:
     gtd_dict: dict
     training_df: pd.DataFrame
 
+    @pytest.fixture(autouse=True)
     def setup_method(self):
         data = {
             'seen_timestamp': [1, 1, 1, 1, 0, 2, 2, 0, 0, 3, 0, 3],
@@ -43,6 +47,10 @@ class TestInputParser:
             'Response': ['', '{\'bruh\': \'duch\'}', '', '{\'bruhu\': \'duchu\'}', '{\'bruha\': \'ducha\'}', '']
         }
         self.training_df = pd.DataFrame(res_dict)
+
+        yield
+        if os.path.exists('test_data'):
+            shutil.rmtree('test_data')
 
 
     def test_prepare_input_data_and_concat(self):

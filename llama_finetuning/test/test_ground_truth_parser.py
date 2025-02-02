@@ -1,6 +1,8 @@
-import pytest
 import os
+import shutil
+
 import pandas as pd
+import pytest
 
 from llama_finetuning.ground_truth_parser import load_coupons, prepare_ground_truth_data
 
@@ -12,6 +14,7 @@ class TestGroundTruthParser:
     original_coupons: pd.DataFrame
     gtd_dict: dict
 
+    @pytest.fixture(autouse=True)
     def setup_method(self):
         data = {
             'discount_text': ['1t', '2t', '3t', '4t', '5t', '6t', '7t', '8t', 'nan', '10t', '11t', 'nan'],
@@ -74,6 +77,10 @@ class TestGroundTruthParser:
                 },
             ]
         }
+
+        yield
+        if os.path.exists('test_data'):
+            shutil.rmtree('test_data')
 
 
     def test_load_coupons(self):
