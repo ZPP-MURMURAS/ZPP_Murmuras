@@ -49,15 +49,24 @@ def load_model(model_name, max_seq_length, wandb_key, name):
     return model, tokenizer
 
 def train_model(model, tokenizer, dataset_name, training_data, max_seq_length):
-    from trl import SFTTrainer
+    from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
     from transformers import TrainingArguments
     from unsloth import is_bfloat16_supported
+
+    # https://huggingface.co/docs/trl/main/en/sft_trainer#advanced-usage
+    # Without this,it is my understanding that a model would learn go generate
+    # the whole input 'text' column (which consists of the prompt and the input and response).
+    # This way, model will learn to only generate the response.
+
+    response_template = "### Response:"
+    collator = DataCollatorForCompletionOnlyLM(response_template)
 
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
         train_dataset=training_data,
         dataset_text_field="text",
+        data_collator=collator,
         max_seq_length=max_seq_length,
         dataset_num_proc=2,
         packing=True,

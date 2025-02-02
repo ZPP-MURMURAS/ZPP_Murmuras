@@ -1,5 +1,5 @@
 import os
-import json
+import pprint
 import pandas as pd
 import input_parser as ip
 import ground_truth_parser as gtp
@@ -21,8 +21,8 @@ if __name__ == '__main__':
     cg_concat = ip.prepare_input_data(INPUT_PATH)
 
     # This will perform to OpenAI API, and overwrite ground_truth.json.
-    gtd = gtp.extract_discounts(lidl_discount_list, client)
-    gtp.store_coupons_as_json(gtd, GROUND_TRUTH_JSON_PATH)
+    #gtd = gtp.extract_discounts(lidl_discount_list, client)
+    #gtp.store_coupons_as_json(gtd, GROUND_TRUTH_JSON_PATH)
 
     # Said json is produced by the gtp.extract_discounts call and stored under
     # the GROUND_TRUTH_JSON_PATH.
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # Global var of the dt lib.
     dt.EOS_TOKEN = tokenizer.eos_token
     training_data = dt.run_mapping(training_df, dt.one_input_one_output_wrequest)
-    print(training_data['text'])
+    pprint.pprint(training_data['text'])
     # This loop creates finished datasets, and then pushes it to the hugging face hub.
     #for map_func in dt.MAP_FUNCTIONS:
      #   training_data = dt.run_mapping(training_df, map_func)

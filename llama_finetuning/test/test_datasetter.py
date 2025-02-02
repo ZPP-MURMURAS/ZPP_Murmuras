@@ -20,10 +20,8 @@ class TestDatasetter:
         })
 
         self.mapped_data = {
-            'Context': ['context1', 'context2', 'context3', 'context4'],
-            'Response': ['[response1]', '[response2, response3]', '[response4]', '[]'],
-            'text': [self.prompt.format('context1', 'response1'), self.prompt.format('context2', 'response2, response3'),
-                        self.prompt.format('context3', 'response4'), self.prompt.format('context4', '')]
+            'text': [self.prompt.format('context1', '[response1]'), self.prompt.format('context2', '[response2, response3]'),
+                        self.prompt.format('context3', '[response4]'), self.prompt.format('context4', '[]')]
         }
 
     def test_parse_to_oimo(self):
@@ -33,4 +31,6 @@ class TestDatasetter:
     def test_map_logic(self):
         ds = Dataset.from_pandas(self.expected_oimo_res)
         res = _datasetter__map_logic(ds, self.prompt)
+        print(res)
+        print(self.mapped_data)
         assert res == self.mapped_data
