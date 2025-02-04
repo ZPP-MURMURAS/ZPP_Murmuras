@@ -93,7 +93,7 @@ def _get_discounts(
 This function will return a list of Coupon objects that represent the 
 expected coupons. This function is used to benchmark the pipeline.
 :param file_path: The path to the folder with the expected coupons in csv 
-                format (like in the Murmuras mr_datasets)
+                format (like in the Murmuras datasets)
 :return: A list of Coupon objects that represent the expected coupons
 """
 
@@ -417,10 +417,10 @@ def validate_folders(input_folder: str, output_folder: str) -> bool:
 
 
 """
-This function will get the default mr_datasets from Google Drive and return the
+This function will get the default datasets from Google Drive and return the
 paths to the input and expected folders. The function will create the folders
 if they do not exist. If the folders already exist, the function will delete the
-files inside them and replace them with the default mr_datasets.
+files inside them and replace them with the default datasets.
 :return: A tuple with the paths to the input and expected folders
 """
 
@@ -441,7 +441,7 @@ def get_default_datasets() -> Tuple[str, str]:
                 for subdir in dirs:
                     shutil.rmtree(os.path.join(root, subdir))
 
-    # Get the default mr_datasets from google drive
+    # Get the default datasets from google drive
     tools_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '../../', 'tools'))
     sys.path.append(tools_path)
@@ -455,12 +455,12 @@ def get_default_datasets() -> Tuple[str, str]:
         print(
             "The data_load.py file was not found. Ensure the path is correct.")
 
-    # Get the path to the mr_datasets folder
+    # Get the path to the datasets folder
     datasets_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '../../',
-                     'mr_datasets/coupons_1'))
+                     'datasets/coupons_1'))
 
-    # Copy the files from the mr_datasets folder to the input and expected folders
+    # Copy the files from the datasets folder to the input and expected folders
     for directory in os.listdir(datasets_path):
         if not os.path.isdir(os.path.join(datasets_path, directory)):
             continue
@@ -516,17 +516,17 @@ if __name__ == '__main__':
         type=str,
         required=False,
         help=
-        'List of invalid mr_datasets to exclude from the benchmark. Input them as\
+        'List of invalid datasets to exclude from the benchmark. Input them as\
         a space-separated string.'
     )
     args = parser.parse_args()
 
-    # Get the names of the invalid mr_datasets
+    # Get the names of the invalid datasets
     if args.invalid is not None:
         INCORRECT_DATASETS = args.invalid.strip().split()
 
     # If either the input or expected folders are not provided, get the default
-    # mr_datasets
+    # datasets
     if args.input is None or args.expected is None:
         args.input, args.expected = get_default_datasets()
 
