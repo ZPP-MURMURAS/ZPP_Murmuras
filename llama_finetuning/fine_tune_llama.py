@@ -24,7 +24,7 @@ def load_model(model_name, max_seq_length, wandb_key, name):
     import os
 
     wandb.login(key=wandb_key)
-    os.environ["WANDB_PROJECT"] = "test_ft"
+    os.environ["WANDB_PROJECT"] = "CompareDataForLLamas"
     os.environ["WANDB_RUN_ID"] = name
 
     model, tokenizer = FastLanguageModel.from_pretrained(
@@ -49,7 +49,7 @@ def load_model(model_name, max_seq_length, wandb_key, name):
     return model, tokenizer
 
 def train_model(model, tokenizer, dataset_name, training_data, max_seq_length):
-    from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
+    from trl import SFTTrainer
     from transformers import TrainingArguments
     from unsloth import is_bfloat16_supported
 
@@ -58,24 +58,32 @@ def train_model(model, tokenizer, dataset_name, training_data, max_seq_length):
     # the whole input 'text' column (which consists of the prompt and the input and response).
     # This way, model will learn to only generate the response.
 
-    response_template = "### Response:"
-    collator = DataCollatorForCompletionOnlyLM(response_template)
+
+    # UPDATE: I had issues with the collator (division by zero to be precise).
+    # It makes sense to use it, but on the other hand, many tutorials don't care about it,
+    # and here: https://wandb.ai/capecape/alpaca_ft/reports/How-to-Fine-tune-an-LLM-Part-3-The-HuggingFace-Trainer--Vmlldzo1OTEyNjMy
+    # authors suggest that you can omit it for the sake of performance. So, I "swap the variable"
+    # and omit the collator for the sake of making the fine-tuning work.
+
+    # input_template = "### Input:"
+    # response_template = "### Response:"
+    # collator = DataCollatorForCompletionOnlyLM(instruction_template=input_template, response_template=response_template, tokenizer=tokenizer)
 
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
         train_dataset=training_data,
         dataset_text_field="text",
-        data_collator=collator,
+        #data_collator=collator,
         max_seq_length=max_seq_length,
         dataset_num_proc=2,
-        packing=True,
+        packing=True, # True doesn't work with the current collator, BUT is faster.
         args=TrainingArguments(
-            learning_rate=3e-4,
+            learning_rate=3e-2,
             lr_scheduler_type="linear",
             per_device_train_batch_size=16,
             gradient_accumulation_steps=8,
-            num_train_epochs=4,
+            num_train_epochs=25,
             fp16=not is_bfloat16_supported(),
             bf16=is_bfloat16_supported(),
             logging_steps=1,

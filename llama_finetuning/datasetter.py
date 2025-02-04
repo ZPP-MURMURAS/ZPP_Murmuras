@@ -3,15 +3,13 @@ from typing import Callable
 import pandas as pd
 from datasets import Dataset
 
-__PROMPT = """You are provided with text representing contents of the phone screen. Your task is to extract 
-information about coupons from the text. The information should include the product name, the validity date,
-the discount, the old price, and the new price. 
-
-### Input:
-{}
-
-### Response:
-{}"""
+__PROMPT = (
+    "You are provided with text representing contents of the phone screen. Your task is to extract "
+    "information about coupons from the text. The information should include the product name, the validity date, "
+    "the discount, the old price, and the new price.\n\n"
+    "### Input:\n{}\n\n"
+    "### Response:\n{}"
+)
 
 
 __PROMPT_WTH_DESC = """
@@ -37,7 +35,7 @@ def __map_logic(training_dts: Dataset, prompt: string) -> dict:
 
     texts = []
     for input_, output in zip(inputs, outputs):
-        text = prompt.format(input_, output) + EOS_TOKEN
+        text = prompt.format(input_, output)# + EOS_TOKEN
         texts.append(text)
 
     return {"text": texts, }
