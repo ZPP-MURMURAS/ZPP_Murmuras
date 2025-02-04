@@ -44,7 +44,7 @@ class TestInputParser:
         }
         res_dict = {
             'Context': ['bla', 'blabla', 'blablabla', 'blablablabla', 'blablablabla', 'blablablablabla'],
-            'Response': ['', '{\'bruh\': \'duch\'}', '', '{\'bruhu\': \'duchu\'}', '{\'bruha\': \'ducha\'}', '']
+            'Response': ['{}', '{\'bruh\': \'duch\'}', '{}', '{\'bruhu\': \'duchu\'}', '{\'bruha\': \'ducha\'}', '{}']
         }
         self.training_df = pd.DataFrame(res_dict)
 

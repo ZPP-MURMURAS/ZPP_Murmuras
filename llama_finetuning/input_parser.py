@@ -72,10 +72,11 @@ def create_training_df(input_dict: dict, gtd_dict: dict) -> pd.DataFrame:
     for key, value in input_dict.items():
         if key in gtd_dict:
             for item in gtd_dict[key]:
+                #res = {'input': value, 'output': item}
                 res = {'input': value, 'output': item}
                 concatenated_dfs.append(res)
         else:
-            res = {'input': value, 'output': ''}
+            res = {'input': value, 'output': '{}'}
             concatenated_dfs.append(res)
 
     # Parsing to make the dict compatible with pandas
