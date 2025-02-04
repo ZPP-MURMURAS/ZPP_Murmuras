@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from llama_finetuning.input_parser import prepare_input_data, create_training_df
+from src.llama_dataset_generation.input_parser import prepare_input_data, create_training_df
 
 class TestInputParser:
     csv_path = 'test_data/test_input_parser.csv'  # Fixed path issue

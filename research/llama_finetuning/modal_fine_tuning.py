@@ -12,7 +12,7 @@ finetune_image = (
     .apt_install("git")
     .pip_install("trl")
     .pip_install("transformers")
-    .pip_install("datasets")
+    .pip_install("mr_datasets")
     .pip_install("unsloth")
     .pip_install("torch")
     .pip_install("numpy")
@@ -26,7 +26,7 @@ finetune_image = (
 
 def prepare_data():
     import pandas as pd
-    data = pd.read_json("hf://datasets/Amod/mental_health_counseling_conversations/combined_dataset.json", lines=True)
+    data = pd.read_json("hf://mr_datasets/Amod/mental_health_counseling_conversations/combined_dataset.json", lines=True)
 
     data['Context_length'] = data['Context'].apply(len)
     filtered_data = data[data['Context_length'] <= 1500]

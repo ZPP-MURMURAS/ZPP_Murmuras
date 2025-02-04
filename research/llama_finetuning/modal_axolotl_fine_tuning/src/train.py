@@ -140,7 +140,7 @@ def launch(config_raw: dict, data_raw: str, run_to_resume: str, preproc_only: bo
     print(f"Preparing training run in {run_folder}.")
     with (
         open(f"{run_folder}/config.yml", "w") as config_file,
-        open(f"{run_folder}/{config['datasets'][0]['path']}", "w") as data_file,
+        open(f"{run_folder}/{config['mr_datasets'][0]['path']}", "w") as data_file,
     ):
         config_file.write(config_raw)
         data_file.write(data_raw)

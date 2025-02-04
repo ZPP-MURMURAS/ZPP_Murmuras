@@ -4,7 +4,7 @@ import shutil
 import pandas as pd
 import pytest
 
-from llama_finetuning.ground_truth_parser import load_coupons, prepare_ground_truth_data
+from src.llama_dataset_generation.ground_truth_parser import load_coupons, prepare_ground_truth_data
 
 
 class TestGroundTruthParser:

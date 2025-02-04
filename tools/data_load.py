@@ -11,7 +11,7 @@ from google.oauth2 import service_account
 
 
 CREDENTIALS_PATH = os.path.realpath(__file__).rsplit('/', 1)[0] + '/gdrive_credentials.json'
-DATASETS_PATH = os.path.realpath(__file__).rsplit('/', 2)[0] + '/datasets/'
+DATASETS_PATH = os.path.realpath(__file__).rsplit('/', 2)[0] + '/mr_datasets/'
 
 
 def init_service() -> Resource:
