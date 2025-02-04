@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from datasets import Dataset
 
-from llama_finetuning.datasetter import __parse_to_oimo as _datasetter__parse_to_oimo
-from llama_finetuning.datasetter import __map_logic as _datasetter__map_logic
+from src.llama_dataset_generation.datasetter import __parse_to_oimo as _datasetter__parse_to_oimo
+from src.llama_dataset_generation.datasetter import __map_logic as _datasetter__map_logic
 
 
 class TestDatasetter:
