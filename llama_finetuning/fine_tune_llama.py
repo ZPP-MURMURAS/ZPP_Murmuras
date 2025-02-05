@@ -15,7 +15,8 @@ finetune_image = (
     .pip_install("numpy")
     .pip_install("pandas")
     .pip_install("wandb")
-    .env({"HALT_AND_CATCH_FIRE": 0})
+    .env({"HALT_AND_CATCH_FIRE": 0,
+          "TIMEOUT": os.getenv('TIMEOUT')})
 )
 
 def load_model(model_name, max_seq_length, wandb_key, name):
@@ -98,7 +99,7 @@ def train_model(model, tokenizer, dataset_name, training_data, max_seq_length):
 
     trainer.train()
 
-@app.function(image=finetune_image, gpu="H100", timeout=600)
+@app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name):
     from datasets import load_dataset
 
