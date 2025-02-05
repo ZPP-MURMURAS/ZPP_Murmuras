@@ -41,19 +41,23 @@ def __map_logic(training_dts: Dataset, prompt: string) -> dict:
     return {"text": texts, }
 
 
-def one_input_one_output_wrequest(training_dts: Dataset) -> dict:
+def one_input_one_output_wrequest(df: pd.DataFrame) -> dict:
+    return __map_logic(Dataset.from_pandas(df), __PROMPT)
+
+
+def one_input_one_output_wthrequest(df: pd.DataFrame) -> dict:
+    return __map_logic(Dataset.from_pandas(df), __PROMPT_WTH_DESC)
+
+
+def one_input_multiple_outputs_wrequest(df: pd.DataFrame) -> dict:
+    training_dts = __parse_to_oimo(df)
+    training_dts = Dataset.from_pandas(training_dts)
     return __map_logic(training_dts, __PROMPT)
 
 
-def one_input_one_output_wthrequest(training_dts: Dataset) -> dict:
-    return __map_logic(training_dts, __PROMPT_WTH_DESC)
-
-
-def one_input_multiple_outputs_wrequest(training_dts: Dataset) -> dict:
-    return __map_logic(training_dts, __PROMPT)
-
-
-def one_input_multiple_outputs_wthrequest(training_dts: Dataset) -> dict:
+def one_input_multiple_outputs_wthrequest(df: pd.DataFrame) -> dict:
+    training_dts = __parse_to_oimo(df)
+    training_dts = Dataset.from_pandas(training_dts)
     return __map_logic(training_dts, __PROMPT_WTH_DESC)
 
 
@@ -95,10 +99,7 @@ def run_mapping(df: pd.DataFrame, map_func: Callable) -> Dataset:
     :param map_func: A mapping function to be applied to the dataframe.
     :return training_data: A Dataset object with the mapping function applied.
     """
-    if map_func in [one_input_multiple_outputs_wrequest, one_input_multiple_outputs_wthrequest]:
-        training_data = Dataset.from_pandas(__parse_to_oimo(df))
-    else:
-        training_data = Dataset.from_pandas(df)
+    training_data = Dataset.from_pandas(df)
     training_data = training_data.map(map_func, batched=True)
     return training_data
 
