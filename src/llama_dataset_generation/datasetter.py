@@ -60,7 +60,7 @@ def one_input_multiple_outputs_wthrequest(training_dts: Dataset) -> dict:
 def __parse_to_oimo(df: pd.DataFrame) -> pd.DataFrame:
     """
     Helper function to change the layout of the input dataframe from
-    one input one output (oimo) to one input multiple outputs (oimo).
+    one input one output (oioo) to one input multiple outputs (oimo).
 
     :param df: A pandas dataframe to be parsed.
     :return output_df: A pandas dataframe with the parsed layout.
