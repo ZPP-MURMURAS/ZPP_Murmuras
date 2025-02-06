@@ -1,6 +1,7 @@
 import os
 
 import modal
+from trl import DataCollatorForCompletionOnlyLM
 
 app = modal.App("example-fine-tuning")
 
@@ -24,6 +25,7 @@ def load_model(model_name, max_seq_length, wandb_key, name):
     import wandb
     import os
 
+    print(wandb_key)
     wandb.login(key=wandb_key)
     os.environ["WANDB_PROJECT"] = "CompareDataForLLamas"
     os.environ["WANDB_RUN_ID"] = name
