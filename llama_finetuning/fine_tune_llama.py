@@ -1,7 +1,6 @@
 import os
 
 import modal
-from trl import DataCollatorForCompletionOnlyLM
 
 app = modal.App("example-fine-tuning")
 

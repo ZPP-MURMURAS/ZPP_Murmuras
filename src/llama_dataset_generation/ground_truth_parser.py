@@ -18,11 +18,11 @@ def init_client(api_key: string) -> AsyncOpenAI:
     return client
 
 
-def store_coupons_as_json(coupons: json, path: string) -> None:
+def store_coupons_as_json(coupons: list, path: string) -> None:
     """
     This function stores the extracted coupon data in a json file under the input path.
 
-    :param coupons: The extracted coupon data in a list of jsons.
+    :param coupons: The extracted coupon data in a list of dicts.
     :param path: The path to the json file where the coupon data will be stored.
     """
     with open(path, 'w') as f:
@@ -109,6 +109,11 @@ def __get_prompt(data_list: string) -> string:
 async def __extract_discount_details(coupons_list: list, client: AsyncOpenAI, batch_size: int = 15) -> list:
     """
     This function handles the logic of creating async tasks to process the coupon data in batches.
+    Coupon data in this context refers to the list of coupon texts that need to be processed by the ChatGPT.
+    Those texts contain the information about the value of the discount (usually either a percentage or a new price,
+    but it can be both, and both old and new price can be present). ChatGPT usage is dictated by the need to extract
+    the currency from the price, as well as the goal of generalization for different types of discounts that
+    may be valid but not "regexable" in an easy way.
 
     :param coupons_list: The list of coupon data.
     :param client: The initialized Async OpenAI client.
@@ -118,12 +123,11 @@ async def __extract_discount_details(coupons_list: list, client: AsyncOpenAI, ba
     tasks = []
     for j in range(0, len(coupons_list), batch_size):
         task = asyncio.create_task(
-            __get_data(__get_prompt(coupons_list[j:min(j + 15, len(coupons_list))]), client, model='gpt-4o'))
+            __get_data(__get_prompt(coupons_list[j:min(j + batch_size, len(coupons_list))]), client, model='gpt-4o'))
         tasks.append(task)
     results = await asyncio.gather(*tasks)
     res = []
     for result in results:
-        print(result)
         list_start = result.find('[')
         list_end = result.rfind(']')
         result = result[list_start:list_end + 1]

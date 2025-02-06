@@ -201,3 +201,6 @@ tools/gdrive_credentials.json
 
 # env file/s
 *.env
+
+#  csv files
+*.csv

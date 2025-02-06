@@ -41,31 +41,25 @@ def __map_logic(training_dts: Dataset, prompt: string) -> dict:
     return {"text": texts, }
 
 
-def one_input_one_output_wrequest(df: pd.DataFrame) -> dict:
-    return __map_logic(Dataset.from_pandas(df), __PROMPT)
+def one_input_one_output_wrequest(training_dts: Dataset) -> dict:
+    return __map_logic(training_dts, __PROMPT)
+
+def one_input_one_output_wthrequest(training_dts: Dataset) -> dict:
+    return __map_logic(training_dts, __PROMPT_WTH_DESC)
 
 
-def one_input_one_output_wthrequest(df: pd.DataFrame) -> dict:
-    return __map_logic(Dataset.from_pandas(df), __PROMPT_WTH_DESC)
-
-
-def one_input_multiple_outputs_wrequest(df: pd.DataFrame) -> dict:
-    training_dts = __parse_to_oimo(df)
-    training_dts = Dataset.from_pandas(training_dts)
+def one_input_multiple_outputs_wrequest(training_dts: Dataset) -> dict:
     return __map_logic(training_dts, __PROMPT)
 
 
-def one_input_multiple_outputs_wthrequest(df: pd.DataFrame) -> dict:
-    training_dts = __parse_to_oimo(df)
-    training_dts = Dataset.from_pandas(training_dts)
+def one_input_multiple_outputs_wthrequest(training_dts: Dataset) -> dict:
     return __map_logic(training_dts, __PROMPT_WTH_DESC)
 
 
 def __parse_to_oimo(df: pd.DataFrame) -> pd.DataFrame:
     """
     Helper function to change the layout of the input dataframe from
-    one input one output (oioo) to one input multiple outputs (oimo).
-
+    one input one output (oimo) to one input multiple outputs (oimo).
     :param df: A pandas dataframe to be parsed.
     :return output_df: A pandas dataframe with the parsed layout.
     """
@@ -94,12 +88,14 @@ def run_mapping(df: pd.DataFrame, map_func: Callable) -> Dataset:
     """
     This function takes a pandas dataframe and a mapping function, and returns a Dataset object
     with the mapping function applied to it (it adds a prompt to the data).
-
     :param df: A pandas dataframe to be mapped.
     :param map_func: A mapping function to be applied to the dataframe.
     :return training_data: A Dataset object with the mapping function applied.
     """
-    training_data = Dataset.from_pandas(df)
+    if map_func in [one_input_multiple_outputs_wrequest, one_input_multiple_outputs_wthrequest]:
+        training_data = Dataset.from_pandas(__parse_to_oimo(df))
+    else:
+        training_data = Dataset.from_pandas(df)
     training_data = training_data.map(map_func, batched=True)
     return training_data
 

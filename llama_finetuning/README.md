@@ -5,6 +5,7 @@ This directory contains code for fine-tuning the LLaMA model on the coupon data.
 ```bash
 modal run llama_finetuning/fine_tune_llama.py
 ```
+Because of that, the fine-tuning code itself does not need any requirements.
 - **`fine_tuning_results.ipynb**  
   Notebook with results of the fine-tuning.
 - **`run_finetuning.sh`**  
