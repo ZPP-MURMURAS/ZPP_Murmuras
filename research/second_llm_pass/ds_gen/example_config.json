@@ -1,0 +1,12 @@
+{
+  "frames": [
+    {
+      "content": "datasets/coupons_1/lidl/Kopia test_data_2024_11_25_lidl_plus_content_generic_2024-12-05T07_39_49.726955559+01_00.csv",
+      "coupons": "datasets/coupons_1/lidl/Kopia test_data_2024_11_25_lidl_plus_cupons_2024-12-05T07_54_54.63740938+01_00.csv"
+    },
+    {
+      "content": "datasets/coupons_1/rossmann/Kopia test_data_2024_03_07_rossmann_content_generic_2024-12-05T10_24_07.981399375+01_00.csv",
+      "coupons": "datasets/coupons_1/rossmann/Kopia test_data_2024_03_07_rossmann_coupons_2024-12-05T10_24_55.372924301+01_00.csv"
+    }
+  ]
+}
