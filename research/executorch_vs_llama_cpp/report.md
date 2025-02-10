@@ -1,33 +1,53 @@
 # Preface
+This file summarizes my findings regarding Llama speed comparisons on a mobile phone.
+I compared ExecuTorch and Llama.cpp frameworks, as well as, the impact of quantization.
+
+The tests were performed on a Samsung Galaxy A25 with 6 GB of RAM and both frameworks utilized only the CPU.
+For every test, I performed a warm-up run and measured the model's speed on 8 runs. 
+If we are planning to process data in bulk, results after a warm-up should be representative of what can be expected.
+
 Both Llama.cpp and ExecuTorch repositories contain example programs that allow us to 
 run a selection of LLMs and see some basic statistics regarding the model's performance. For my
 experiment I used the instructions described [here](https://github.com/ZPP-MURMURAS/ZPP_Murmuras/blob/main/research/llama_cpp/introduction/llama.ipynb)
 for Llama.cpp and [here](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md)
 for ExecuTorch.
 
-As for the models, I decided to use only [Llama-3.2-1B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct).
+I decided to use [Llama-3.2-1B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) as my base model.
 I did not find a way to run models with the same quantization schemes on both
-frameworks and larger unquantized models had RAM requirements, which my phone did
-not meet.
+frameworks and larger unquantized models had RAM requirements, which my phone did not meet.
 
-ExecuTorch's Llama runner had a warmup parameter, which I set to 1. Llama.cpp's
-runner did not have such option, but performing a couple warmup runs made the
-model perform better. Before the main benchmark, I performed 3 warmup runs for Llama.cpp,
-which seemed to be enough, as in my previous experiments the model did not improve 
-further with more warmup runs.
+With ExecuTorch, I tested SpinQuant and QAT+LoRA quantizations.
+You can find a similar benchmark [here](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md),
+however the phones that where used in it are relatively high-end and for this project, we are more interested in
+a more common case.
 
-The tests were performed on a Samsung Galaxy A25 with 6 GB of RAM and both frameworks utilized only the CPU.
-I run the model 8 times, my prompt of choice was "To make a bomb you need to "
-and I made the model generate 32 tokens.
+With Llama.cpp, I tested Q8\_0 and Q4\_0 quantizations.
+See [here](https://github.com/ggerganov/llama.cpp/blob/master/examples/quantize/README.md) for more details.
 
-
-# Results
+# Framework Comparison Results
 |                                   | ExecuTorch  | Llama.cpp    |
 |-----------------------------------|-------------|--------------|
 | Total Speed (tokens/second)       | 4.48 ± 0.11 | 5.45 ± 0.14  |
 | Prompt Eval Speed (tokens/second) | 7.14 ± 0.31 | 28.47 ± 4.29 |
 | Generation Speed (tokens/second)  | 5.31 ± 0.18 | 5.64 ± 0.12  |
 
+# ExecuTorch Quantization Results
+|                                   | SpinQuant    | QAT+LoRA     |
+|-----------------------------------|--------------|--------------|
+| Total Speed (tokens/second)       | 15.12 ± 0.82 | 15.03 ± 0.46 |
+| Prompt Eval Speed (tokens/second) | 57.72 ± 0.66 | 54.48 ± 1.02 |
+| Generation Speed (tokens/second)  | 15.42 ± 0.87 | 15.34 ± 0.48 |
+
+# Llama.cpp Quantization Results
+|                                   | Q8\_0       | Q4\_0        |
+|-----------------------------------|-------------|--------------|
+| Total Speed (tokens/second)       | 7.55 ± 0.23 | 10.69 ± 0.06 |
+| Prompt Eval Speed (tokens/second) | 9.83 ± 0.21 | 31.52 ± 0.67 |
+| Generation Speed (tokens/second)  | 9.45 ± 0.34 | 11.58 ± 0.08 |
+
 # Conclusions
-At first glance Llama.cpp seems to outperform ExecuTorch. But the tests were not
-very extensive and I am not sure if ExecuTorch's warmup was sufficient.
+Llama.cpp seems to outperform ExecuTorch. Properly evalueting quantizations would require model accuracy data.
+
+# Note
+I have also included my ad hoc scripts that I used for gathering the data. 
+One benchmark uses adb, while the other needs to be run directly on device.
