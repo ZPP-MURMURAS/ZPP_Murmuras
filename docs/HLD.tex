@@ -17,47 +17,63 @@
 \maketitle
 
 \section*{Introduction}
-The goal of the project is to create a universal solution for processing phone screen content, such as social media posts and advertisements on websites. In addition, the processing must occur locally on the user's device to protect sensitive data.\\
-This project is being created on the request of \textbf{Murmuras}, a company specialized in providing analytical data for commercial as well as scientific purposes. \\
-While the proposed method itself is expected to be applicable in various domains, in our work we will focus on the task of discount coupon gathering.\\
-A \textbf{discount coupon} is, in our case, a digital voucher offered to the user in the application published by supermarket chain. With the new applications of this type dynamically appearing, and existing ones evolving, it is hard to maintain a reliable data delivery pipeline that would use conventional scrapping techniques. The usage of Large Language Models (LLMs) in our solution aims to resolve this problem. \\
-Apart from that, use cases of developed method will, among others, include the task of collecting profiles of political views of users without violating privacy of their conversations thanks to the data being processed locally.
+The goal of this project is to develop a universal solution for processing phone screen content, such as social media posts and online advertisements. Additionally, all processing must occur locally on the user's device to protect sensitive data.\\
 
-\section*{Existing Solutions And Their Limitations}
-We are not aware of any publicly available solutions that directly address our problem. There were attempts to use LLMs for web scrapping \cite{scrapegraph-ai}\cite{llm-reader}, but effective deployment of these solutions on mobile phones seems to be an unexplored ground. A notable drawback of language models used there is their very large number of parameters; for example, GPT-3 has 175 billion parameters \cite{brown2020languagemodelsfewshotlearners}.
+This project is being developed at the request of \textbf{Murmuras}, a company specializing in providing analytical data for both commercial and scientific purposes.\\
+
+While the proposed method is expected to be applicable across various domains, our work focuses on the task of gathering discount coupons.\\
+
+A \textbf{discount coupon}, in our case, refers to a digital voucher offered to users through an application published by a supermarket chain. With new applications of this type continuously emerging and existing ones evolving, maintaining a reliable data delivery pipeline using conventional scraping techniques is challenging. Our solution leverages Large Language Models (LLMs) to address this issue.\\
+
+Beyond this, the developed method will also be applicable to tasks such as profiling users' political views without compromising their privacy, as all data processing occurs locally.
+
+
+\section*{Existing Solutions and Their Limitations}
+To the best of our knowledge, no publicly available solutions directly address our problem. There have been attempts to use LLMs for web scraping \cite{scrapegraph-ai}\cite{llm-reader}, but effectively deploying these solutions on mobile devices remains largely unexplored.
+
+A notable drawback of the language models used in these approaches is their extremely large number of parameters. For instance, GPT-3 has 175 billion parameters \cite{brown2020languagemodelsfewshotlearners}, making it challenging to implement on resource-constrained devices.
+
 
 \section*{Murmuras' Solution}
-The existing prototype solution developed by Murmuras uses data in CSV format that describes the screen's content. This data is then subjected to very basic processing, e.g., removal of empty columns, and subsequently processed by ChatGPT-4 mini into JSON format. This solution has two main issues: it does not run locally on mobile devices, as the model is not available for local execution, and the data is often described incorrectly (e.g., volume is treated as the product's price).
+The existing prototype developed by Murmuras processes data in CSV format, which describes the screen's content. This data undergoes basic preprocessing, such as the removal of empty columns, before being converted into JSON format using ChatGPT-4 mini.
+
+However, this solution has two major limitations. First, it does not run locally on mobile devices, as the model is not available for on-device execution. Second, the data is often misinterpreted—for example, volume may be mistakenly treated as the product's price.
+
 
 \subsection*{Development Opportunities}
-There is a theoretical possibility to solve these problems. There are Python modules such as \textit{outlines}\cite{willard2023efficient} or \textit{LangChain}\cite{Chase_LangChain_2022}, which allow for enforcing structured output in models. The first of these works with models from \textit{HuggingFace}. This, alongside with mobile model deployemnts tools like Llama.cpp\cite{llamacpp} would allow us to perform local inference.
+In theory, these problems can be addressed. Python modules such as \textit{outlines} \cite{willard2023efficient} and \textit{LangChain} \cite{Chase_LangChain_2022} allow for enforcing structured output in language models. The former is compatible with models from \textit{HuggingFace}. Combined with mobile model deployment tools like Llama.cpp \cite{llamacpp}, this would enable local inference on mobile devices.
 
 \section*{Specification of the Completed Project}
-As the core part of the project, we plan to design and implement a functional solution that will be able to extract discount coupons from a data from a diverse set of mobile applications. The deployment of the solution on the Android smartphone in form of a mobile application is optional, but we require our proposal to be theoretically possible to do so. Our solution is expected to be generalizable to wider range of problems, as mentioned above. We will provide description of it that will make this generalization possible.\\
-On top of that, we will design and implement a benchmark to measure performance of the developed proposal and compare it with rejected alternatives.
+The core objective of this project is to design and implement a functional solution capable of extracting discount coupons from a diverse range of mobile application data. While deploying the solution as a mobile application on an Android smartphone is optional, we require our approach to be theoretically feasible for such deployment. Additionally, our solution is expected to be generalizable to a broader range of problems, as outlined above. We will provide documentation to facilitate this generalization.
 
 \section*{Challenges}
 
 \subsection*{Hardware Requirements}
 
 \subsubsection*{Computational Power and RAM}
-Both modern LLMs and data preprocessing algorithms often require significant resources \cite{LLMmobile2024}. At the same time, we want everything to run locally on the mobile device. Therefore, the challenge will be selecting model that is not too resource-intensive and can be deployed on a mobile device. We want this model to have no more than 1 billion trainable parameters to ensure it can be deployed on most of the modern smartphones\cite{li2025palmbenchcomprehensivebenchmarkcompressed}.
+Modern LLMs and data preprocessing algorithms often demand substantial computational resources \cite{LLMmobile2024}. At the same time, we aim for all processing to be performed locally on the mobile device. The challenge lies in selecting a model that is not overly resource-intensive yet remains effective for our use case. To ensure compatibility with most modern smartphones, we aim to use a model with no more than 1 billion trainable parameters \cite{li2025palmbenchcomprehensivebenchmarkcompressed}.
 
 \subsubsection*{Disk Storage}
-The operation of the application will require an amount of disk space in order of magnitude of gigabytes\cite{llama32-1b-size} as the model weights will be stored locally. We assume that this will not be an issue for the user due to the company's business model. Users are rewarded for installing the data-gathering application on their phones.
+The application will require several gigabytes of disk space \cite{llama32-1b-size}, as the model weights will be stored locally. However, we anticipate this will not be an issue for users, given the company's business model, where users are incentivized to install the data-gathering application on their phones.
+
 
 \subsection*{Benchmarking}
+
 \subsubsection*{Algorithm}
-To evaluate the quality of our solution, we propose the following benchmarking metric. Assume a batch of samples $S_i$ in form that represents the content of smartphone screen in .CSV format. We define a \textit{coupon} as a tuple of the following fields:
+To evaluate the quality of our solution, we propose the following benchmarking metric. Consider a batch of samples \( S_i \) representing smartphone screen content in CSV format. We define a \textit{coupon} as a tuple containing the following fields:
+
 \begin{enumerate}
-    \item \textit{old\_price}: fixed precision number, the standard price of related item
-    \item \textit{new\_price}: fixed precision number, the lower price offered to the customer
-    \item \textit{name}: string, item name
-    \item \textit{validity}: string, the date of the coupon expiration
-    \item \textit{percentage}: string, discount as percent
+    \item \textit{old\_price}: Fixed-precision number representing the standard price of the item
+    \item \textit{new\_price}: Fixed-precision number representing the discounted price offered to the customer
+    \item \textit{name}: String representing the item name
+    \item \textit{validity}: String representing the coupon's expiration date
+    \item \textit{percentage}: String representing the discount percentage
 \end{enumerate}
-Any of these fields, excluding \textit{name}, can be $None$.\\
+
+Any of these fields, except for \textit{name}, can be \( None \).
+
 Next, we define the following weights:
+
 \begin{gather*}
     w_n=0.4 \\
     w_p=0.3 \\
@@ -65,15 +81,25 @@ Next, we define the following weights:
     w_v=0.1 \\
     w_{po}=0.5\\
     w_{pn}=0.5
-\end{gather*} \\
-Now, we define function assigning similarity to pairs of coupons:
-\begin{gather*}
-    S(c_1, c_2)=w_nR(c_1[name],c_2[name])+\\w_pw_{po}Q(c_1[price\_old],c_2[price\_old])+w_pw_{pn}Q(c_1[price\_new],c_2[price\_new])\\+w_{pr}R(c_1[percent],c_2[percent])+w_vR(c_1[validity],c_2[validity])
 \end{gather*}
-Where:\\
-$R(s_1,s_2)$ is measure of similarity between two sequences as defined in \cite{python-seq-match} and $Q(x, y)$ is $1$ if $x=y$ and $0$ else.\\
-With each sample $S_i$ we associate a multiset of coupons expected to be extracted from this sample: $C_i$.\\
-Then, for a multiset $\tilde{C}_i$ obtained by the pipeline being benchmarked for input sample we follow procedure:
+
+We now define a function that assigns similarity scores to pairs of coupons:
+
+\begin{gather*}
+    S(c_1, c_2) = w_n R(c_1[\text{name}], c_2[\text{name}]) +  \\
+    w_p w_{po} Q(c_1[\text{old\_price}], c_2[\text{old\_price}]) + \\
+    w_p w_{pn} Q(c_1[\text{new\_price}], c_2[\text{new\_price}]) +  \\
+    w_{pr} R(c_1[\text{percentage}], c_2[\text{percentage}]) +  \\
+    w_v R(c_1[\text{validity}], c_2[\text{validity}])  \\
+\end{gather*}
+
+where:
+- \( R(s_1, s_2) \) is a similarity measure between two sequences, as defined in \cite{python-seq-match}.
+- \( Q(x, y) \) is \( 1 \) if \( x = y \) and \( 0 \) otherwise.
+
+For each sample \( S_i \), we associate a multiset of expected coupons \( C_i \).
+Given a multiset \( \tilde{C}_i \) obtained by the pipeline being benchmarked for an input sample, we apply the following procedure:
+
 \begin{algorithmic}
 \State $lonely_i \gets 0$
 \State $similarities_i \gets []$
@@ -87,48 +113,61 @@ Then, for a multiset $\tilde{C}_i$ obtained by the pipeline being benchmarked fo
     \State $C_i.pop(c')$
 \EndFor
 \State $lonely_i += len(C_i)$
-\For{$i=0;i<lonely_i;i++$}
+\For{$i=0$ \textbf{to} $lonely_i$}
     \State $similarities_i.append(0)$
 \EndFor
-\State $similarity_i \gets mean(similarities_i)$
+\State $similarity_i \gets \text{mean}(similarities_i)$
 \end{algorithmic}
-We then can average similarities across samples.
+
+Finally, we compute the average similarity across all samples.
+
 \subsubsection*{Dataset}
-As benchmarking dataset we selected a representative portion of data provided to us by Murmuras. This portion of data is relatively small as it contains less than 200 coupons which enables fast evaluation and is obtained from a content from different applications to increase reliability of the benchmark.
+For benchmarking, we selected a representative subset of the data provided by Murmuras. This dataset is relatively small, containing fewer than 200 coupons, which enables fast evaluation. To improve the reliability of the benchmark, the data is sourced from multiple applications.
+
 \section*{Proposed Solution}
+
 \subsection*{Input Data Format and Acquisition}
-The solution will operate on input data in format of .CSV files representing XML structure that underlies visible screen content. These .CSV files enable us to get information about, among others, location and content of the text fields and their hierarchical structure. \\ During mentioned below fine-tuning process, we will utilize data provided to us by Murmuras. As the fine-tuning will be performed in supervised fashion, expected model output will be generated with the help of ChatGPT. At a runtime, pipeline will use data scrapped from smartphone screen by the tool that is provided by Murmuras too.\\
-Currently we are developing two different solutions to the problem.
-\subsection*{Solution 1: Labeling Via Lightweight LLM}
-Our pipeline will consist following modules:
+Our solution will process input data in the form of CSV files representing the XML structure underlying visible screen content. These CSV files provide information about various aspects, including the location and content of text fields as well as their hierarchical structure.
+
+During the fine-tuning process described below, we will use data provided by Murmuras. Since fine-tuning will be performed in a supervised manner, the expected model output will be generated with the assistance of ChatGPT. At runtime, the pipeline will process data extracted from smartphone screens using a scraping tool provided by Murmuras.
+
+Currently, we are developing two different approaches to solving the problem.
+
+
+\subsection*{Solution 1: Directly Querying an LLM}
+In this more straightforward approach, we will fine-tune the Llama3.2-1B model from the Llama family \cite{llama32-1b}, selected due to its optimal size based on the considerations outlined above, its liberal licensing terms, and its compatibility with fine-tuning frameworks \cite{unsloth}. The model will be executed using the llama-cpp tool \cite{llamacpp}\cite{LLMmobile2024}, ensuring that its output is formatted in JSON. This structured output will significantly simplify postprocessing, reducing it to a trivial aggregation task.
+
+\subsubsection*{Model Fine-Tuning}
+The fine-tuning process will be conducted in the Modal cloud environment \cite{modal}. To accelerate training, we will utilize the Unsloth framework \cite{unsloth}, which is optimized for efficient fine-tuning of LLMs.
+
+\subsection*{Solution 2: Labeling via Lightweight LLM}
+Our pipeline will consist of the following modules:
 
 \subsubsection*{Preprocessing}
-We will divide the screen representation in .CSV format into segments corresponding to logical parts (e.g., a single coupon). We will either use a clustering algorithm we have developed or, through fine-tuning, train the small LLM model for this task.
+We will segment the screen representation in CSV format into logical parts (e.g., individual coupons). This segmentation will be performed either using a clustering algorithm we developed or through fine-tuning a small LLM for this specific task.
 
 \subsubsection*{Token Labeling}
-Using a fine-tuned model from the BERT family \cite{devlin2019bertpretrainingdeepbidirectional}, we will assign classes to individual tokens corresponding to the attributes of interest in the coupons (e.g., price before, price after, etc.).
+Using a fine-tuned model from the BERT family \cite{devlin2019bertpretrainingdeepbidirectional}, we will assign classes to individual tokens that correspond to key coupon attributes (e.g., original price, discounted price, etc.).
 
 \paragraph{Model Selection}
-After preliminary research, we decided to focus on transformer models with parameter counts ranging from 10 million to around 500 million. Most of the options we selected are derivatives of the BERT model \cite{devlin2019bertpretrainingdeepbidirectional}. The three main subtypes are:
+After preliminary research, we decided to focus on transformer models with parameter counts ranging from 10 million to approximately 500 million. Most of the models we selected are derivatives of BERT \cite{devlin2019bertpretrainingdeepbidirectional}. The three main subtypes under consideration are:
+
 \begin{enumerate}
-    \item Bert: \textasciitilde100 million parameters,
-    \item DistilBert: \textasciitilde65 million parameters,
-    \item AlBert: \textasciitilde11 million parameters.
+    \item BERT: \textasciitilde100 million parameters
+    \item DistilBERT: \textasciitilde65 million parameters
+    \item ALBERT: \textasciitilde11 million parameters
 \end{enumerate}
-Their advantage lies in their very small size; experiments \cite{LLMmobile2024} have been conducted where the Llama-2 model with 7 billion parameters was run on mobile devices. Models from the BERT family are an order of magnitude smaller.
+
+The primary advantage of these models is their relatively small size. Previous experiments \cite{LLMmobile2024} have demonstrated that the LLaMA-2 model, with 7 billion parameters, can be deployed on mobile devices. Models from the BERT family are an order of magnitude smaller, making them more suitable for our use case.
 
 \subsubsection*{Postprocessing}
-Postprocessing will involve batching the data labeled by the model into coupons.
-
-\subsection*{Solution 2: directly querying LLM}
-In this more straightforward approach we will fine-tune model llama3.2-1b from Llama family\cite{llama32-1b}, chosen due to its size being optimal which is implied by above considerations, its liberal license and support from fine-tuning frameworks\cite{unsloth}. The model itself will be run by llama-cpp\cite{llamacpp}\cite{LLMmobile2024} tool. It will ensure that the model output is in JSON format, which will reduce postprocessing to trivial aggregation.
-\subsubsection*{Model fine-tuning}
-Fine tuning will be performed in Modal\cite{modal} cloud environment. To speed up training unsloth\cite{unsloth} tool will be used.
+Postprocessing will involve grouping the labeled data into structured coupon representations.
 
 \subsection*{Deployment on Mobile Devices (Optional)}
-We will create a mobile application or add functionality to an existing one, in which we will implement the above points. We will create a service running in the background that processes incoming data in real time. If real-time processing turns out to be too resource-intensive, we will implement data storage (assuming daily use of the coupon application for 15 minutes, we estimate the data size to be 15KB) from the screen and process it at night when the user is not using the device.\\
+We plan to develop a standalone mobile application or integrate the functionality into an existing one, implementing the aforementioned processing pipeline. A background service will be designed to process incoming data in real time. However, if real-time processing proves to be too resource-intensive, an alternative approach will be adopted in which the application stores the data temporarily (with an estimated daily storage requirement of approximately 15KB, assuming 15 minutes of daily coupon application usage) and processes it during off-peak hours, such as at night when the device is idle.
 
-We aim for the app to be compatible with Android 9+ but do not require it to work on all devices. Data storage and further transmission will be left to the company's app at this time.
+The application will be designed to ensure compatibility with Android 9 and later versions. However, achieving universal compatibility across all devices is not a strict requirement. Data storage and further transmission will be managed by the company’s existing application infrastructure at this stage.
+
 
 \section*{Milestones}
 
