@@ -95,9 +95,11 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
     text_col = content_frame[COL_CONTENT_TEXT]
     while ix < len(text_col):
         text = text_col[ix]
-        if not isinstance(text, str):
+        if not text == float('nan'):
             ix += 1
             continue
+        else:
+            text = str(text)
         ended_iters = []
         for itr in ptree_iters:
             if text not in itr[0][0]:
@@ -190,10 +192,12 @@ def batch_to_json(batch: pd.DataFrame) -> TreeNode:
     for row in batch.iterrows():
         text_field = row[1][COL_CONTENT_TEXT]
         name = row[1][COL_VIEW_ID]
-        if isinstance(name, str):
-            name = name.rsplit('/')[-1]
-        if not isinstance(text_field, str):
+        if name != float('nan'):
+            name = str(name).rsplit('/')[-1]
+        if text_field == float('nan'):
             text_field = None
+        else:
+            text_field = str(text_field)
         depth = row[1][COL_DEPTH]
         while len(tree_path) > 0 and tree_path[-1][1] >= depth:
             tree_path.pop(-1)
@@ -331,8 +335,10 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
             for i, row in subframe.iterrows():
                 text = row[COL_CONTENT_TEXT]
                 is_coupon = row[__COL_IS_COUPON]
-                if not isinstance(text, str) or not text:
+                if text == float('nan') or text == '':
                     continue
+                else:
+                    text = str(text)
                 words.extend(text.split())
                 if not is_coupon:
                     labels += [LBL_UNK] * len(text.split())
@@ -367,10 +373,5 @@ if __name__ == '__main__':
         content_frame = pd.read_csv(content)
         coupons_frame = pd.read_csv(coupons)
         examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
-
-    import random
-    for _ in range(10):
-        print(random.choice(examples))
-    exit(0)
 
     publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY)
