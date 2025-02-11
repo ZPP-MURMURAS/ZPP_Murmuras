@@ -123,8 +123,9 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
             ptree_iters.append([coupons_ptree[0][text], ix, -1 if not coupons_ptree[0][text][1] else ix])
         ix += 1
     is_coupon_array += [False] * (len(content_frame) - len(is_coupon_array))
-    content_frame[__COL_IS_COUPON] = is_coupon_array
-    return content_frame
+    new_content_frame = content_frame.copy()
+    new_content_frame[__COL_IS_COUPON] = is_coupon_array
+    return new_content_frame
 
 
 class TreeNode(TypedDict):
@@ -210,7 +211,7 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
     """
     res = []
     for i, (t, subframe) in enumerate(frame.groupby(COL_GROUPBY)):
-        ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[COL_GROUPBY] == t, fmt)
+        ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[COL_GROUPBY] == t], fmt)
         subframe = __clear_content_frame(subframe)
         subframe = annotate_frame_by_matches(subframe, ptree)
         tree = batch_to_json(subframe)
@@ -366,5 +367,10 @@ if __name__ == '__main__':
         content_frame = pd.read_csv(content)
         coupons_frame = pd.read_csv(coupons)
         examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
+
+    import random
+    for _ in range(10):
+        print(random.choice(examples))
+    exit(0)
 
     publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY)
