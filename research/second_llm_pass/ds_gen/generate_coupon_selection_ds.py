@@ -91,7 +91,7 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_frame: pd.Dat
             else:
                 itr[0] = itr[0][0][text]
                 if itr[0][1]:
-                    itr[2]= ix
+                    itr[2] = ix
         if ended_iters:
             chosen = None
             chosen_len = 0
