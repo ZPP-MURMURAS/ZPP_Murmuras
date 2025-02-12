@@ -16,9 +16,10 @@ I decided to use [Llama-3.2-1B-Instruct](https://huggingface.co/meta-llama/Llama
 I did not find a way to run models with the same quantization schemes on both
 frameworks and larger unquantized models had RAM requirements, which my phone did not meet.
 
-With ExecuTorch, I tested SpinQuant and QAT+LoRA quantizations.
+With ExecuTorch, I tested [SpinQuant](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct-SpinQuant_INT4_EO8) 
+and [QAT+LoRA](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct-QLORA_INT4_EO8) quantizations.
 You can find a similar benchmark [here](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md),
-however the phones that where used in it are relatively high-end and for this project, we are more interested in
+however the phones that where used in it are relatively high-end and for this project, we are interested in
 a more common case.
 
 With Llama.cpp, I tested Q8\_0 and Q4\_0 quantizations.
