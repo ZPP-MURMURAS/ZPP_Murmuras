@@ -2,3 +2,4 @@ pandas
 notebook
 transformers
 sentencepiece
+torch
