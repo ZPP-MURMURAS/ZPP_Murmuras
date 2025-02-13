@@ -2,12 +2,11 @@ import re
 import json
 from collections import defaultdict
 from collections.abc import MutableSet
-from marshal import dumps
-from typing import Optional, List
+from typing import List
 
 import pandas as pd
 
-from constants import *
+from src.constants import *
 
 
 def labeled_data_to_extra_csv_column(content_frame: pd.DataFrame, coupons_frame: pd.DataFrame) -> pd.DataFrame:
