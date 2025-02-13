@@ -1,6 +1,6 @@
 # Coupon selecting dataset
 This directory contains a script that can be used for creating and publishing datasets for the coupon selection task.<br/>
-The script works on a pair of a coupon frame and a content frame. It founds coupons from the first file inside the content file.<br/>
+The script works on a pair of a coupon frame and a content frame. It finds coupons from the first file in the second file.<br/>
 Running the script:<br/>
 ```bash
 python generate_coupon_selection_ds.py <config_path> <ds_name>
