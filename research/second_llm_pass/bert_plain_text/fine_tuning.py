@@ -1,4 +1,5 @@
 import os
+from functools import partial
 
 from datasets import Dataset, load_dataset
 from transformers import AutoModelForTokenClassification
@@ -14,7 +15,7 @@ if __name__ == '__main__':
     ft.init_finetuner(MODEL_CHECKPOIT)
 
     tokenized_dataset = cspl.map(
-        ft.tokenize_and_align_labels,
+        partial(ft.tokenize_and_align_labels, "texts", "labels"),
         batched=True,
         remove_columns=cspl["train"].column_names,
     )

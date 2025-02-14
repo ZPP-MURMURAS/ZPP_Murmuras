@@ -56,21 +56,21 @@ def __align_labels_with_tokens(labels, word_ids, bi_split):
     return new_labels
 
 
-def tokenize_and_align_labels(examples):
+def tokenize_and_align_labels(input_column, labels_column, examples):
     tokenized_inputs = __TOKENIZER(
-        examples["tokens"], truncation=True, is_split_into_words=True
+        examples[input_column], truncation=True, is_split_into_words=True
     )
-    all_labels = examples["ner_tags"]
+    all_labels = examples[labels_column]
     new_labels = []
     for i, labels in enumerate(all_labels):
         word_ids = tokenized_inputs.word_ids(i)
-        new_labels.append(__align_labels_with_tokens(labels, word_ids))
+        new_labels.append(__align_labels_with_tokens(labels, word_ids, False))
 
     tokenized_inputs["labels"] = new_labels
     return tokenized_inputs
 
 
-def compute_metrics(custom_labels, eval_preds):
+def __compute_metrics(custom_labels, eval_preds):
     logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
 
@@ -89,7 +89,7 @@ def compute_metrics(custom_labels, eval_preds):
     }
 
 
-def train_model(model, dataset, custom_labels, push_to_hub=False):
+def train_model(model, dataset, labels, push_to_hub=False):
     args = TrainingArguments(
         "zpp-murmuras/bert_multiling_cased_test_data_test_1",
         evaluation_strategy="epoch",
@@ -104,9 +104,9 @@ def train_model(model, dataset, custom_labels, push_to_hub=False):
         model=model,
         args=args,
         train_dataset=dataset["train"],
-        eval_dataset=dataset["validation"],
+        eval_dataset=dataset["train"],
         data_collator=__DATA_COLLATOR,
-        compute_metrics=partial(compute_metrics, custom_labels),
+        compute_metrics=partial(__compute_metrics, labels),
         tokenizer=__TOKENIZER,
     )
     trainer.train()
