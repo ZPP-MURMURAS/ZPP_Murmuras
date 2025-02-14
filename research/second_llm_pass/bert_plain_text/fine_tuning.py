@@ -11,14 +11,9 @@ MODEL_CHECKPOIT = "google-bert/bert-base-multilingual-cased"
 if __name__ == '__main__':
     cspl = load_dataset('zpp-murmuras/coupon_select_plain_text', token=os.getenv('HF_HUB_KEY'))
     labels_glob = cspl['train'].features['labels'].feature.names
-    print(cspl)
     ft.init_finetuner(MODEL_CHECKPOIT)
 
-    tokenized_dataset = cspl.map(
-        partial(ft.tokenize_and_align_labels, "texts", "labels"),
-        batched=True,
-        remove_columns=cspl["train"].column_names,
-    )
+    tokenized_dataset = ft.tokenize_and_align_labels(cspl, "texts", "labels")
 
     id2label = {i: label for i, label in enumerate(labels_glob)}
     label2id = {v: k for k, v in id2label.items()}
