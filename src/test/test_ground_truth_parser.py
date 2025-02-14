@@ -4,7 +4,40 @@ import shutil
 import pandas as pd
 import pytest
 
-from src.llama_dataset_generation.ground_truth_parser import load_coupons, prepare_ground_truth_data
+from src.llama_dataset_generation.ground_truth_parser import load_coupons, prepare_ground_truth_data, \
+    prepare_ground_truth_data_no_ai
+
+EXAMPLE_COUPON_FRAME = pd.DataFrame({
+    'discount_text': ['heh', 'hah', 'hoh'],
+    'time': ['1-1', '2-2', '3-3'],
+    'product_text': ['product1', 'product2', 'product3'],
+    'validity_text': ['valid1', 'valid2', 'valid3'],
+    "content_full": ["['bydle']", "['bydle']", "['bydle']"]
+})
+
+EXAMPLE_GTD_NEW_FORMAT = {
+    '1-1': [
+        {
+            'product_name': 'product1',
+            'valid_until': 'valid1',
+            'discount_text': 'heh'
+        },
+    ],
+    '2-2': [
+        {
+            'product_name': 'product2',
+            'valid_until': 'valid2',
+            'discount_text': 'hah'
+        },
+    ],
+    '3-3': [
+        {
+            'product_name': 'product3',
+            'valid_until': 'valid3',
+            'discount_text': 'hoh'
+        },
+    ]
+}
 
 
 class TestGroundTruthParser:
@@ -40,13 +73,7 @@ class TestGroundTruthParser:
             }
         ]
 
-        self.original_coupons = pd.DataFrame({
-            'discount_text': ['heh', 'hah', 'hoh'],
-            'prices': ['??', '???', '????'],
-            'time': ['1-1', '2-2', '3-3'],
-            'product_text': ['product1', 'product2', 'product3'],
-            'validity_text': ['valid1', 'valid2', 'valid3'],
-        })
+        self.original_coupons = EXAMPLE_COUPON_FRAME.copy()
 
         self.gtd_dict = {
             '1-1': [
@@ -90,3 +117,42 @@ class TestGroundTruthParser:
     def test_prepare_ground_truth_data_and_ground_truth_to_dict(self):
         res = prepare_ground_truth_data(self.discounts_list, self.original_coupons)
         assert res == self.gtd_dict
+
+    @pytest.mark.parametrize('frame,exp', [
+        (
+                EXAMPLE_COUPON_FRAME.copy(),
+                EXAMPLE_GTD_NEW_FORMAT
+        ),
+        (
+            pd.DataFrame({'discount_text': [], 'time': [], 'product_text': [], 'validity_text': [], "content_full": []}),
+            {}
+        ),
+        (
+            pd.DataFrame({
+                'discount_text': ['10zł', '2137gr', 'pół piwa'],
+                'product_text': ['apples', 'sword', 'piwo'],
+                'validity_text': ['N/A', 'N/A', '31.02.2025'],
+                'time': ['t0', 't0', 't0'],
+                'content_full': ["['bydle']", "['bydle']", "['bydle', 'dziekan]"]
+            }),
+            {'t0': [
+                {
+                    'product_name': 'apples',
+                    'valid_until': 'N/A',
+                    'discount_text': '10zł'
+                },
+                {
+                    'product_name': 'sword',
+                    'valid_until': 'N/A',
+                    'discount_text': '2137gr'
+                },
+                {
+                    'product_name': 'piwo',
+                    'valid_until': '31.02.2025',
+                    'discount_text': 'pół piwa'
+                }
+            ]}
+        )
+    ])
+    def test_prepare_ground_truth_data_no_ai(self, frame: pd.DataFrame, exp: dict):
+        assert prepare_ground_truth_data_no_ai(frame) == exp
