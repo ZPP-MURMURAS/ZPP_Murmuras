@@ -12,13 +12,13 @@ __DATA_COLLATOR = None
 __METRIC = None
 
 
-"""
-Function that is responsible for initializing the finetuner. It must be called before using the lib,
-otherwise an exception will be thrown.
-
-:param model_checkpoint: The model checkpoint that will be used for the fine-tuning
-"""
 def init_finetuner(model_checkpoint: str):
+    """
+    Function that is responsible for initializing the finetuner. It must be called before using the lib,
+    otherwise an exception will be thrown.
+
+    :param model_checkpoint: The model checkpoint that will be used for the fine-tuning
+    """
     global __MODEL_CHECKPOINT, __TOKENIZER, __DATA_COLLATOR, __METRIC
     __MODEL_CHECKPOINT = model_checkpoint
     __TOKENIZER = AutoTokenizer.from_pretrained(model_checkpoint)
@@ -26,25 +26,25 @@ def init_finetuner(model_checkpoint: str):
     __METRIC = evaluate.load("seqeval")
 
 
-"""
-Function used to check whether the init_finetuner function was called before training the model,
-and possibly, if is succeeded (e.g. tokenizer is not None).
-"""
 def __assert_init():
+    """
+    Function used to check whether the init_finetuner function was called before training the model,
+    and possibly, if is succeeded (e.g. tokenizer is not None).
+    """
     assert __MODEL_CHECKPOINT, "Model checkpoint is undefined. Please call init_finetuner before training the model"
     assert __TOKENIZER, "Tokenizer is undefined. Please call init_finetuner before training the model"
     assert __DATA_COLLATOR, "Data collator is undefined. Please call init_finetuner before training the model"
 
 
-"""
-For BERT finetuning, we need tokens to represent the beginning and the continuation of the entities.
-So, if the dataset does not provide this information, we need to create it.
-This function is responsible for converting labels from X to B-X and I-X format.
-
-:param tokens: The tokens that will be converted
-:return: The converted tokens
-"""
 def create_custom_tags(tokens: list) -> list:
+    """
+    For BERT finetuning, we need tokens to represent the beginning and the continuation of the entities.
+    So, if the dataset does not provide this information, we need to create it.
+    This function is responsible for converting labels from X to B-X and I-X format.
+
+    :param tokens: The tokens that will be converted
+    :return: The converted tokens
+    """
     custom_tokens = []
     for token in tokens:
         if token == "O" or token == "N/A":
@@ -55,16 +55,16 @@ def create_custom_tags(tokens: list) -> list:
     return custom_tokens
 
 
-"""
-Function that is responsible for aligning the labels with the tokens.
-This is necessary because the tokenizer splits the tokens into subtokens, and we need to align the labels with them.
-
-:param labels: The labels that will be aligned
-:param word_ids: The word ids of the tokens
-:param bi_split: Whether the labels are in B-X and I-X format
-:return: The aligned labels
-"""
 def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> list:
+    """
+    Function that is responsible for aligning the labels with the tokens.
+    This is necessary because the tokenizer splits the tokens into subtokens, and we need to align the labels with them.
+
+    :param labels: The labels that will be aligned
+    :param word_ids: The word ids of the tokens
+    :param bi_split: Whether the labels are in B-X and I-X format
+    :return: The aligned labels
+    """
     new_labels = []
     current_word = None
     for word_id in word_ids:
@@ -89,17 +89,17 @@ def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> 
     return new_labels
 
 
-"""
-Function that is responsible for tokenizing the inputs and aligning the labels with the tokens,
-using __align_labels_with_tokens function. This function is not intended to be used directly.
-
-param: input_column: The column that contains the inputs
-param: labels_column: The column that contains the labels
-param: bi_split: Whether the labels are in B-X and I-X format
-param: examples: dataset from which the input_column will be tokenized
-return: The tokenized inputs with aligned labels
-"""
 def __tokenize_and_align_labels(input_column: str, labels_column: str, bi_split: bool, examples: Dataset) -> Dataset:
+    """
+    Function that is responsible for tokenizing the inputs and aligning the labels with the tokens,
+    using __align_labels_with_tokens function. This function is not intended to be used directly.
+
+    param: input_column: The column that contains the inputs
+    param: labels_column: The column that contains the labels
+    param: bi_split: Whether the labels are in B-X and I-X format
+    param: examples: dataset from which the input_column will be tokenized
+    return: The tokenized inputs with aligned labels
+    """
     tokenized_inputs = __TOKENIZER(
         examples[input_column], truncation=True, is_split_into_words=True
     )
@@ -113,17 +113,17 @@ def __tokenize_and_align_labels(input_column: str, labels_column: str, bi_split:
     return tokenized_inputs
 
 
-"""
-Function that is responsible for tokenizing the inputs and aligning the labels with the tokens.
-Under the hood, it wraps __tokenize_and_align_labels function in something more user-friendly.
-
-:param dataset: The dataset that will be tokenized
-:param input_column: The column that contains the inputs to tokenize
-:param labels_column: The column that contains the labels to align
-:param bi_split: Whether the labels are in B-X and I-X format. Default is True
-:return: The tokenized dataset with aligned labels
-"""
 def tokenize_and_align_labels(dataset: Dataset, input_column: str, labels_column: str, bi_split: bool =True) -> Dataset:
+    """
+    Function that is responsible for tokenizing the inputs and aligning the labels with the tokens.
+    Under the hood, it wraps __tokenize_and_align_labels function in something more user-friendly.
+
+    :param dataset: The dataset that will be tokenized
+    :param input_column: The column that contains the inputs to tokenize
+    :param labels_column: The column that contains the labels to align
+    :param bi_split: Whether the labels are in B-X and I-X format. Default is True
+    :return: The tokenized dataset with aligned labels
+    """
     __assert_init()
     tokenized_dataset = dataset.map(
         partial(__tokenize_and_align_labels, input_column, labels_column, bi_split),
@@ -133,15 +133,15 @@ def tokenize_and_align_labels(dataset: Dataset, input_column: str, labels_column
     return tokenized_dataset
 
 
-"""
-Function that is responsible for computing the metrics of the model.
-
-:param custom_labels: The labels that will be used to compute the metrics. This is
-necessary in case that in the beginning labels were not in B-X and I-X format.
-:param eval_preds: The predictions that will be used to compute the metrics
-:return: The metrics of the model
-"""
 def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
+    """
+    Function that is responsible for computing the metrics of the model.
+
+    :param custom_labels: The labels that will be used to compute the metrics. This is
+    necessary in case that in the beginning labels were not in B-X and I-X format.
+    :param eval_preds: The predictions that will be used to compute the metrics
+    :return: The metrics of the model
+    """
     logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
 
@@ -160,17 +160,17 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     }
 
 
-"""
-Function that is responsible for training the model. It assumes that the dataset
-is already tokenized and aligned with the labels. It should contain
-train, validation and test splits. Otherwise an exception will be thrown.
-
-:param model: The model that will be trained (assumed BERT architexture)
-:param dataset: The dataset that contains the train, validation and test splits
-:param labels: The labels that will be used to compute the metrics
-:param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
-"""
 def train_model(model: callable, dataset: Dataset, labels: list, push_to_hub: bool=False):
+    """
+    Function that is responsible for training the model. It assumes that the dataset
+    is already tokenized and aligned with the labels. It should contain
+    train, validation and test splits. Otherwise, an exception will be thrown.
+
+    :param model: The model that will be trained (assumed BERT architexture)
+    :param dataset: The dataset that contains the train, validation and test splits
+    :param labels: The labels that will be used to compute the metrics
+    :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
+    """
     __assert_init()
     args = TrainingArguments(
         "zpp-murmuras/bert_multiling_cased_test_data_test_1",

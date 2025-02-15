@@ -9,7 +9,7 @@ import src.bert_finetuning.finetuner as ft
 MODEL_CHECKPOIT = "google-bert/bert-base-multilingual-cased"
 
 if __name__ == '__main__':
-    cspl = load_dataset('zpp-murmuras/coupon_select_plain_text', token=os.getenv('HF_HUB_KEY'))
+    cspl = load_dataset('zpp-murmuras/syf', token=os.getenv('HF_HUB_KEY'))
     labels_glob = cspl['train'].features['labels'].feature.names
     ft.init_finetuner(MODEL_CHECKPOIT)
 
