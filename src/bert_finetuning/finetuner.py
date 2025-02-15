@@ -140,6 +140,7 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     :param custom_labels: The labels that will be used to compute the metrics. This is
     necessary in case that in the beginning labels were not in B-X and I-X format.
     :param eval_preds: The predictions that will be used to compute the metrics
+
     :return: The metrics of the model
     """
     logits, labels = eval_preds
