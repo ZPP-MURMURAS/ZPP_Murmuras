@@ -5,8 +5,10 @@ import re
 import json
 import datasets
 import pandas as pd
+from datasets import DatasetDict, Dataset
 from huggingface_hub import login
 from huggingface_hub import HfApi
+from sklearn.model_selection import train_test_split
 
 # Constants
 TAG_B_COUPON = 'B-COUPON'  # begin coupon tag
@@ -300,18 +302,31 @@ def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, a
         "texts": datasets.Sequence(datasets.Value("string")),
         "labels": datasets.Sequence(LABELS)
     })
-    ds = datasets.Dataset.from_dict(
-        {
-            "texts": list(sample[0] for sample in samples),
-            "labels": list(sample[1] for sample in samples)
-        },
-        features=features
+    # Convert samples into a dictionary
+    texts = [sample[0] for sample in samples]
+    labels = [sample[1] for sample in samples]
+
+    # Initial train/test split (80% train, 20% temp)
+    train_texts, temp_texts, train_labels, temp_labels = train_test_split(
+        texts, labels, test_size=0.2, random_state=42
     )
+
+    # Split temp set into validation (10%) and test (10%)
+    val_texts, test_texts, val_labels, test_labels = train_test_split(
+        temp_texts, temp_labels, test_size=0.5, random_state=42
+    )
+
+    # Create Dataset objects
+    dataset_dict = DatasetDict({
+        "train": Dataset.from_dict({"texts": train_texts, "labels": train_labels}, features=features),
+        "validation": Dataset.from_dict({"texts": val_texts, "labels": val_labels}, features=features),
+        "test": Dataset.from_dict({"texts": test_texts, "labels": test_labels}, features=features)
+    })
     login(token=apikey)
     api = HfApi()
     api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
 
-    ds.push_to_hub(save_name, private=True)
+    dataset_dict.push_to_hub(save_name, private=True)
 
 
 def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: pd.DataFrame, json_output: bool) \
@@ -370,6 +385,7 @@ if __name__ == '__main__':
 
     examples = []
     for fmt, (content, coupons) in zip(formats, frame_pairs):
+        print('y')
         content_frame = pd.read_csv(content)
         coupons_frame = pd.read_csv(coupons)
         examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
