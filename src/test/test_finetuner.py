@@ -1,6 +1,6 @@
 import pytest
 from src.bert_finetuning.finetuner import __assert_init as ft__assert_init \
-    , create_custom_tags, __align_labels_with_tokens as ft__align_labels_with_tokens, init_finetuner
+    , create_custom_tags, __align_labels_with_tokens as ft__align_labels_with_tokens
 
 
 class TestFinetuner:

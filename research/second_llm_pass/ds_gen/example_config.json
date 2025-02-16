@@ -9,7 +9,12 @@
       "content": "/home/gustaw/Desktop/ZPP_Murmuras/datasets/coupons_1/rossmann/Kopia test_data_2024_03_07_rossmann_content_generic_2024-12-05T10_24_07.981399375+01_00.csv",
       "coupons": "/home/gustaw/Desktop/ZPP_Murmuras/datasets/coupons_1/rossmann/Kopia test_data_2024_03_07_rossmann_coupons_2024-12-05T10_24_55.372924301+01_00.csv",
       "format": 1
+    },
+    {
+      "content": "/home/gustaw/Desktop/ZPP_Murmuras/datasets/coupons big/DM/dm_content_generic_complete_from_2024.csv",
+      "coupons": "/home/gustaw/Desktop/ZPP_Murmuras/datasets/coupons big/DM/coupons_dm.csv",
+      "format": 2
     }
   ],
-  "json_format": false
+  "json_format": true
 }

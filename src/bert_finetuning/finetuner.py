@@ -25,6 +25,19 @@ def init_finetuner(model_checkpoint: str):
     __DATA_COLLATOR = DataCollatorForTokenClassification(tokenizer=__TOKENIZER)
     __METRIC = evaluate.load("seqeval")
 
+def two_way_id2label(labels: list) -> tuple:
+    """
+    Function that is responsible for creating a two-way mapping between labels and their ids.
+    It is useful when we need to create a model, and we need to pass id2label and label2id mappings.
+    This function does need the lib to be initialized.
+
+    :param labels: The labels that will be used to create the mappings
+    :return: The two-way mapping between labels and their ids
+    """
+    id2label = {i: label for i, label in enumerate(labels)}
+    label2id = {v: k for k, v in id2label.items()}
+    return id2label, label2id
+
 
 def __assert_init():
     """

@@ -294,7 +294,7 @@ def json_to_labeled_tokens(data: List[TreeNode], indent: Optional[int] = None) -
     return res
 
 
-def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str) -> None:
+def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str, new_repo: bool) -> None:
     """
     Creates dataset out of list of pairs of words and labels and pushes it to HF Hub.
     """
@@ -323,8 +323,9 @@ def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, a
         "test": Dataset.from_dict({"texts": test_texts, "labels": test_labels}, features=features)
     })
     login(token=apikey)
-    api = HfApi()
-    api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
+    if new_repo:
+        api = HfApi()
+        api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
 
     dataset_dict.push_to_hub(save_name, private=True)
 
@@ -369,9 +370,13 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
 
 if __name__ == '__main__':
     HF_HUB_KEY = getenv('HF_HUB_KEY')
-    assert len(sys.argv) == 3, f"usage: {sys.argv[0]} <config_path> <ds_name>"
+    assert len(sys.argv) == 4, f"usage: {sys.argv[0]} <config_path> <ds_name> <create_repo: y/n>"
     config_path = sys.argv[1]
     ds_name = sys.argv[2]
+    create_repo = sys.argv[3]
+    if (create_repo != 'y') and (create_repo != 'n'):
+        print("create_repo must be either 'y' or 'n'")
+        exit(1)
     config = json.load(open(config_path))
     try:
         frame_pairs = list([(entry['content'], entry['coupons']) for entry in config['frames']])
@@ -385,9 +390,8 @@ if __name__ == '__main__':
 
     examples = []
     for fmt, (content, coupons) in zip(formats, frame_pairs):
-        print('y')
         content_frame = pd.read_csv(content)
         coupons_frame = pd.read_csv(coupons)
         examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
 
-    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY)
+    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')

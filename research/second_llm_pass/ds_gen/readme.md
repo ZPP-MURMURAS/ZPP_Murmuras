@@ -3,9 +3,10 @@ This directory contains a script that can be used for creating and publishing da
 The script works on a pair of a coupon frame and a content frame. It finds coupons from the first file in the second file.<br/>
 Running the script:<br/>
 ```bash
-python generate_coupon_selection_ds.py <config_path> <ds_name>
+python generate_coupon_selection_ds.py <config_path> <ds_name> <create_repo>
 ```
-Where `config_path` is a path to the configuration file in format demonstrated by `example_config.json` file. <br/>
+Where `config_path` is a path to the configuration file in format demonstrated by `example_config.json` file, and
+create_repo is either 'y' or 'n'; it is used to mark whetver the dataset is being pushed to an existing or new repo. <br/>
 To run the script `HF_HUB_KEY` env variable is expected to be set to your access key to hf hub.
 ## Dataset Format
 The dataset contains a list of pairs of word sequences and labels:
