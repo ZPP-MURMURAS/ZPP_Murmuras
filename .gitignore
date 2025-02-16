@@ -190,6 +190,17 @@ fabric.properties
 
 # datasets
 datasets/**
+llama_finetuning/datasets/**
+llama_finetuning/datasets
 
 # google drive credentials
 tools/gdrive_credentials.json
+
+# jsons with data
+*.json
+
+# env file/s
+*.env
+
+#  csv files
+*.csv
