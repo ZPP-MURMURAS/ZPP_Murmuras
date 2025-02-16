@@ -19,7 +19,7 @@
 \section*{Introduction}
 The goal of this project is to develop a universal solution for processing phone screen content, such as social media posts and online advertisements. Additionally, all processing must occur locally on the user's device to protect sensitive data.\\
 
-This project is being developed at the request of \textbf{Murmuras}, a company specializing in providing analytical data for both commercial and scientific purposes.\\
+This project is being developed at the request of \textbf{Murmuras}\cite{murmuras}, a company specializing in providing analytical data for both commercial and scientific purposes.\\
 
 While the proposed method is expected to be applicable across various domains, our work focuses on the task of gathering discount coupons.\\
 
@@ -33,15 +33,13 @@ To the best of our knowledge, no publicly available solutions directly address o
 
 A notable drawback of the language models used in these approaches is their extremely large number of parameters. For instance, GPT-3 has 175 billion parameters \cite{brown2020languagemodelsfewshotlearners}, making it challenging to implement on resource-constrained devices.
 
+On the other hand, there are Computer Vision models that focus on extracting text and bounding boxes from user screen images. Microsoft's OmniParser \cite{lu2024omniparserpurevisionbased} appears to perform very well in this regard, but its output would still require preprocessing solutions similar to those we are investigating. Furthermore, based on our experiments running OmniParser locally, it appears that it requires CUDA technology for execution, which makes it unsuitable for deployment on mobile devices.
+
 
 \section*{Murmuras' Solution}
 The existing prototype developed by Murmuras processes data in CSV format, which describes the screen's content. This data undergoes basic preprocessing, such as the removal of empty columns, before being converted into JSON format using ChatGPT-4 mini.
 
-However, this solution has two major limitations. First, it does not run locally on mobile devices, as the model is not available for on-device execution. Second, the data is often misinterpreted—for example, volume may be mistakenly treated as the product's price.
-
-
-\subsection*{Development Opportunities}
-In theory, these problems can be addressed. Python modules such as \textit{outlines} \cite{willard2023efficient} and \textit{LangChain} \cite{Chase_LangChain_2022} allow for enforcing structured output in language models. The former is compatible with models from \textit{HuggingFace}. Combined with mobile model deployment tools like Llama.cpp \cite{llamacpp}, this would enable local inference on mobile devices.
+However, this solution has two major limitations. First, it involves sending data to the remote model, which generates issues both with privacy and costs related to usage of cloud-deployed models. Second, the data is often misinterpreted—for example, volume may be mistakenly treated as the product's price.
 
 \section*{Specification of the Completed Project}
 The core objective of this project is to design and implement a functional solution capable of extracting discount coupons from a diverse range of mobile application data. While deploying the solution as a mobile application on an Android smartphone is optional, we require our approach to be theoretically feasible for such deployment. Additionally, our solution is expected to be generalizable to a broader range of problems, as outlined above. We will provide documentation to facilitate this generalization.
@@ -54,7 +52,7 @@ The core objective of this project is to design and implement a functional solut
 Modern LLMs and data preprocessing algorithms often demand substantial computational resources \cite{LLMmobile2024}. At the same time, we aim for all processing to be performed locally on the mobile device. The challenge lies in selecting a model that is not overly resource-intensive yet remains effective for our use case. To ensure compatibility with most modern smartphones, we aim to use a model with no more than 1 billion trainable parameters \cite{li2025palmbenchcomprehensivebenchmarkcompressed}.
 
 \subsubsection*{Disk Storage}
-The application will require several gigabytes of disk space \cite{llama32-1b-size}, as the model weights will be stored locally. However, we anticipate this will not be an issue for users, given the company's business model, where users are incentivized to install the data-gathering application on their phones.
+The application will require several gigabytes of disk space \cite{llama32-1b-size}, as the model weights will be stored locally. However, we anticipate this will not be an issue for users, given the company's business model, where users are monetarily compensated for installing the data-gathering application on their phones.
 
 
 \subsection*{Benchmarking}
