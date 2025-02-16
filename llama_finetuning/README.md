@@ -15,6 +15,10 @@ Because of that, the fine-tuning code itself does not need any requirements.
 First of all, you need to create a Wandb account for logging the results. Then, you need to specify the following environment variables:
 - `WANDB_API_KEY`: set it inside the bash script
 - `HUGGING_FACE_TOKEN`: set it inside the bash script
+- `TIMEOUT`: timeout (in seconds) for modal call
+- `DATASET_NAME`: dataset from hf to use
+- `WANDB_PROJECT`: name of the wandb project that will gather training metrics
+- `EPOCH_NO`: (optional, default 25), number of epochs
 ## Note on training params:
 ### lr_scheduler
 One of:
