@@ -12,8 +12,7 @@ if __name__ == '__main__':
 
     tokenized_dataset = ft.tokenize_and_align_labels(raw_dataset, "tokens", "ner_tags", bi_split=False)
 
-    id2label = {i: label for i, label in enumerate(custom_labels)}
-    label2id = {v: k for k, v in id2label.items()}
+    id2label, label2id = ft.two_way_id2label(custom_labels)
 
     model = AutoModelForTokenClassification.from_pretrained(
         model_checkpoint,
