@@ -20,5 +20,5 @@ if __name__ == '__main__':
         label2id=label2id,
     )
 
-    ft.train_model(model, tokenized_dataset, custom_labels)
+    ft.train_model(model, tokenized_dataset, custom_labels, 'test')
 

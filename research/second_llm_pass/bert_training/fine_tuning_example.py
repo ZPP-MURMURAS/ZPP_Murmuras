@@ -34,4 +34,4 @@ if __name__ == '__main__':
         label2id=label2id_json,
     )
 
-    ft.train_model(model_json, tokenized_dataset_json, labels_pl)
+    #ft.train_model(model_json, tokenized_dataset_json, labels_pl)

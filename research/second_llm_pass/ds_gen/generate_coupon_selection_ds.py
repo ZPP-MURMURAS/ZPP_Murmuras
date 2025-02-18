@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 # Constants
 TAG_B_COUPON = 'B-COUPON'  # begin coupon tag
 TAG_I_COUPON = 'I-COUPON'  # inside coupon tag
-TAG_UNKNOWN = 'UNKNOWN'  # not-a-coupon tag
+TAG_UNKNOWN = 'O'  # not-a-coupon tag
 
 COL_TEXT_FULL = 'content_full'  # column from coupons frame with full coupon text
 COL_CONTENT_TEXT = 'text'  # column from content_generic file containing text
