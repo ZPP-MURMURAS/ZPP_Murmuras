@@ -26,7 +26,7 @@ if __name__ == '__main__':
         label2id=label2id_pl,
     )
 
-    #ft.train_model(model_pl, tokenized_dataset_pl, labels_pl)
+    ft.train_model(model_pl, tokenized_dataset_pl, labels_pl)
 
     model_json = AutoModelForTokenClassification.from_pretrained(
         MODEL_CHECKPOIT,

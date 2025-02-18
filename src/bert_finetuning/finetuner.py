@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, DataCollatorForTokenClassification, Auto
 import numpy as np
 import evaluate
 from functools import partial
+import wandb
 
 
 __MODEL_CHECKPOINT = ""
@@ -165,7 +166,8 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
         [custom_labels[p] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
-    all_metrics = __METRIC.compute(predictions=true_predictions, references=true_labels)
+    # https://stackoverflow.com/questions/43162506/undefinedmetricwarning-f-score-is-ill-defined-and-being-set-to-0-0-in-labels-wi
+    all_metrics = __METRIC.compute(predictions=true_predictions, references=true_labels, zero_division=0)
     return {
         "precision": all_metrics["overall_precision"],
         "recall": all_metrics["overall_recall"],
@@ -174,7 +176,7 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     }
 
 
-def train_model(model: callable, dataset: Dataset, labels: list, push_to_hub: bool=False):
+def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False):
     """
     Function that is responsible for training the model. It assumes that the dataset
     is already tokenized and aligned with the labels. It should contain
@@ -183,17 +185,35 @@ def train_model(model: callable, dataset: Dataset, labels: list, push_to_hub: bo
     :param model: The model that will be trained (assumed BERT architexture)
     :param dataset: The dataset that contains the train, validation and test splits
     :param labels: The labels that will be used to compute the metrics
+    :param run_name: The name of the run
     :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
+    :param wandb_log: Whether the model should be logged to wandb. Default is False
     """
     __assert_init()
+
+    if wandb_log:
+        wandb.init(
+            project="bert-multiling-training",
+            name="bert-finetuning-" + run_name,
+            config={
+                "learning_rate": 2e-5,
+                "epochs": 3,
+                "weight_decay": 0.01,
+                "model_name": "bert_multiling_cased",
+            }
+        )
+
     args = TrainingArguments(
-        "zpp-murmuras/bert_multiling_cased_test_data_test_1",
+        "zpp-murmuras/bert",
         evaluation_strategy="epoch",
         save_strategy="epoch",
         learning_rate=2e-5,
         num_train_epochs=3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
+        logging_dir="./logs",  # Directory for logs
+        logging_steps=10,  # Log every 10 steps
+        report_to=["wandb"] if wandb_log else ["none"],  # Enable wandb logging
     )
 
     trainer = Trainer(
@@ -205,7 +225,14 @@ def train_model(model: callable, dataset: Dataset, labels: list, push_to_hub: bo
         compute_metrics=partial(__compute_metrics, labels),
         tokenizer=__TOKENIZER,
     )
+
     trainer.train()
-    trainer.evaluate(dataset["test"])
+    eval_results = trainer.evaluate(dataset["test"])
+
+    if wandb_log:
+        wandb.log(eval_results)  # Log final evaluation metrics
+        wandb.finish()
+
+    # Left for historic purposes
     if push_to_hub:
         trainer.push_to_hub("Training completed")
