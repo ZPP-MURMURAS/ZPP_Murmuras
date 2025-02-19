@@ -6,7 +6,7 @@ import finetuner as ft
 import os
 
 app = modal.App("BERT-fine-tuning")
-MODEL_CHECKPOIT = "google-bert/bert-base-multilingual-cased"
+MODEL_CHECKPOINT = "google-bert/bert-base-multilingual-cased"
 
 finetune_image = (
     modal.Image.debian_slim(python_version="3.10")
@@ -36,7 +36,7 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
     id2label, label2id = ft.two_way_id2label(labels)
 
     model = AutoModelForTokenClassification.from_pretrained(
-        MODEL_CHECKPOIT,
+        MODEL_CHECKPOINT,
         id2label=id2label,
         label2id=label2id,
     )
@@ -45,7 +45,7 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
     if push_to_hub:
         model_repo = 'zpp-murmuras/bert_' + dataset_name
         model.push_to_hub(model_repo, token=hf_token)
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_CHECKPOIT)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_CHECKPOINT)
         tokenizer.push_to_hub(model_repo, token=hf_token)
 
 
