@@ -1,6 +1,5 @@
 from datasets import Dataset
-from transformers import AutoTokenizer, DataCollatorForTokenClassification, AutoModelForTokenClassification, \
-    TrainingArguments, Trainer
+from transformers import AutoTokenizer, DataCollatorForTokenClassification, TrainingArguments, Trainer
 import numpy as np
 import evaluate
 from functools import partial

@@ -1,6 +1,6 @@
 import os
 
-from datasets import Dataset, load_dataset
+from datasets import load_dataset
 from transformers import AutoModelForTokenClassification
 
 import src.bert_finetuning.finetuner as ft
