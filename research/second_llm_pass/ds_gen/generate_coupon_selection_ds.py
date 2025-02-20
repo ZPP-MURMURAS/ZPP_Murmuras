@@ -95,7 +95,7 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
     text_col = content_frame[COL_CONTENT_TEXT]
     while ix < len(text_col):
         text = text_col[ix]
-        if not text == float('nan'):
+        if text == float('nan'):
             ix += 1
             continue
         else:
