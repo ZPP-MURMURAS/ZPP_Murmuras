@@ -33,18 +33,18 @@ See [here](https://github.com/ggerganov/llama.cpp/blob/master/examples/quantize/
 | Generation Speed (tokens/second)  | 5.31 ± 0.18 | 5.64 ± 0.12  |
 
 # ExecuTorch Quantization Results
-|                                   | SpinQuant    | QAT+LoRA     |
-|-----------------------------------|--------------|--------------|
-| Total Speed (tokens/second)       | 15.12 ± 0.82 | 15.03 ± 0.46 |
-| Prompt Eval Speed (tokens/second) | 57.72 ± 0.66 | 54.48 ± 1.02 |
-| Generation Speed (tokens/second)  | 15.42 ± 0.87 | 15.34 ± 0.48 |
+|                                   | Baseline    | SpinQuant    | QAT+LoRA     |
+|-----------------------------------|-------------|--------------|--------------|
+| Total Speed (tokens/second)       | 4.48 ± 0.11 | 15.12 ± 0.82 | 15.03 ± 0.46 |
+| Prompt Eval Speed (tokens/second) | 7.14 ± 0.31 | 57.72 ± 0.66 | 54.48 ± 1.02 |
+| Generation Speed (tokens/second)  | 5.31 ± 0.18 | 15.42 ± 0.87 | 15.34 ± 0.48 |
 
 # Llama.cpp Quantization Results
-|                                   | Q8\_0       | Q4\_0        |
-|-----------------------------------|-------------|--------------|
-| Total Speed (tokens/second)       | 7.55 ± 0.23 | 10.69 ± 0.06 |
-| Prompt Eval Speed (tokens/second) | 9.83 ± 0.21 | 31.52 ± 0.67 |
-| Generation Speed (tokens/second)  | 9.45 ± 0.34 | 11.58 ± 0.08 |
+|                                   | Baseline     | Q8\_0       | Q4\_0        |
+|-----------------------------------|--------------|-------------|--------------|
+| Total Speed (tokens/second)       | 5.45 ± 0.14  | 7.55 ± 0.23 | 10.69 ± 0.06 |
+| Prompt Eval Speed (tokens/second) | 28.47 ± 4.29 | 9.83 ± 0.21 | 31.52 ± 0.67 |
+| Generation Speed (tokens/second)  | 5.64 ± 0.12  | 9.45 ± 0.34 | 11.58 ± 0.08 |
 
 # Conclusions
 Llama.cpp seems to outperform ExecuTorch. Properly evalueting quantizations would require model accuracy data.
