@@ -14,7 +14,7 @@
 
 % dodaj opcję [licencjacka] dla pracy licencjackiej
 % dodaj opcję [en] dla wersji angielskiej (mogą być obie: [licencjacka,en])
-\documentclass[licencjacka,en]{docs/pracamgr}
+\documentclass[licencjacka,en]{pracamgr}
 \usepackage{hyperref}  % Enables clickable links
 \usepackage{xcolor}    % Allows hyperlink color customization
 
@@ -23,8 +23,6 @@
     colorlinks=false,
     urlcolor=blue
 }
-
-
 
 % Dane magistranta:
 \autori{Szymon Kozłowski}{448304}
@@ -36,9 +34,7 @@
 \title{Innovative methods of processing data coming from mobile devices for market and scientific research}
 
 \tytulang{Innovative methods of processing data coming from mobile devices for market and scientific research}
-
-
-%\tytulang{An implementation of a difference blabalizer based on the theory of $\sigma$ -- $\rho$ phetors}
+\titlepl{Innowacyjne metody przetwarzania danych pochodzących z urządzeń mobilnych na potrzeby badań rynkowych i naukowych}
 
 %kierunek: 
 % - matematyka, informacyka, ...
@@ -82,7 +78,7 @@
 }
 
 %Klasyfikacja tematyczna wedlug AMS (matematyka) lub ACM (informatyka)
-\klasyfikacja{\\
+\klasyfikacja{
   I.2.7: Natural Language Processing\\
   H.3.3: Information Search and Retrieval}
 
@@ -99,12 +95,8 @@
 \maketitle
 
 %tu idzie streszczenie na strone poczatkowa
-\begin{abstract}
-    This project aims to develop a solution for processing phone screen content, including social media posts and website advertisements, while ensuring all processing occurs locally on the user's device to protect sensitive data. It was commissioned by Murmuras, a company specializing in gathering data for commercial and scientific analysis~\cite{murmuras}.
-    
-    With new applications emerging and existing ones evolving rapidly, conventional web scraping techniques struggle to maintain a reliable data delivery pipeline. Our approach leverages Large Language Models (LLMs) to address this challenge effectively.
-
-    Our primary focus is discount coupon extraction, nevertheless our solution is designed to be easily generalizable to other use cases, such as analyzing users' political views.
+\begin{abstract} 
+In an era of rapidly evolving digital applications, traditional scraping techniques face increasing challenges in maintaining reliable data collection pipelines. Commissioned by Murmuras, a company specializing in commercial and scientific data analysis \cite{murmuras}, this project presents a novel approach to processing phone screen content, such as social media posts and website advertisements. Our solution leverages Large Language Models (LLMs) running locally on the user's device to handle diverse data formats while ensuring that sensitive information remains protected. The primary application explored in this study is the extraction of discount coupons, demonstrating the feasibility of our method in identifying and structuring valuable content from varying digital sources. Furthermore, the system is designed to be easily adaptable to other use cases, such as analyzing users' political views. The results highlight the potential of LLM-driven content analysis as an alternative to conventional scraping techniques. 
 \end{abstract}
 
 \tableofcontents
@@ -113,16 +105,16 @@
 
 \chapter{Introduction}
 \section{Project background and motivation}
-With the rapid advancement of information technology, the internet has become one of the most crucial facets for many businesses to perform marketing activities~\cite{design_of_coupons}. One of the key marketing tools in business-to-consumer (B2C) e-commerce is the digital coupon (also referred to as an electronic coupon)~\cite{targeted_reminders}. In comparison to paper coupons, digital coupons are characterized by their wide reach, rapid distribution, and low spread costs. Furthermore, a key advantage of digital coupons is their ability to facilitate targeted marketing by offering personalized discounts to different customers, thereby increasing sales~\cite{design_of_coupons}. To maximize the benefits of digital coupons, it is essential for businesses to assess the effectiveness of their coupon campaigns, evaluate their reach, and analyze their competitors’ strategies. By tracking key performance metrics such as redemption rates, customer engagement, and sales impact, businesses can refine their marketing approaches to optimize results. Additionally, studying competitors' digital coupon strategies enables businesses to identify market trends, adjust their promotional tactics, and maintain a competitive edge in the evolving digital marketplace.
+With the rapid advancement of information technology, the internet has become one of the most crucial facets for many businesses to perform marketing activities \cite{design_of_coupons}. One of the key marketing tools in business-to-consumer (B2C) e-commerce is the digital coupon (also referred to as an electronic coupon) \cite{targeted_reminders}. In comparison to paper coupons, digital coupons are characterized by their wide reach, rapid distribution, and low spread costs. Furthermore, a key advantage of digital coupons is their ability to facilitate targeted marketing by offering personalized discounts to different customers, thereby increasing sales \cite{design_of_coupons}. To maximize the benefits of digital coupons, it is essential for businesses to assess the effectiveness of their coupon campaigns, evaluate their reach, and analyze their competitors’ strategies. By tracking key performance metrics such as redemption rates, customer engagement, and sales impact, businesses can refine their marketing approaches to optimize results. Additionally, studying competitors' digital coupon strategies enables businesses to identify market trends, adjust their promotional tactics, and maintain a competitive edge in the evolving digital marketplace. 
 
-Machine learning has rapidly become a central focus in computer science research, offering powerful capabilities in pattern recognition and information extraction from unstructured data. This advancement has led to the development of models that can learn relevant features from large datasets, reducing reliance on heuristic-based algorithms that require extensive parameter tuning and handcrafted rules. Such models are particularly effective in handling the variability inherent in real-world data~\cite{ml_general}, including diverse coupon designs.
+Machine learning has rapidly become a central focus in computer science research, offering powerful capabilities in pattern recognition and information extraction from unstructured data. This advancement has led to the development of models that can learn relevant features from large datasets, reducing reliance on heuristic-based algorithms that require extensive parameter tuning and handcrafted rules. Such models are particularly effective in handling the variability inherent in real-world data \cite{ml_general}, including diverse coupon designs.
 
-Recent statistics underscore the significance of mobile devices in this domain. For example, studies have shown that over 90\% of digital coupon users access their vouchers via smartphones~\cite{emarketer_coupon_stats}, and similar figures are reported by other industry sources~\cite{coupon_stats_2}. This high rate of mobile usage creates a pressing need for coupon analysis tools that are optimized for mobile platforms, ensuring that consumers receive timely and personalized offers regardless of their location or device.
+Recent statistics underscore the significance of mobile devices in this domain. For example, studies have shown that over 90\% of digital coupon users access their vouchers via smartphones \cite{emarketer_coupon_stats}, and similar figures are reported by other industry sources \cite{coupon_stats_2}. This high rate of mobile usage creates a pressing need for coupon analysis tools that are optimized for mobile platforms, ensuring that consumers receive timely and personalized offers regardless of their location or device.
 
 In light of these trends, the company Murmuras has tasked us with developing a machine learning model that can be deployed as a mobile application. This model will process input representing the user's onscreen view and extract digital coupons along with their relevant data. This solution must be capable of running locally on the device, ensuring efficient processing without relying on external servers. By leveraging advanced machine learning techniques, the app will handle the diverse formats and layouts of digital coupons, thereby facilitating the collection of data regarding coupons.
 
 \section{The definition of a coupon} 
-A coupon is a physical piece of paper or digital voucher that can be redeemed for a financial discount when purchasing a product~\cite{coupon_definition}. A coupon is characterized by a name, expiration date, and a discount type (e.g. \'20\% off\', \'buy 1 get 1 free\', etc.), however, not every coupon contains each of these features. Furthermore, coupons may contain numerous other features such as images and eligibility requirements. Henceforth, the term \'coupon\' will refer exclusively to a digital coupon.
+A coupon is a physical piece of paper or digital voucher that can be redeemed for a financial discount when purchasing a product \cite{coupon_definition}. A coupon is characterized by a name, expiration date, and a discount type (e.g. '20\% off', 'buy 1 get 1 free', etc.), however, not every coupon contains each of these features. Furthermore, coupons may contain numerous other features such as images and eligibility requirements. Henceforth, the term 'coupon' will refer exclusively to a digital coupon.
 
 \section{Project goals}
 \begin{enumerate}
@@ -139,7 +131,7 @@ A coupon is a physical piece of paper or digital voucher that can be redeemed fo
 Our solution will aid businesses in analyzing consumer behaviour and optimizing their marketing strategies accordingly. By facilitating the collection of data on coupon characteristics and their redemption rates, businesses will be able to assess the effectiveness of their coupon campaigns—determining whether they reach the intended audience and achieve the desired results. Additionally, large-scale analysis of coupon data can reveal valuable insights into purchasing patterns, preferred discount types, and the most appealing products or services for different customer segments. With this information, businesses can refine their promotional strategies, tailor offers to specific demographics, and enhance overall customer engagement.
 
 \subsection{Market analysis and competitor monitoring}
-The aforementioned gathering of data can also be utilized to monitor competitors' coupon strategies, their effectiveness, and whether they provide better discounts. Using machine learning to identify and analyze competitors' strategies is more cost-effective compared to exhaustive web scraping or mystery shopping~\cite{competitor_tariffs}. This will enable businesses to make better-informed decisions about their own marketing campaigns and provide a comprehensive understanding of the competitive landscape.
+The aforementioned gathering of data can also be utilized to monitor competitors' coupon strategies, their effectiveness, and whether they provide better discounts. Using machine learning to identify and analyze competitors' strategies is more cost-effective compared to exhaustive web scraping or mystery shopping \cite{competitor_tariffs}. This will enable businesses to make better-informed decisions about their own marketing campaigns and provide a comprehensive understanding of the competitive landscape.
 
 
 \chapter{Machine learning and the dangers associated with it}
@@ -150,7 +142,7 @@ Note: this chapter is a work in progress, bullet points aim to provide guidance 
 (1b) Explain what a benchmark is and what it is used for. \\
 
 \subsection{Benchmark}
-Benchmarking is the process of running a set of, among others, computer programs against a set of tests to assess their relative performance or precision~\cite{benchmark}.
+Benchmarking is the process of running a set of, among others, computer programs against a set of tests to assess their relative performance or precision \cite{benchmark}.
 
 (2) Understanding ML models \\
 (2a) Explain what a model is \\
@@ -172,22 +164,26 @@ Benchmarking is the process of running a set of, among others, computer programs
 
 
 \chapter{Overview of the existing solutions}
-To our knowledge, as of writing this thesis, there are no publicly available solutions that directly address this problem. The most comparable approaches involve existing multimodal models. While widely used models like ChatGPT and Gemini offer some relevant capabilities, they are not highly precise for this specific task. A major limitation of such models is their large size—for instance, GPT-3 has 175 billion parameters~\cite{chatgpt_params}—making them impractical for mobile deployment.
+To our knowledge, as of writing this thesis, there are no publicly available solutions that directly address this problem. The most comparable approaches involve existing multimodal models. While widely used models like ChatGPT and Gemini offer some relevant capabilities, they are not highly precise for this specific task. A major limitation of such models is their large size—for instance, GPT-3 has 175 billion parameters\cite{chatgpt_params}—making them impractical for mobile deployment \cite{LinguaLinked}.
 
-Alternatively, Computer Vision models exist for extracting text and bounding boxes from screen images. Microsoft’s OmniParser~\cite{omniparser_intro}, for example, performs well in this area but still requires preprocessing similar to our approach. Moreover, our experiments running OmniParser locally indicate that it depends on CUDA technology, making it unsuitable for mobile deployment.
+Alternatively, Computer Vision models exist for extracting text and bounding boxes from screen images. Microsoft’s OmniParser \cite{omniparser_intro}, for example, performs well in this area but still requires preprocessing similar to our approach. Moreover, our experiments running OmniParser locally indicate that it depends on CUDA technology, making it unsuitable for mobile deployment \cite{OUR EXPERIMENTS???}.
 
 
 
 \section{Murmuras' existing solution} 
-Murmuras’ current solution involves basic preprocessing of the extracted data before sending it to GPT-4o-mini for further processing. his approach leverages an LLM to interpret the data to extract relevant coupon details. However, the reliance on an external server means the solution does not run locally on the mobile device, leading to potential privacy concerns, latency issues, and a dependence on internet connectivity. 
+Murmuras' current approach relies on fixed scripts tailored to specific applications, making it inflexible and difficult to generalize across diverse coupon formats. This lack of adaptability limits its usefulness in real-world scenarios where coupon structures vary widely. Since our goal is to develop a solution that is easily adaptable for processing diverse mobile content, this method is not well-suited for our needs.
 
-Additionally, the accuracy of this method is suboptimal. According to their own benchmarks, the average similarity ratio is only 56.49\%, indicating significant inconsistencies in the extracted data. Another limitation is that their approach relies on fixed scripts tailored to specific applications, making it inflexible and difficult to generalize across diverse coupon formats. This lack of adaptability limits its usefulness in real-world scenarios where coupon structures vary widely. Since our goal is to develop a solution that is easily adaptable for processing diverse mobile content, this method is not well-suited for our needs.
+In contrast, Murmuras' most-recent proof of concept involves basic preprocessing of the extracted data before sending it to GPT-4o-mini for further processing. This approach leverages an LLM to interpret the data to extract relevant coupon details. However, the reliance on an external server means the solution does not run locally on the mobile device, leading to potential privacy concerns, latency issues, and a dependence on internet connectivity. 
+
+Additionally, the accuracy of this method is suboptimal. According to their own benchmarks, the average similarity ratio is only 56.49\%, indicating significant inconsistencies in the extracted data. This benchmark measures the accuracy of extracted coupons by comparing them to expected ground-truth values across five key attributes: product name, discount percentage, old price, new price, and coupon validity.
+
+The evaluation process involves using difflib’s SequenceMatcher, a text similarity algorithm that computes the ratio of matching sequences between two strings \cite{sequence_matcher}. For each extracted coupon, the similarity scores of its five attributes are individually compared against the ground-truth values. The results are then averaged to generate an overall similarity percentage. A low similarity ratio indicates significant variations between the extracted and expected coupon details, highlighting challenges in precise text interpretation and extraction. 
 
 
 \section{Scapegraph AI}
-ScrapeGraphAI is an open-source Python library that streamlines data extraction from websites and local documents by utilizing LLMs and graph logic to construct efficient scraping pipelines. This approach automates data extraction, reducing the need for extensive manual coding. The library supports integration with various LLMs, including local models~\cite{scapegraph_intro}. For instance, users have configured ScrapeGraphAI to work with local models like those served through vLLM~\cite{gh_issue_810_scapegraph} or Ollama~\cite{gh_issue_752_scapegraph}.
+ScrapeGraphAI is an open-source Python library that streamlines data extraction from websites and local documents by utilizing LLMs and graph logic to construct efficient scraping pipelines. This approach automates data extraction, reducing the need for extensive manual coding. The library supports integration with various LLMs, including local models \cite{scapegraph_intro}. For instance, users have configured ScrapeGraphAI to work with local models like those served through vLLM \cite{gh_issue_810_scapegraph} or Ollama \cite{gh_issue_752_scapegraph}.
 
-However, this solution does not address the issue of deploying such models directly on mobile devices. This presents significant challenges since mobile devices typically have limited processing power and memory compared to desktop computers or servers~\cite{mobile_resources}.
+However, this solution does not address the issue of deploying such models directly on mobile devices. This presents significant challenges since mobile devices typically have limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}. 
 
 
 % \section{}
@@ -276,17 +272,26 @@ Satyam Tripathi
 parser for pure vision based gui agent, 2024.}
 
 \bibitem{gh_issue_810_scapegraph}
-\textit{Can not Set Model Tokens to Local Model with OpenAI API Format #810}
+\textit{Can not Set Model Tokens to Local Model with OpenAI API Format \#810}
 \url{https://github.com/ScrapeGraphAI/Scrapegraph-ai/issues/810}
 
 \bibitem{gh_issue_752_scapegraph}
-\textit{Can't load tokenizer for 'gpt2' #752}
+\textit{Can't load tokenizer for 'gpt2' \#752}
 \url{https://github.com/ScrapeGraphAI/Scrapegraph-ai/issues/752}
 
 \bibitem{mobile_resources}
 Xiang Li, et. al.
 \textit{Large Language Models on Mobile Devices: Measurements, Analysis, and Insights}
 \url{https://dl.acm.org/doi/10.1145/3662006.366205}
+
+\bibitem{LinguaLinked}
+Junchen Zhao, et. al.
+\textit{LinguaLinked: A Distributed Large Language Model Inference System for Mobile Devices}
+\url{https://arxiv.org/pdf/2312.00388}
+
+\bibitem{sequence_matcher}
+\textit{difflib — Helpers for computing deltas}
+\url{https://docs.python.org/3/library/difflib.html}
 
 \end{thebibliography}
 
