@@ -39,7 +39,7 @@ def ptree_insert(root: PTreeNode, path: List[str]):
     """
     if not path:
         return
-    if path[0] not in root:
+    if path[0] not in root[0]:
         root[0][path[0]] = ({}, len(path) == 1)
     ptree_insert(root[0][path[0]], path[1:])
 
@@ -85,7 +85,7 @@ def __construct_prefix_tree_for_coupon_frame(coupons_frame: pd.DataFrame, ds_for
 
 def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeNode) -> pd.DataFrame:
     """
-    Adds column to dataframe with is_coupon flag.
+    Adds column to dataframe with tokenization labels.
     This function is created to deal with coupon frames with no beginning indices provided and should be
     executed on input for single value of COL_GROUPBY.
     """
@@ -95,7 +95,7 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
     text_col = content_frame[COL_CONTENT_TEXT]
     while ix < len(text_col):
         text = text_col[ix]
-        if text == float('nan'):
+        if pd.isna(text):
             ix += 1
             continue
         else:
@@ -116,15 +116,31 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
                 if itr[2] - itr[1] + 1 > chosen_len:
                     chosen = itr
                     chosen_len = itr[2] - itr[1] + 1
-            is_coupon_array += [False] * (chosen[1] - len(is_coupon_array) - 1)
-            is_coupon_array += [True] * chosen_len
+            is_coupon_array += [LBL_UNK] * (chosen[1] - len(is_coupon_array))
+            is_coupon_array.append(LBL_BC)
+            is_coupon_array += [LBL_IC] * (chosen_len - 1)
             ptree_iters.clear()
             ix = chosen[2] + 1
             continue
         if text in coupons_ptree[0]:
             ptree_iters.append([coupons_ptree[0][text], ix, -1 if not coupons_ptree[0][text][1] else ix])
         ix += 1
-    is_coupon_array += [False] * (len(content_frame) - len(is_coupon_array))
+    # searching for possible coupons in running iterators
+    candidates = []
+    for itr in ptree_iters:
+        if itr[2] != -1:
+            candidates.append(itr)
+    if candidates:
+        chosen = None
+        chosen_len = 0
+        for itr in candidates:
+            if itr[2] - itr[1] + 1 > chosen_len:
+                chosen = itr
+                chosen_len = itr[2] - itr[1] + 1
+        is_coupon_array += [LBL_UNK] * (chosen[1] - len(is_coupon_array))
+        is_coupon_array.append(LBL_BC)
+        is_coupon_array += [LBL_IC] * (chosen_len - 1)
+    is_coupon_array += [LBL_UNK] * (len(content_frame) - len(is_coupon_array))
     new_content_frame = content_frame.copy()
     new_content_frame[__COL_IS_COUPON] = is_coupon_array
     return new_content_frame
@@ -192,9 +208,9 @@ def batch_to_json(batch: pd.DataFrame) -> TreeNode:
     for row in batch.iterrows():
         text_field = row[1][COL_CONTENT_TEXT]
         name = row[1][COL_VIEW_ID]
-        if name != float('nan'):
+        if pd.isna(name):
             name = str(name).rsplit('/')[-1]
-        if text_field == float('nan'):
+        if pd.isna(text_field):
             text_field = None
         else:
             text_field = str(text_field)
@@ -203,7 +219,7 @@ def batch_to_json(batch: pd.DataFrame) -> TreeNode:
             tree_path.pop(-1)
 
         __insert_to_json_tree(res, tree_path, name,
-                              {"text": text_field, "children": {}, "is_coupon": row[1][__COL_IS_COUPON]})
+                              {"text": text_field, "children": {}, "is_coupon": row[1][__COL_IS_COUPON] != LBL_UNK})
         tree_path.append((name, depth))
 
     return res
@@ -307,11 +323,20 @@ def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, a
         },
         features=features
     )
-    login(token=apikey)
-    api = HfApi()
-    api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
+    total = 0
+    nonzero = 0
+    total_with_coupon = 0
+    for sample in ds["labels"]:
+        total += len(sample)
+        nonzero += len(sample) - sample.count(LBL_UNK)
+        total_with_coupon += LBL_BC in sample
+    print(f'{nonzero}/{total}={nonzero/total}')
+    print(f'{total_with_coupon}/{len(ds)}={total_with_coupon/len(ds)}')
+    # login(token=apikey)
+    # api = HfApi()
+#     api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
 
-    ds.push_to_hub(save_name, private=True)
+#     ds.push_to_hub(save_name, private=True)
 
 
 def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: pd.DataFrame, json_output: bool) \
@@ -329,25 +354,24 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
             ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[COL_GROUPBY] == val], fmt)
             subframe = __clear_content_frame(subframe)
             subframe = annotate_frame_by_matches(subframe, ptree)
-            last_label = LBL_UNK
             labels = []
             words = []
             for i, row in subframe.iterrows():
                 text = row[COL_CONTENT_TEXT]
-                is_coupon = row[__COL_IS_COUPON]
-                if text == float('nan') or text == '':
+                is_coupon_lbl = row[__COL_IS_COUPON]
+                if pd.isna(text) or text == '':
                     continue
                 else:
                     text = str(text)
                 words.extend(text.split())
-                if not is_coupon:
+                if is_coupon_lbl == LBL_UNK:
                     labels += [LBL_UNK] * len(text.split())
                 else:
-                    if last_label != LBL_UNK:
-                        labels += [LBL_IC] * len(text.split())
+                    if is_coupon_lbl == LBL_BC:
+                        labels.append(LBL_BC)
                     else:
-                        labels += [LBL_BC] + [LBL_IC] * (len(text.split()) - 1)
-                last_label = labels[-1]
+                        labels.append(LBL_IC)
+                    labels.extend([LBL_IC] * (len(text.split()) - 1))
             samples.append((words, labels))
         return samples
 
