@@ -2,42 +2,15 @@ import numpy as np
 import argparse
 import subprocess
 import difflib as diff
-import os
-import re
 import json
+import os
+from typing import Optional, List
 import sys
-import shutil
-import csv
-from typing import Optional, List, Tuple
-from dataclasses import dataclass, field
 
-
-@dataclass()
-class Coupon:
-    """
-    Class representing data associated with a single coupon.
-    """
-    product_name: str
-    new_price: Optional[str] = None
-    old_price: Optional[str] = None
-    percents: List[str] = field(default_factory=list)
-    other_discounts: List[str] = field(default_factory=list)
-    dates: Optional[str] = None
-
-
-INCORRECT_DATASETS = [
-    "rewe",
-    "dm",
-]
-
-# Regex matches to different types of discounts
-PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%'
-PRICE_REGEX = r'\b\d+[.,]?\d*\b'
-
-# Column names for the expected coupons
-DISCOUNT_TEXT = 'discount_text'
-PRODUCT_TEXT = 'product_text'
-VALIDITY_TEXT = 'validity_text'
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
+from src.benchmark_utils.io_utils import get_default_datasets, validate_folders, Coupon, get_expected_coupons
+os.chdir(CURRENT_PATH)
 
 # Weights for each attribute of the coupon
 NAME_WEIGHT = 0.3
@@ -50,99 +23,25 @@ VALIDITY_WEIGHT = 0.1
 NEW_PRICE_WEIGHT = 0.5
 OLD_PRICE_WEIGHT = 0.5
 LENGTH_PENALTY = 0.2
-"""
-This function will extract the discounts from the text of the coupon and return
-them in a structured format. The discounts can be of different types: new price,
-old price, percentage, or other discounts. The function will return the new and
-old prices, the percentages, and the other discounts found in the text. Not all
-discounts are required to be present in the text. The function will return None 
-or an empty list if the discount is not found.
-:param discount_text: The text of the coupon
-:return: A tuple with the new price, old price, percentages, and other discounts
-"""
-
-
-def _get_discounts(
-        discount_text: str) -> Tuple[str, str, List[str], List[str]]:
-    new_price = None
-    old_price = None
-    percents = []
-    other_discounts = []
-
-    if discount_text is not None:
-        discounts_found = 0
-        if re.search(PRICE_REGEX, discount_text):
-            prices = re.findall(PRICE_REGEX, discount_text)
-            if len(prices) >= 2:
-                prices = sorted([float(price) for price in prices])
-                new_price = str(prices[0])
-                old_price = str(prices[-1])
-                discounts_found += 1
-
-        if re.search(PERCENT_REGEX, discount_text):
-            percents = re.findall(PERCENT_REGEX, discount_text)
-            discounts_found += 1
-
-        if discounts_found == 0:
-            other_discounts = [discount_text]
-
-    return new_price, old_price, percents, other_discounts
-
-
-"""
-This function will return a list of Coupon objects that represent the 
-expected coupons. This function is used to benchmark the pipeline.
-:param file_path: The path to the folder with the expected coupons in csv 
-                format (like in the Murmuras datasets)
-:return: A list of Coupon objects that represent the expected coupons
-"""
-
-
-def get_expected_coupons(file_path: Optional[str]) -> List[Coupon]:
-    # No file path provided
-    if file_path is None:
-        return []
-
-    expected_coupons = []
-
-    for file_name in os.listdir(file_path):
-        file_path_full = os.path.join(file_path, file_name)
-        if os.path.isfile(file_path_full):
-            with open(file_path_full, 'r') as file:
-                reader = csv.DictReader(file)
-
-                for row in reader:
-                    new_price, old_price, percents, other_discounts = _get_discounts(
-                        row[DISCOUNT_TEXT])
-
-                    coupon = Coupon(product_name=row[PRODUCT_TEXT],
-                                    new_price=new_price,
-                                    old_price=old_price,
-                                    percents=percents,
-                                    other_discounts=other_discounts,
-                                    dates=row[VALIDITY_TEXT])
-                    expected_coupons.append(coupon)
-
-    return expected_coupons
-
-
-"""
-This function will compare two lists of prices and return a float value that 
-represents the similarity between them. The higher the value, the more similar 
-the lists are. The lower the value, the more different the lists are. The lowest
-and highest values of the lists are taken to be the old and new prices, 
-respectively, and their similarity has more weight.The score takes into account 
-the discrepancy in the number of prices between the two lists and punishes the 
-pipeline accordingly. Each list will contain at most two prices: the new and old
-prices. The lists can be empty or contain only one price.
-:param generated_prices: The first list of prices to compare (generated by the 
-                        pipeline)
-:param expected_prices: The second list of prices to compare (expected)
-:return: A float value that represents the similarity between the two lists
-"""
 
 
 def _compare_prices(generated_prices: list, expected_prices: list) -> float:
+    """
+    This function will compare two lists of prices and return a float value that 
+    represents the similarity between them. The higher the value, the more similar 
+    the lists are. The lower the value, the more different the lists are. The lowest
+    and highest values of the lists are taken to be the old and new prices, 
+    respectively, and their similarity has more weight.The score takes into account 
+    the discrepancy in the number of prices between the two lists and punishes the 
+    pipeline accordingly. Each list will contain at most two prices: the new and old
+    prices. The lists can be empty or contain only one price.
+
+    :param generated_prices: The first list of prices to compare (generated by the 
+                            pipeline)
+    :param expected_prices: The second list of prices to compare (expected)
+    :return: A float value that represents the similarity between the two lists
+    """
+
     # Convert the prices to floats and sort them; remove None values
     generated_prices = np.array(
         sorted(
@@ -188,26 +87,19 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
     return max(0.0, coupon_difference - length_difference * LENGTH_PENALTY)
 
 
-"""
-This function will compare two coupons and return a float value that represents 
-the similarity between the two coupons. The higher the value, the more similar 
-the coupons are. The lower the value, the more different the coupons are. 
-:param coupon_1, coupon_2: The first and second coupons to compare
-:return: A float value that represents the similarity between the two coupons
-"""
-
-
 def compare_coupons(coupon_1: Optional[Coupon],
                     coupon_2: Optional[Coupon]) -> float:
+    """
+    This function will compare two coupons and return a float value that represents 
+    the similarity between the two coupons. The higher the value, the more similar 
+    the coupons are. The lower the value, the more different the coupons are. 
+
+    :param coupon_1, coupon_2: The first and second coupons to compare
+    :return: A float value that represents the similarity between the two coupons
+    """
+
     if coupon_1 is None or coupon_2 is None:
         return 0.0
-    """
-    product_name: str
-    prices: List[str] = field(default_factory=list)
-    percents: List[str] = field(default_factory=list)
-    other_discounts: List[str] = field(default_factory=list)
-    dates: List[str] = field(default_factory=list)
-    """
 
     name_ratio = diff.SequenceMatcher(a=coupon_1.product_name,
                                       b=coupon_2.product_name).ratio()
@@ -218,7 +110,7 @@ def compare_coupons(coupon_1: Optional[Coupon],
     percents_2 = sorted([str(percent) for percent in coupon_2.percents])
     percents_ratio = diff.SequenceMatcher(
         a=percents_1,
-        b=percents_2).ratio() - 0.2 * abs(len(percents_1) - len(percents_2))
+        b=percents_2).ratio() - LENGTH_PENALTY * abs(len(percents_1) - len(percents_2))
 
     discounts_1 = sorted(
         [str(discount) for discount in coupon_1.other_discounts])
@@ -226,12 +118,12 @@ def compare_coupons(coupon_1: Optional[Coupon],
         [str(discount) for discount in coupon_2.other_discounts])
     other_discopunts_ratio = diff.SequenceMatcher(
         a=discounts_1, b=discounts_2).ratio(
-        ) - 0.2 * abs(len(discounts_1) - len(discounts_2))
+        ) - LENGTH_PENALTY * abs(len(discounts_1) - len(discounts_2))
 
     dates_1 = sorted([str(date) for date in coupon_1.dates])
     dates_2 = sorted([str(date) for date in coupon_2.dates])
     dates_ratio = diff.SequenceMatcher(
-        a=dates_1, b=dates_2).ratio() - 0.2 * abs(len(dates_1) - len(dates_2))
+        a=dates_1, b=dates_2).ratio() - LENGTH_PENALTY * abs(len(dates_1) - len(dates_2))
 
     return (name_ratio * NAME_WEIGHT) + (prices_ratio * PRICE_WEIGHT) + (
         percents_ratio * PERCENT_WEIGHT) + (
@@ -239,24 +131,24 @@ def compare_coupons(coupon_1: Optional[Coupon],
                                                                VALIDITY_WEIGHT)
 
 
-"""
-This function will judge the pipeline by comparing the expected coupons with the
-generated ones. The function will return a tuple with the average similarity
-between the coupons and the number of lonely coupons. The average similarity is
-calculated by comparing each expected coupon with the most similar generated
-coupon. The number of lonely coupons is the number of expected coupons that
-could not be matched with any generated coupon and vice versa. 
-:param expected_coupons: A list of Coupon objects that represent the
-                        expected coupons
-:param generated_coupons: A list of Coupon objects that represent the
-                        generated coupons
-:return: A tuple with the average similarity between the coupons and the number
-        of lonely coupons
-"""
-
-
 def judge_pipeline(expected_coupons: List[Coupon],
                    generated_coupons: List[Coupon]) -> tuple[float, int]:
+    """
+    This function will judge the pipeline by comparing the expected coupons with the
+    generated ones. The function will return a tuple with the average similarity
+    between the coupons and the number of lonely coupons. The average similarity is
+    calculated by comparing each expected coupon with the most similar generated
+    coupon. The number of lonely coupons is the number of expected coupons that
+    could not be matched with any generated coupon and vice versa. 
+    
+    :param expected_coupons: A list of Coupon objects that represent the
+                            expected coupons
+    :param generated_coupons: A list of Coupon objects that represent the
+                            generated coupons
+    :return: A tuple with the average similarity between the coupons and the number
+            of lonely coupons
+    """
+
     generated_coupons = dict(
         (i, coupon) for i, coupon in enumerate(generated_coupons))
     lonely_coupons: int = 0
@@ -288,19 +180,19 @@ def judge_pipeline(expected_coupons: List[Coupon],
             lonely_coupons)
 
 
-"""
-This function will run the pipeline with the input data and return the
-generated coupons. The function will return None if the pipeline fails to run. 
-The result of the pipeline must be written to a file called output.json.
-:param pipeline_command: The command to run the pipeline
-:param input_folder: The path to the folder with the input data
-:return: A list of Coupon objects that represent the generated coupons
-        or None if the pipeline fails to run
-"""
-
-
 def run_pipeline(pipeline_command: str,
                  input_folder: str) -> Optional[List[Coupon]]:
+    """
+    This function will run the pipeline with the input data and return the
+    generated coupons. The function will return None if the pipeline fails to run. 
+    The result of the pipeline must be written to a file called output.json.
+    
+    :param pipeline_command: The command to run the pipeline
+    :param input_folder: The path to the folder with the input data
+    :return: A list of Coupon objects that represent the generated coupons
+            or None if the pipeline fails to run
+    """
+
     if os.path.exists("output.json"):
         os.remove("output.json")
 
@@ -328,165 +220,6 @@ def run_pipeline(pipeline_command: str,
     except subprocess.CalledProcessError as e:
         print(f"Error running the pipeline: {e.stderr}")
         return None
-
-
-"""
-This function will validate the format of the csv file that contains the
-expected coupons. The file must contain the headers defined below. 
-:param fieldnames: The headers of the csv file
-:return: True if the file format is valid, False otherwise
-"""
-
-
-def _validate_output_file_format(fieldnames: list) -> bool:
-    required_headers = [
-        "product_text", "discount_text", "discount_details", "validity_text"
-    ]
-    return all(header in fieldnames for header in required_headers)
-
-
-"""
-This function will validate the format of the csv file that contains the
-input data. The file must contain the headers defined below.
-:param fieldnames: The headers of the csv file
-:return: True if the file format is valid, False otherwise
-"""
-
-
-def _validate_input_file_format(fieldnames: list) -> bool:
-    required_headers = [
-        "view_depth", "text", "description", "class_name", "application_name"
-    ]
-    return all(header in fieldnames for header in required_headers)
-
-
-"""
-This function will validate the input and output folders. The input folder must
-contain csv files with the format defined in the _validate_input_file_format
-function. The output folder must contain csv files with the format defined in
-the _validate_output_file_format function.
-:param input_folder: The path to the folder with the input data
-:param output_folder: The path to the folder with the expected coupons
-:return: True if the folders are valid, False otherwise
-"""
-
-
-def validate_folders(input_folder: str, output_folder: str) -> bool:
-    if not os.path.isdir(input_folder):
-        raise NotADirectoryError(
-            f"The input path {input_folder} is not a directory.")
-    if not os.path.isdir(output_folder):
-        raise NotADirectoryError(
-            f"The output path {output_folder} is not a directory.")
-
-    # Validate the output folder
-    for file_name in os.listdir(output_folder):
-        file_name_full = os.path.join(output_folder, file_name)
-        if not os.path.isfile(file_name_full):
-            raise NotADirectoryError(
-                f"The output path {output_folder} is not a directory.")
-
-        if not file_name.endswith('.csv'):
-            raise ValueError(f"The file {file_name} is not a CSV file.")
-
-        with open(file_name_full, 'r') as file:
-            reader = csv.DictReader(file)
-            if reader.fieldnames is None or not _validate_output_file_format(
-                    list(reader.fieldnames)):
-                raise ValueError(
-                    f"The file {file_name} has an invalid format.")
-
-    # Validate the input folder
-    for file_name in os.listdir(input_folder):
-        file_name_full = os.path.join(input_folder, file_name)
-        if not os.path.isfile(file_name_full):
-            raise NotADirectoryError(
-                f"The input path {input_folder} is not a directory.")
-
-        if not file_name.endswith('.csv'):
-            raise ValueError(f"The file {file_name} is not a CSV file.")
-
-        with open(file_name_full, 'r') as file:
-            reader = csv.DictReader(file)
-            if reader.fieldnames is None or not _validate_input_file_format(
-                    list(reader.fieldnames)):
-                raise ValueError(
-                    f"The file {file_name} has an invalid format.")
-
-    return True
-
-
-"""
-This function will get the default datasets from Google Drive and return the
-paths to the input and expected folders. The function will create the folders
-if they do not exist. If the folders already exist, the function will delete the
-files inside them and replace them with the default datasets.
-:return: A tuple with the paths to the input and expected folders
-"""
-
-
-def get_default_datasets() -> Tuple[str, str]:
-    # Default paths to the input and expected folders
-    input_folder = os.path.join(os.getcwd(), "input")
-    expected_folder = os.path.join(os.getcwd(), "expected")
-
-    # Create the folders; if they already exist, delete the files and folders inside them
-    for folder in [input_folder, expected_folder]:
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        else:
-            for root, dirs, files in os.walk(folder):
-                for file in files:
-                    os.remove(os.path.join(root, file))
-                for subdir in dirs:
-                    shutil.rmtree(os.path.join(root, subdir))
-
-    # Get the default datasets from google drive
-    tools_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../../', 'tools'))
-    sys.path.append(tools_path)
-    script_path = os.path.join(tools_path, 'data_load.py')
-
-    try:
-        subprocess.run(['python3', script_path, 'coupons_1'], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred while running the script: {e}")
-    except FileNotFoundError:
-        print(
-            "The data_load.py file was not found. Ensure the path is correct.")
-
-    # Get the path to the datasets folder
-    datasets_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../../',
-                     'datasets/coupons_1'))
-
-    # Copy the files from the datasets folder to the input and expected folders
-    for directory in os.listdir(datasets_path):
-        if not os.path.isdir(os.path.join(datasets_path, directory)):
-            continue
-
-        if directory in INCORRECT_DATASETS:
-            continue
-
-        sub_input_folder = os.path.join(input_folder, directory)
-        sub_expected_folder = os.path.join(expected_folder, directory)
-
-        os.makedirs(sub_input_folder, exist_ok=True)
-        os.makedirs(sub_expected_folder, exist_ok=True)
-
-        for file in os.listdir(os.path.join(datasets_path, directory)):
-            # One of the files has a typo in the name hence the check
-            if "coupons" in file.lower() or "cupons" in file.lower():
-                target = os.path.join(sub_expected_folder, file)
-            elif "content_generic" in file.lower():
-                target = os.path.join(sub_input_folder, file)
-            else:
-                continue
-
-            shutil.copyfile(os.path.join(datasets_path, directory, file),
-                            target)
-
-    return input_folder, expected_folder
 
 
 if __name__ == '__main__':
@@ -517,8 +250,7 @@ if __name__ == '__main__':
         required=False,
         help=
         'List of invalid datasets to exclude from the benchmark. Input them as\
-        a space-separated string.'
-    )
+        a space-separated string.')
     args = parser.parse_args()
 
     # Get the names of the invalid datasets
