@@ -10,6 +10,7 @@ import sys
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
 from src.benchmark_utils.io_utils import get_default_datasets, validate_folders, Coupon, get_expected_coupons
+from src.llama_dataset_generation.input_parser import prepare_input_data
 os.chdir(CURRENT_PATH)
 
 # Weights for each attribute of the coupon
@@ -220,9 +221,15 @@ def run_pipeline(pipeline_command: str,
     except subprocess.CalledProcessError as e:
         print(f"Error running the pipeline: {e.stderr}")
         return None
+    
 
+def _parse_args() -> argparse.Namespace:
+    """
+    This function will parse the input arguments.
 
-if __name__ == '__main__':
+    :return: The parsed input arguments
+    """
+
     # Parse the input arguments and check if the input and output paths are valid
     parser = argparse.ArgumentParser(description='Benchmarking script')
     parser.add_argument('-i',
@@ -252,6 +259,14 @@ if __name__ == '__main__':
         'List of invalid datasets to exclude from the benchmark. Input them as\
         a space-separated string.')
     args = parser.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+
+    prepare_input_data('research/pipeline_benchmark/input/rossmann/Kopia test_data_2024_03_07_rossmann_content_generic_2024-12-05T10_24_07.981399375+01_00.csv')
+    sys.exit(0) 
+    args = _parse_args()
 
     # Get the names of the invalid datasets
     if args.invalid is not None:
