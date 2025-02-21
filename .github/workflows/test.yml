@@ -9,7 +9,7 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     env:
-      TEST_DIR: src/test
+      TEST_DIR: test
 
     steps:
     - uses: actions/checkout@v4
