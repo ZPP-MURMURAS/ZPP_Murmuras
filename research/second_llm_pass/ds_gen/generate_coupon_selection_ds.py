@@ -149,7 +149,7 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
 class TreeNode(TypedDict):
     """helper class used to operating on json"""
     children: Dict[str, 'TreeNode']
-    is_coupon: bool
+    is_coupon: int
     text: Optional[str]
 
 
@@ -204,7 +204,7 @@ def batch_to_json(batch: pd.DataFrame) -> TreeNode:
     Takes batch representing single screen content and converts it to JSON representing XML structure.
     """
     tree_path = []
-    res = {"text": None, "children": {}, "is_coupon": False}
+    res = TreeNode(text=None, children={}, is_coupon=LBL_UNK)
     for row in batch.iterrows():
         text_field = row[1][COL_CONTENT_TEXT]
         name = row[1][COL_VIEW_ID]
@@ -219,9 +219,8 @@ def batch_to_json(batch: pd.DataFrame) -> TreeNode:
             tree_path.pop(-1)
 
         __insert_to_json_tree(res, tree_path, name,
-                              {"text": text_field, "children": {}, "is_coupon": row[1][__COL_IS_COUPON] != LBL_UNK})
+                              {"text": text_field, "children": {}, "is_coupon": row[1][__COL_IS_COUPON]})
         tree_path.append((name, depth))
-
     return res
 
 
@@ -232,7 +231,7 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
     res = []
     for i, (t, subframe) in enumerate(frame.groupby(COL_GROUPBY)):
         ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[COL_GROUPBY] == t], fmt)
-        subframe = __clear_content_frame(subframe)
+        subframe.reset_index(inplace=True, drop=True)
         subframe = annotate_frame_by_matches(subframe, ptree)
         tree = batch_to_json(subframe)
         tree = collapse_tree(tree)[0]
@@ -243,7 +242,7 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
     return res
 
 
-def __encode_json_tree_node_with_children_into_tokens(root: TreeNode, is_coupon, indent: Optional[int]):
+def __encode_json_tree_node_with_children_into_tokens(root: TreeNode, is_coupon: int, indent: Optional[int]):
     """
     Converts a node with children from json tree to a pair of lists of tokens (words) and labels associated with them.
     :param root: a node to convert, it is expected not to contain a is_coupon flag.
@@ -258,25 +257,32 @@ def __encode_json_tree_node_with_children_into_tokens(root: TreeNode, is_coupon,
     string1, string2 = string.rsplit('{}', maxsplit=1)
     string1 += '{'
     string2 = '}' + string2
-    words1 = re.split("[ \n\t]", string1)
-    words2 = re.split("[ \n\t]", string2)
-    labels1 = [is_coupon] * len(words1)
-    labels2 = [is_coupon] * len(words2)
+    words1 = re.split("[ \n\t]+", string1)
+    words2 = re.split("[ \n\t]+", string2)
+    labels1 = [is_coupon]
+    labels1 += [is_coupon if is_coupon != LBL_BC else LBL_IC] * (len(words1) - 1)
     first_child = True
     for name, child in children.items():
-        words_child, labels_child = __encode_json_tree_into_tokens_rec(child, is_coupon, indent)
-        words1.append(f'{name}:')
-        labels1.append(is_coupon)
+        words_child, labels_child = __encode_json_tree_into_tokens_rec(child, indent)
+        words1.append(f'"{name}":')
+        if labels_child[0] != LBL_IC:
+            labels1.append(LBL_UNK)
+        else:
+            labels1.append(LBL_IC)
+        is_coupon = LBL_UNK if labels_child[-1] == LBL_UNK else LBL_IC
         if not first_child:
             words1[-2] += ','
         first_child = False
         labels1 += labels_child
         words1 += words_child
+    if is_coupon == LBL_BC:
+        is_coupon = LBL_IC
+    labels2 = [is_coupon] * len(words2)
     return words1 + words2, labels1 + labels2
 
 
-def __encode_json_tree_into_tokens_rec(root: TreeNode, is_coupon, indent: Optional[int])\
-        -> Tuple[List[str], List[bool]]:
+def __encode_json_tree_into_tokens_rec(root: TreeNode, indent: Optional[int])\
+        -> Tuple[List[str], List[int]]:
     """
     Converts a node from json tree to a pair of lists of tokens (words) and labels associated with them.
     :param root: a node to convert
@@ -285,12 +291,16 @@ def __encode_json_tree_into_tokens_rec(root: TreeNode, is_coupon, indent: Option
     :return: a pair of list of tokens (words) and labels associated with them.
     """
     root = dict(root)
-    is_coupon |= root.pop('is_coupon')
+    is_coupon_local = root.pop('is_coupon')
     if 'children' in root:
-        return __encode_json_tree_node_with_children_into_tokens(root, is_coupon, indent)
+        return __encode_json_tree_node_with_children_into_tokens(root, is_coupon_local, indent)
     string = json.dumps(root, indent=indent)
-    words = re.split("[ \n\t]", string)
-    labels = [is_coupon] * len(words)
+    words = re.split("[ \n\t]+", string)
+    if is_coupon_local != LBL_UNK:
+        labels = [is_coupon_local]
+        labels += [LBL_IC] * (len(words) - 1)
+    else:
+        labels = [LBL_UNK] * len(words)
     return words, labels
 
 
@@ -301,9 +311,7 @@ def json_to_labeled_tokens(data: List[TreeNode], indent: Optional[int] = None) -
     """
     res = []
     for tree in data:
-        tkns, lbls = __encode_json_tree_into_tokens_rec(tree, False, indent)
-        prv = LBL_UNK
-        lbls = [prv := (LBL_UNK if not lbl else LBL_BC if prv == LBL_UNK else LBL_IC) for lbl in lbls]
+        tkns, lbls = __encode_json_tree_into_tokens_rec(tree, indent)
         res.append((tkns, lbls))
     return res
 
@@ -323,20 +331,11 @@ def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, a
         },
         features=features
     )
-    total = 0
-    nonzero = 0
-    total_with_coupon = 0
-    for sample in ds["labels"]:
-        total += len(sample)
-        nonzero += len(sample) - sample.count(LBL_UNK)
-        total_with_coupon += LBL_BC in sample
-    print(f'{nonzero}/{total}={nonzero/total}')
-    print(f'{total_with_coupon}/{len(ds)}={total_with_coupon/len(ds)}')
-    # login(token=apikey)
-    # api = HfApi()
-#     api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
+    login(token=apikey)
+    api = HfApi()
+    api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
 
-#     ds.push_to_hub(save_name, private=True)
+    ds.push_to_hub(save_name, private=True)
 
 
 def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: pd.DataFrame, json_output: bool) \
