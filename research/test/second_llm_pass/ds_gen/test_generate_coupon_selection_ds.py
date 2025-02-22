@@ -386,4 +386,3 @@ class TestGenerateCouponSelectionDs:
     def test_ds_gen__construct_prefix_tree_for_coupon_frame(self, id_val, tgt_tree):
         fc = frame_coupons(fmt=1)
         assert _ds_gen__construct_prefix_tree_for_coupon_frame(fc[fc[COL_GROUPBY] == id_val], 1) == tgt_tree
-
