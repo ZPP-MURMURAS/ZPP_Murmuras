@@ -1,12 +1,10 @@
-# from research.second_llm_pass.ds_gen.generate_coupon_selection_ds import (
-#     ptree_insert,
-#     build_ptree,
-#     annotate_frame_by_matches,
-#     collapse_tree,
-#     batch_to_json,
-#     frame_to_json,
-#     json_to_labeled_tokens,
-# )
+from research.second_llm_pass.ds_gen.generate_coupon_selection_ds import (
+    __insert_to_json_tree as _ds_gen__insert_to_json_tree,
+    __encode_json_tree_into_tokens_rec as _ds_gen__encode_json_tree_into_tokens_rec,
+    __encode_json_tree_node_with_children_into_tokens as _ds_gen__encode_json_tree_node_with_children_into_tokens,
+    __samples_from_entry as _ds_gen__samples_from_entry,
+    __construct_prefix_tree_for_coupon_frame as _ds_gen__construct_prefix_tree_for_coupon_frame
+)
 from research.second_llm_pass.ds_gen.generate_coupon_selection_ds import *
 from research.second_llm_pass.ds_gen.generate_coupon_selection_ds import __COL_IS_COUPON as _ds_gen__COL_IS_COUPON
 
@@ -265,6 +263,19 @@ def json_words_labels_joint():
     return [(words1, labels1), (words2, labels2), (words3, labels3)]
 
 @pytest.fixture
+def plain_words_labels_joint():
+    words1 = ['abc', 'y', 'yyy', 'uwu', 'uwuw', 'uwu']
+    labels1 = [LBL_UNK] * len(words1)
+    labels1[3] = labels1[-1] = LBL_BC
+    words2 = ['dummy', 'wine', 'whiskey', 'vodka', 'Tequila']
+    labels2 = [LBL_IC] * len(words2)
+    labels2[1] = LBL_BC
+    labels2[0] = LBL_UNK
+    words3 = []
+    labels3 = []
+    return [(words1, labels1), (words2, labels2), (words3, labels3)]
+
+@pytest.fixture
 def json_joint_collapsed(collapsed_json_tree1, collapsed_json_tree3):
     return [collapsed_json_tree1, collapsed_json_tree3, TreeNode(text=None, is_coupon=LBL_UNK, children={})]
 
@@ -324,3 +335,55 @@ class TestGenerateCouponSelectionDs:
 
     def test_json_to_labeled_tokens(self, json_words_labels_joint, json_joint_collapsed):
         assert json_to_labeled_tokens(json_joint_collapsed) == json_words_labels_joint
+
+    @pytest.mark.parametrize("tree1,tree2,path", [
+        (TreeNode(children={}, is_coupon=LBL_UNK, text=None), TreeNode(children={'magic_key': TreeNode(children={}, is_coupon=LBL_UNK, text="abrakadabra")}, is_coupon=LBL_UNK, text=None), []),
+        (TreeNode(children={"x": TreeNode(children={}, is_coupon=LBL_UNK, text=None)}, is_coupon=LBL_UNK, text=None), TreeNode(children={"x": TreeNode(children={"magic_key": TreeNode(children={}, is_coupon=LBL_UNK, text="abrakadabra")}, is_coupon=LBL_UNK, text=None)}, is_coupon=LBL_UNK, text=None), [("x", 1)]),
+        (TreeNode(children={"magic_key": TreeNode(children={}, is_coupon=LBL_UNK, text=None)}, is_coupon=LBL_UNK, text=None), TreeNode(children={"magic_key": TreeNode(children={}, is_coupon=LBL_UNK, text=None), "magic_key_0": TreeNode(children={}, is_coupon=LBL_UNK, text="abrakadabra")}, is_coupon=LBL_UNK, text=None), []),
+    ])
+    def test_ds_gen__insert_to_json_tree(self, tree1: TreeNode, tree2: TreeNode, path: List[Tuple[str, int]]):
+        node = TreeNode(children={}, text="abrakadabra", is_coupon=LBL_UNK)
+        _ds_gen__insert_to_json_tree(tree1, path, "magic_key", node)
+        assert tree1 == tree2
+
+    def test_ds_gen__encode_json_tree_into_tokens_rec(self, collapsed_json_tree1: TreeNode, collapsed_json_tree3: TreeNode, json_words_labels_joint):
+        assert _ds_gen__encode_json_tree_into_tokens_rec(collapsed_json_tree1, indent=None) == json_words_labels_joint[0]
+        assert _ds_gen__encode_json_tree_into_tokens_rec(collapsed_json_tree3, indent=None) == json_words_labels_joint[1]
+
+    @pytest.mark.parametrize("is_coupon", [LBL_BC, LBL_IC, LBL_UNK])
+    def test_ds_gen__encode_json_tree_node_with_children_into_tokens(self, json_words_labels_joint, collapsed_json_tree1: TreeNode, is_coupon):
+        words, labels = json_words_labels_joint[0]
+        labels[0] = is_coupon
+        if is_coupon == LBL_BC:
+            is_coupon = LBL_IC
+        for i in range(4):
+            labels[i] = is_coupon
+        collapsed_json_tree1 = dict(collapsed_json_tree1)
+        collapsed_json_tree1.pop("is_coupon")
+        tree = deepcopy(collapsed_json_tree1)
+        assert _ds_gen__encode_json_tree_node_with_children_into_tokens(collapsed_json_tree1, is_coupon, indent=None) == (words, labels)
+        tree = dict(tree["children"]["b.c"])
+        tree.pop("is_coupon")
+        labels = labels[5:10]
+        words = words[5:10]
+        words[-1] = words[-1][:-1]
+        labels[0] = is_coupon
+        if is_coupon == LBL_BC:
+            is_coupon = LBL_IC
+        for i in range(1, len(labels)):
+            labels[i] = is_coupon
+        assert _ds_gen__encode_json_tree_node_with_children_into_tokens(tree, is_coupon, indent=None) == (words, labels)
+
+    @pytest.mark.parametrize("fmt,as_json,tgt", [(1, True, lf('json_words_labels_joint')), (2, False, lf('plain_words_labels_joint'))])
+    def test_ds_gen__samples_from_entry(self, fmt, frame_joint, as_json, tgt):
+        assert _ds_gen__samples_from_entry(fmt, frame_joint, frame_coupons(fmt), as_json) == tgt
+
+    @pytest.mark.parametrize("id_val,tgt_tree", [
+        (1, lf('ptree2')),
+        (2, lf('ptree4')),
+        (3, ({}, False)),
+    ])
+    def test_ds_gen__construct_prefix_tree_for_coupon_frame(self, id_val, tgt_tree):
+        fc = frame_coupons(fmt=1)
+        assert _ds_gen__construct_prefix_tree_for_coupon_frame(fc[fc[COL_GROUPBY] == id_val], 1) == tgt_tree
+
