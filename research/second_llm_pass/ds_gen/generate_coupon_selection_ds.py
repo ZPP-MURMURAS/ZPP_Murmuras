@@ -374,4 +374,10 @@ if __name__ == '__main__':
         coupons_frame = pd.read_csv(coupons)
         examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
 
-    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY)
+    # clear empty samples
+    examples_nonempty = []
+    for example in examples:
+        if len(example[0]) > 0:
+            examples_nonempty.append(example)
+
+    publish_to_hub(examples_nonempty, f"zpp-murmuras/{ds_name}", HF_HUB_KEY)
