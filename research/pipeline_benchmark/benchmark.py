@@ -25,6 +25,10 @@ NEW_PRICE_WEIGHT = 0.5
 OLD_PRICE_WEIGHT = 0.5
 LENGTH_PENALTY = 0.2
 
+# File to store the output of the pipeline
+OUTPUT_FILE = "output.json"
+INPUT_FILE = "input.json"
+
 
 def _compare_prices(generated_prices: list, expected_prices: list) -> float:
     """
@@ -182,7 +186,7 @@ def judge_pipeline(expected_coupons: List[Coupon],
 
 
 def run_pipeline(pipeline_command: str,
-                 input_folder: str) -> Optional[List[Coupon]]:
+                 input_folder: str, is_new_format: bool = False) -> Optional[List[Coupon]]:
     """
     This function will run the pipeline with the input data and return the
     generated coupons. The function will return None if the pipeline fails to run. 
@@ -194,10 +198,14 @@ def run_pipeline(pipeline_command: str,
             or None if the pipeline fails to run
     """
 
-    if os.path.exists("output.json"):
-        os.remove("output.json")
+    if os.path.exists(OUTPUT_FILE):
+        os.remove(OUTPUT_FILE)
 
-    pipeline_command = pipeline_command + " > output.json"
+    if is_new_format:
+        input_file = os.path.join(input_folder, INPUT_FILE)
+        pipeline_command = pipeline_command + " < " +  input_file  + " > " + OUTPUT_FILE
+    else: 
+        pipeline_command = pipeline_command + " > " + OUTPUT_FILE
     print(f"Running the pipeline with the command: {pipeline_command}")
 
     try:
@@ -205,7 +213,7 @@ def run_pipeline(pipeline_command: str,
 
         # The pipeline must write the output to a file called output.json
         proto_coupons = []
-        with open("output.json", "r") as file:
+        with open(OUTPUT_FILE, "r") as file:
             coupons = json.load(file)
 
         for coupon in coupons:
@@ -230,7 +238,7 @@ def _parse_args() -> argparse.Namespace:
     :return: The parsed input arguments
     """
 
-    # Parse the input arguments and check if the input and output paths are valid
+    # Parse the input arguments
     parser = argparse.ArgumentParser(description='Benchmarking script')
     parser.add_argument('-i',
                         '--input',
@@ -258,15 +266,25 @@ def _parse_args() -> argparse.Namespace:
         help=
         'List of invalid datasets to exclude from the benchmark. Input them as\
         a space-separated string.')
+    format_group = parser.add_mutually_exclusive_group()
+    format_group.add_argument('-newformat',
+                              '--newformat',
+                              action='store_true',
+                              default=True,
+                              help='Use the new format (default)')
+    format_group.add_argument('-oldformat',
+                              '--oldformat',
+                              action='store_false',
+                              dest='newformat',
+                              help='Use the old format')
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-
-    prepare_input_data('research/pipeline_benchmark/input/rossmann/Kopia test_data_2024_03_07_rossmann_content_generic_2024-12-05T10_24_07.981399375+01_00.csv')
-    sys.exit(0) 
+    # a = prepare_input_data('input/rossmann/Kopia test_data_2024_03_07_rossmann_content_generic_2024-12-05T10_24_07.981399375+01_00.csv') 
     args = _parse_args()
+    new_format = True if args.newformat else False
 
     # Get the names of the invalid datasets
     if args.invalid is not None:
@@ -274,7 +292,7 @@ if __name__ == '__main__':
 
     # If either the input or expected folders are not provided, get the default
     # datasets
-    if args.input is None or args.expected is None:
+    if args.input is None or args.expected is None:            
         args.input, args.expected = get_default_datasets()
 
     folder_names = [folder_name for folder_name in os.listdir(args.expected)]
@@ -284,14 +302,25 @@ if __name__ == '__main__':
         expected_dir = os.path.join(args.expected, folder_name)
         input_dir = os.path.join(args.input, folder_name)
 
-        if not validate_folders(input_dir, expected_dir):
-            print("The input and expected folders are not valid.")
+        try:
+            if not validate_folders(input_dir, expected_dir, new_format):
+                print("The input and expected folders are not valid.")
+        except ValueError as e:
             continue
 
+        if new_format:
+            for file_name in os.listdir(input_dir):
+                file_path = os.path.join(input_dir, file_name)
+                if not os.path.isfile(file_path):
+                    continue
+                prepared_data = prepare_input_data(file_path)
+                input_file = os.path.join(input_dir, INPUT_FILE)
+                with open(input_file, 'w') as json_file:
+                    json.dump(prepared_data, json_file)
+
         # Get the expected coupons
-        expected_coupons: List[Coupon] = get_expected_coupons(expected_dir)
-        generated_coupons: List[Coupon] = run_pipeline(args.pipeline,
-                                                       input_dir)
+        expected_coupons: List[Coupon] = get_expected_coupons(expected_dir, new_format)
+        generated_coupons: List[Coupon] = run_pipeline(args.pipeline, input_dir, new_format)
 
         similarity, lonely_coupons = judge_pipeline(expected_coupons,
                                                     generated_coupons)
