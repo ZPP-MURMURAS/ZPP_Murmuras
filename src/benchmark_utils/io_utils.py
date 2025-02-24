@@ -1,3 +1,4 @@
+import json
 import re
 import csv
 import os
@@ -76,7 +77,50 @@ def _get_discounts(
     return new_price, old_price, percents, other_discounts
 
 
-def get_expected_coupons(file_path: Optional[str]) -> List[Coupon]:
+def _get_coupons_old(file_path: str) -> List[Coupon]:
+    expected_coupons = []
+    with open(file_path, 'r') as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            new_price, old_price, percents, other_discounts = _get_discounts(
+                row[DISCOUNT_TEXT])
+
+            coupon = Coupon(product_name=row[PRODUCT_TEXT],
+                            new_price=new_price,
+                            old_price=old_price,
+                            percents=percents,
+                            other_discounts=other_discounts,
+                            dates=row[VALIDITY_TEXT])
+            expected_coupons.append(coupon)
+    
+    return expected_coupons
+
+
+def _get_coupons_new(file_path: str) -> List[Coupon]:
+    expected_coupons = []
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+
+        for item in data:
+            new_price = item.get("new_price", None)
+            old_price = item.get("old_price", None)
+            percents = item.get("percents", [])
+            other_discounts = item.get("other_discounts", [])
+            dates = item.get("dates", None)
+
+            coupon = Coupon(product_name=item["product_name"],
+                            new_price=new_price,
+                            old_price=old_price,
+                            percents=percents,
+                            other_discounts=other_discounts,
+                            dates=dates)
+            expected_coupons.append(coupon)
+    
+    return expected_coupons
+
+
+def get_expected_coupons(file_path: Optional[str], is_new_format: bool = False) -> List[Coupon]:
     """
     This function will return a list of Coupon objects that represent the 
     expected coupons. This function is used to benchmark the pipeline.
@@ -94,21 +138,13 @@ def get_expected_coupons(file_path: Optional[str]) -> List[Coupon]:
 
     for file_name in os.listdir(file_path):
         file_path_full = os.path.join(file_path, file_name)
-        if os.path.isfile(file_path_full):
-            with open(file_path_full, 'r') as file:
-                reader = csv.DictReader(file)
+        if not os.path.isfile(file_path_full):
+            continue
 
-                for row in reader:
-                    new_price, old_price, percents, other_discounts = _get_discounts(
-                        row[DISCOUNT_TEXT])
-
-                    coupon = Coupon(product_name=row[PRODUCT_TEXT],
-                                    new_price=new_price,
-                                    old_price=old_price,
-                                    percents=percents,
-                                    other_discounts=other_discounts,
-                                    dates=row[VALIDITY_TEXT])
-                    expected_coupons.append(coupon)
+        if not is_new_format:
+            expected_coupons.extend(_get_coupons_old(file_path_full))
+        else:
+            expected_coupons.extend(_get_coupons_new(file_path_full))
 
     return expected_coupons
 
@@ -128,6 +164,36 @@ def _validate_output_file_format(fieldnames: list) -> bool:
     return all(header in fieldnames for header in required_headers)
 
 
+def _validate_output_file_new_format(file: str) -> bool:   
+    """
+    This function will validate the format of the json file that contains the
+    expected coupons. The file must contain the keys defined below. 
+    
+    :param file: The path to the json file
+    :return: True if the file format is valid, False otherwise
+    """
+
+    required_keys = {"product_name", "new_price", "old_price", "percents", "other_discounts", "dates"}
+    with open(file, 'r') as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            raise ValueError(f"The file {file} is not a valid JSON file or contains invalid data.")
+        
+    if not isinstance(data, list):
+        raise ValueError(f"The file {file} must contain a list of dictionaries.")
+    
+    for idx, item in enumerate(data):
+        if not isinstance(item, dict):
+            raise ValueError(f"Entry at index {idx} in {file} must be a dictionary.")
+
+        if not required_keys.issubset(item.keys()):
+            missing_keys = required_keys - item.keys()
+            raise ValueError(f"Entry at index {idx} in {file} is missing keys: {missing_keys}")
+
+    return True 
+
+
 def _validate_input_file_format(fieldnames: list) -> bool:
     """
     This function will validate the format of the csv file that contains the
@@ -143,7 +209,47 @@ def _validate_input_file_format(fieldnames: list) -> bool:
     return all(header in fieldnames for header in required_headers)
 
 
-def validate_folders(input_folder: str, output_folder: str) -> bool:
+def _validate_folder(folder: str, validation_func: callable, is_new_format: bool = False) -> bool:
+    """
+    Validates a folder containing CSV files. The function will check if the folder
+    exists, if it is a directory, and if it contains only CSV files in the correct
+    format.
+
+    :param folder: The path to the folder
+    :param validation_func: The function to validate the format of the CSV files
+    :return: True if the folder is valid, False otherwise
+    """
+    if not os.path.isdir(folder):
+        raise NotADirectoryError(
+            f"The input path {folder} is not a directory.")
+        
+    for file_name in os.listdir(folder):
+        file_name_full = os.path.join(folder, file_name)
+        if not os.path.isfile(file_name_full):
+            raise NotADirectoryError(
+                f"The output path {file_name_full} is not a file.")
+        
+        if is_new_format:
+            if not file_name.endswith('.json'):
+                raise ValueError(f"The file {file_name} is not a JSON file.")
+            
+            if not validation_func(file_name_full):
+                raise ValueError(
+                    f"The file {file_name} has an invalid format.")
+            continue
+
+        if not file_name.endswith('.csv'):
+            raise ValueError(f"The file {file_name} is not a CSV file.")
+        
+        with open(file_name_full, 'r') as file:
+            reader = csv.DictReader(file)
+            if reader.fieldnames is None or not validation_func(reader.fieldnames):
+                raise ValueError(
+                    f"The file {file_name} has an invalid format.")
+    return True
+
+
+def validate_folders(input_folder: str, output_folder: str, is_new_format: bool) -> bool:
     """
     This function will validate the input and output folders. The input folder must
     contain csv files with the format defined in the _validate_input_file_format
@@ -151,52 +257,17 @@ def validate_folders(input_folder: str, output_folder: str) -> bool:
     the _validate_output_file_format function.
     
     :param input_folder: The path to the folder with the input data
+    :is_new_format: A boolean flag to indicate if the new format is used
     :param output_folder: The path to the folder with the expected coupons
     :return: True if the folders are valid, False otherwise
     """
 
-    if not os.path.isdir(input_folder):
-        raise NotADirectoryError(
-            f"The input path {input_folder} is not a directory.")
-    if not os.path.isdir(output_folder):
-        raise NotADirectoryError(
-            f"The output path {output_folder} is not a directory.")
+    valid_input: bool = _validate_folder(input_folder, _validate_input_file_format)
 
-    # Validate the output folder
-    for file_name in os.listdir(output_folder):
-        file_name_full = os.path.join(output_folder, file_name)
-        if not os.path.isfile(file_name_full):
-            raise NotADirectoryError(
-                f"The output path {output_folder} is not a directory.")
+    if is_new_format:
+        return valid_input and _validate_folder(output_folder, _validate_output_file_new_format, is_new_format)
 
-        if not file_name.endswith('.csv'):
-            raise ValueError(f"The file {file_name} is not a CSV file.")
-
-        with open(file_name_full, 'r') as file:
-            reader = csv.DictReader(file)
-            if reader.fieldnames is None or not _validate_output_file_format(
-                    list(reader.fieldnames)):
-                raise ValueError(
-                    f"The file {file_name} has an invalid format.")
-
-    # Validate the input folder
-    for file_name in os.listdir(input_folder):
-        file_name_full = os.path.join(input_folder, file_name)
-        if not os.path.isfile(file_name_full):
-            raise NotADirectoryError(
-                f"The input path {input_folder} is not a directory.")
-
-        if not file_name.endswith('.csv'):
-            raise ValueError(f"The file {file_name} is not a CSV file.")
-
-        with open(file_name_full, 'r') as file:
-            reader = csv.DictReader(file)
-            if reader.fieldnames is None or not _validate_input_file_format(
-                    list(reader.fieldnames)):
-                raise ValueError(
-                    f"The file {file_name} has an invalid format.")
-
-    return True
+    return valid_input and _validate_folder(output_folder, _validate_output_file_format)
 
 
 def get_default_datasets() -> Tuple[str, str]:
