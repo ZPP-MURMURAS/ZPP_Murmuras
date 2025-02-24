@@ -11,6 +11,7 @@ CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
 from src.benchmark_utils.io_utils import get_default_datasets, validate_folders, Coupon, get_expected_coupons
 from src.llama_dataset_generation.input_parser import prepare_input_data
+
 os.chdir(CURRENT_PATH)
 
 # Weights for each attribute of the coupon
@@ -113,9 +114,8 @@ def compare_coupons(coupon_1: Optional[Coupon],
 
     percents_1 = sorted([str(percent) for percent in coupon_1.percents])
     percents_2 = sorted([str(percent) for percent in coupon_2.percents])
-    percents_ratio = diff.SequenceMatcher(
-        a=percents_1,
-        b=percents_2).ratio() - LENGTH_PENALTY * abs(len(percents_1) - len(percents_2))
+    percents_ratio = diff.SequenceMatcher(a=percents_1, b=percents_2).ratio(
+    ) - LENGTH_PENALTY * abs(len(percents_1) - len(percents_2))
 
     discounts_1 = sorted(
         [str(discount) for discount in coupon_1.other_discounts])
@@ -128,7 +128,8 @@ def compare_coupons(coupon_1: Optional[Coupon],
     dates_1 = sorted([str(date) for date in coupon_1.dates])
     dates_2 = sorted([str(date) for date in coupon_2.dates])
     dates_ratio = diff.SequenceMatcher(
-        a=dates_1, b=dates_2).ratio() - LENGTH_PENALTY * abs(len(dates_1) - len(dates_2))
+        a=dates_1,
+        b=dates_2).ratio() - LENGTH_PENALTY * abs(len(dates_1) - len(dates_2))
 
     return (name_ratio * NAME_WEIGHT) + (prices_ratio * PRICE_WEIGHT) + (
         percents_ratio * PERCENT_WEIGHT) + (
@@ -186,7 +187,8 @@ def judge_pipeline(expected_coupons: List[Coupon],
 
 
 def run_pipeline(pipeline_command: str,
-                 input_folder: str, is_new_format: bool = False) -> Optional[List[Coupon]]:
+                 input_folder: str,
+                 is_new_format: bool = False) -> Optional[List[Coupon]]:
     """
     This function will run the pipeline with the input data and return the
     generated coupons. The function will return None if the pipeline fails to run. 
@@ -203,8 +205,8 @@ def run_pipeline(pipeline_command: str,
 
     if is_new_format:
         input_file = os.path.join(input_folder, INPUT_FILE)
-        pipeline_command = pipeline_command + " < " +  input_file  + " > " + OUTPUT_FILE
-    else: 
+        pipeline_command = pipeline_command + " < " + input_file + " > " + OUTPUT_FILE
+    else:
         pipeline_command = pipeline_command + " > " + OUTPUT_FILE
     print(f"Running the pipeline with the command: {pipeline_command}")
 
@@ -229,7 +231,7 @@ def run_pipeline(pipeline_command: str,
     except subprocess.CalledProcessError as e:
         print(f"Error running the pipeline: {e.stderr}")
         return None
-    
+
 
 def _parse_args() -> argparse.Namespace:
     """
@@ -282,7 +284,6 @@ def _parse_args() -> argparse.Namespace:
 
 
 if __name__ == '__main__':
-    # a = prepare_input_data('input/rossmann/Kopia test_data_2024_03_07_rossmann_content_generic_2024-12-05T10_24_07.981399375+01_00.csv') 
     args = _parse_args()
     new_format = True if args.newformat else False
 
@@ -292,7 +293,7 @@ if __name__ == '__main__':
 
     # If either the input or expected folders are not provided, get the default
     # datasets
-    if args.input is None or args.expected is None:            
+    if args.input is None or args.expected is None:
         args.input, args.expected = get_default_datasets()
 
     folder_names = [folder_name for folder_name in os.listdir(args.expected)]
@@ -319,8 +320,10 @@ if __name__ == '__main__':
                     json.dump(prepared_data, json_file)
 
         # Get the expected coupons
-        expected_coupons: List[Coupon] = get_expected_coupons(expected_dir, new_format)
-        generated_coupons: List[Coupon] = run_pipeline(args.pipeline, input_dir, new_format)
+        expected_coupons: List[Coupon] = get_expected_coupons(
+            expected_dir, new_format)
+        generated_coupons: List[Coupon] = run_pipeline(args.pipeline,
+                                                       input_dir, new_format)
 
         similarity, lonely_coupons = judge_pipeline(expected_coupons,
                                                     generated_coupons)
