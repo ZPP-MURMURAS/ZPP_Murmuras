@@ -12,7 +12,7 @@ experiment I used the instructions described [here](https://github.com/ZPP-MURMU
 for Llama.cpp and [here](https://github.com/pytorch/executorch/blob/main/examples/models/llama/README.md)
 for ExecuTorch.
 
-I decided to use [Llama-3.2-1B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) as my base model.
+I decided to use [Llama-3.2-1B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) as the base model for both the framework comparison and quantization tests.
 I did not find a way to run models with the same quantization schemes on both
 frameworks and larger unquantized models had RAM requirements, which my phone did not meet.
 
