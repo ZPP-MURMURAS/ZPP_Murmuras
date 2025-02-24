@@ -13,7 +13,7 @@ Because of that, the fine-tuning code itself does not need any requirements.
 
 ## Usage
 First of all, you need to create a Wandb account for logging the results. Then, you need to specify the following environment variables:
-- `WANDB_API_KEY`: set it inside the bash script
+- `WANDB_KEY`: set it inside the bash script
 - `HUGGING_FACE_TOKEN`: set it inside the bash script
 - `TIMEOUT`: timeout (in seconds) for modal call
 - `DATASET_NAME`: dataset from hf to use
