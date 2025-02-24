@@ -27,7 +27,7 @@ finetune_image = (
 def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
     cs = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token)
     labels = cs['train'].features['labels'].feature.names
-    ft.init_finetuner(MODEL_CHECKPOIT)
+    ft.init_finetuner(MODEL_CHECKPOINT)
 
     wandb.login(key=wandb_key)
 
