@@ -70,3 +70,4 @@ wandb==0.19.6
 watchfiles==1.0.4
 xxhash==3.5.0
 yarl==1.18.3
+torch==2.6.0
