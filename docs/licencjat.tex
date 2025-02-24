@@ -30,7 +30,6 @@
 \autoriii{Kamil Dybek}{448224}
 \autoriv{Natalia Junkiert}{448267}
 
-
 \title{Innovative methods of processing data coming from mobile devices for market and scientific research}
 
 \tytulang{Innovative methods of processing data coming from mobile devices for market and scientific research}
@@ -95,8 +94,9 @@
 \maketitle
 
 %tu idzie streszczenie na strone poczatkowa
-\begin{abstract} 
-In an era of rapidly evolving digital applications, traditional scraping techniques face increasing challenges in maintaining reliable data collection pipelines. Commissioned by Murmuras, a company specializing in commercial and scientific data analysis \cite{murmuras}, this project presents a novel approach to processing phone screen content, such as social media posts and website advertisements. Our solution leverages Large Language Models (LLMs) running locally on the user's device to handle diverse data formats while ensuring that sensitive information remains protected. The primary application explored in this study is the extraction of discount coupons, demonstrating the feasibility of our method in identifying and structuring valuable content from varying digital sources. Furthermore, the system is designed to be easily adaptable to other use cases, such as analyzing users' political views. The results highlight the potential of LLM-driven content analysis as an alternative to conventional scraping techniques. 
+\begin{abstract}
+In an era of rapidly evolving digital applications, traditional scraping techniques face increasing challenges in maintaining reliable data collection pipelines. Commissioned by Murmuras, a company specializing in commercial and scientific data analysis \cite{murmuras}, this project presents a novel approach to processing phone screen content, such as social media posts and website advertisements. Our solution leverages Large Language Models (LLMs) running locally on the user's device to handle diverse data formats while ensuring that sensitive information remains protected. The primary application explored in this study is the extraction of discount coupons, demonstrating the feasibility of our method in identifying and structuring valuable content from varying digital sources. Furthermore, the system is designed to be easily adaptable to other use cases, such as analyzing users' political views. The results highlight the potential of LLM-driven content analysis as an alternative to conventional scraping techniques.
+\raggedright
 \end{abstract}
 
 \tableofcontents
@@ -125,7 +125,6 @@ A coupon is a physical piece of paper or digital voucher that can be redeemed fo
     \item A key requirement is that the machine learning model must be deployable on the mobile device itself to guarantee data privacy.
 \end{enumerate} 
 
-
 \section{Potential applications of the project}
 \subsection{Assessing coupon effectiveness}
 Our solution will aid businesses in analyzing consumer behaviour and optimizing their marketing strategies accordingly. By facilitating the collection of data on coupon characteristics and their redemption rates, businesses will be able to assess the effectiveness of their coupon campaigns—determining whether they reach the intended audience and achieve the desired results. Additionally, large-scale analysis of coupon data can reveal valuable insights into purchasing patterns, preferred discount types, and the most appealing products or services for different customer segments. With this information, businesses can refine their promotional strategies, tailor offers to specific demographics, and enhance overall customer engagement.
@@ -133,42 +132,80 @@ Our solution will aid businesses in analyzing consumer behaviour and optimizing 
 \subsection{Market analysis and competitor monitoring}
 The aforementioned gathering of data can also be utilized to monitor competitors' coupon strategies, their effectiveness, and whether they provide better discounts. Using machine learning to identify and analyze competitors' strategies is more cost-effective compared to exhaustive web scraping or mystery shopping \cite{competitor_tariffs}. This will enable businesses to make better-informed decisions about their own marketing campaigns and provide a comprehensive understanding of the competitive landscape.
 
-
 \chapter{Machine learning and the dangers associated with it}
 Note: this chapter is a work in progress, bullet points aim to provide guidance when writing this section
 
-(1) What is the difference between machine learning, artificial intelligence, and deep learning? \\
-(1a) Provide the definitions/a brief explanation of each of the above.\\
-(1b) Explain what a benchmark is and what it is used for. \\
+% \subsection{Benchmark}
+% Benchmarking is the process of running a set of, among others, computer programs against a set of tests to assess their relative performance or precision % \cite{benchmark}.
+\begin{enumerate}
+    \raggedright
+    \item \textbf{Difference between Machine Learning, Artificial Intelligence, and Deep Learning}
+    \begin{enumerate}
+        \item \textbf{Artificial Intelligence (AI):} AI is a broad field of computer science focused on creating systems that can perform tasks typically requiring human intelligence, such as reasoning, problem-solving, and decision-making.
+        \item \textbf{Machine Learning (ML):} ML is a subset of AI that involves training algorithms on data to enable systems to learn patterns and make predictions or decisions without being explicitly programmed.
+        \item \textbf{Deep Learning (DL):} DL is a specialized subset of ML that uses artificial neural networks, particularly deep neural networks, to model complex patterns and perform tasks like image and speech recognition.
+    \end{enumerate}
 
-\subsection{Benchmark}
-Benchmarking is the process of running a set of, among others, computer programs against a set of tests to assess their relative performance or precision \cite{benchmark}.
+    \item \textbf{Benchmark}
+    \begin{enumerate}
+        \item \textbf{Definition:} Benchmarking is the process of running a set of programs against predefined tests to assess their relative performance or precision.
+        \item \textbf{Usage:} Benchmarks are used to evaluate and measure the efficiency, accuracy, and effectiveness of machine learning models, AI systems, or computing hardware against established standards or competing solutions.
+    \end{enumerate}
 
-(2) Understanding ML models \\
-(2a) Explain what a model is \\
-(2b) Explain how a model works, how it is trained, datasets, linear regression, supervised vs unsupervised learning (?), federated learning (?), computer vision (?) \\
-(2c) What is quantization and why it is this of interest to us \\
+    \item \textbf{Understanding ML Models}
+    \begin{enumerate}
+        \item \textbf{What is a Model?} A model in machine learning is a mathematical representation of a system that learns from data to make predictions or decisions.
+        \item \textbf{How a Model Works:}
+        \begin{enumerate}
+            \item \textbf{Training:} A model is trained using datasets that contain input-output pairs.
+            \item \textbf{Datasets:} Collections of labeled or unlabeled data used for training and evaluation.
+            \item \textbf{Linear Regression:} A basic ML model that finds relationships between input and output variables.
+            \item \textbf{Supervised vs. Unsupervised Learning:} Supervised learning uses labeled data, while unsupervised learning finds hidden patterns in unlabeled data.
+            \item \textbf{Federated Learning:} A decentralized ML approach where models are trained across multiple devices without sharing raw data.
+            \item \textbf{Computer Vision:} A field of AI focused on enabling machines to interpret visual data.
+        \end{enumerate}
+        \item \textbf{Quantization:} A technique for reducing the computational cost and memory footprint of ML models by representing numerical values with lower precision.
+    \end{enumerate}
 
-(3) What is NLP \\
-(3a) Explain what NLP is and why it is of interest to us for this project \\
-(3b) BERT, Llama, ChatGPT and other models (briefly explain their differences, advantages and disadvantages, paramters, memory usage (?)) \\
+    \item \textbf{What is NLP?}
+    \begin{enumerate}
+        \item \textbf{Definition and Importance:} Natural Language Processing (NLP) is a branch of AI focused on enabling computers to understand, interpret, and generate human language.
+        \item \textbf{NLP Models:}
+        \begin{enumerate}
+            \item \textbf{BERT:} A transformer-based model designed for contextual word understanding.
+            \item \textbf{LLaMA:} A language model optimized for efficiency in various NLP tasks.
+            \item \textbf{ChatGPT:} A generative AI model designed for conversational applications.
+            \item \textbf{Comparison:} These models differ in size, memory usage, training methods, and suitability for different tasks.
+        \end{enumerate}
+    \end{enumerate}
 
-(4) Should we be scared of AI? \\
-(4a) https://www.youtube.com/watch?v=yh1pF1zaauc. (from our mentor) \\
-(4b) Privacy and ethics of data collection and processing (present the problem, why people are concerned about this, then later on in the document we say that we resolved this issue because we are processing the data locally etc) \\
-(4c) Adversarial attacks (I'm not sure this is particularly relevant to our project but it mught be worth mentioning) \\
-(4e) Accuracy concerns, how can we be sure that our model is correct? Lack of human oversight \\
-(4f) Environmental concerns
-// HF tutorial: env concerns => fine tune not training 
+    \item \textbf{Should We Be Scared of AI?}
+    \begin{enumerate}
+        \item \textbf{Reference:} \textit{YouTube Video} \url{https://www.youtube.com/watch?v=yh1pF1zaauc} (from our mentor).
+        \item \textbf{Privacy and Ethics:} 
+        \begin{enumerate}
+            \item \textbf{Problem:} Concerns about data collection and processing.
+            \item \textbf{Solution:} Our project processes data locally to mitigate privacy risks.
+        \end{enumerate}
+        \item \textbf{Adversarial Attacks:} AI vulnerabilities where manipulated inputs lead to incorrect outputs.
+        \item \textbf{Accuracy Concerns:} 
+        \begin{enumerate}
+            \item \textbf{Reliability:} How can we ensure our model is correct?
+            \item \textbf{Lack of Human Oversight:} Risks of AI decision-making without supervision.
+        \end{enumerate}
+        \item \textbf{Environmental Concerns:} 
+        \begin{enumerate}
+            \item \textbf{Resource Usage:} AI training requires high computational power.
+            \item \textbf{Optimization:} Fine-tuning instead of full training can reduce energy consumption.
+        \end{enumerate}
+    \end{enumerate}
 
-
+\end{enumerate}
 
 \chapter{Overview of the existing solutions}
 To our knowledge, as of writing this thesis, there are no publicly available solutions that directly address this problem. The most comparable approaches involve existing multimodal models. While widely used models like ChatGPT and Gemini offer some relevant capabilities, they are not highly precise for this specific task. A major limitation of such models is their large size—for instance, GPT-3 has 175 billion parameters\cite{chatgpt_params}—making them impractical for mobile deployment \cite{LinguaLinked}.
 
-Alternatively, Computer Vision models exist for extracting text and bounding boxes from screen images. Microsoft’s OmniParser \cite{omniparser_intro}, for example, performs well in this area but still requires preprocessing similar to our approach. Moreover, our experiments running OmniParser locally indicate that it depends on CUDA technology, making it unsuitable for mobile deployment \cite{OUR EXPERIMENTS???}.
-
-
+Alternatively, Computer Vision models exist for extracting text and bounding boxes from screen images. Microsoft’s OmniParser \cite{omniparser_intro}, for example, performs well in this area but still requires preprocessing similar to our approach. Moreover, our experiments running OmniParser locally indicate that it depends on CUDA technology, making it unsuitable for mobile deployment.
 
 \section{Murmuras' existing solution} 
 Murmuras' current approach relies on fixed scripts tailored to specific applications, making it inflexible and difficult to generalize across diverse coupon formats. This lack of adaptability limits its usefulness in real-world scenarios where coupon structures vary widely. Since our goal is to develop a solution that is easily adaptable for processing diverse mobile content, this method is not well-suited for our needs.
@@ -179,12 +216,12 @@ Additionally, the accuracy of this method is suboptimal. According to their own 
 
 The evaluation process involves using difflib’s SequenceMatcher, a text similarity algorithm that computes the ratio of matching sequences between two strings \cite{sequence_matcher}. For each extracted coupon, the similarity scores of its five attributes are individually compared against the ground-truth values. The results are then averaged to generate an overall similarity percentage. A low similarity ratio indicates significant variations between the extracted and expected coupon details, highlighting challenges in precise text interpretation and extraction. 
 
-
 \section{Scapegraph AI}
-ScrapeGraphAI is an open-source Python library that streamlines data extraction from websites and local documents by utilizing LLMs and graph logic to construct efficient scraping pipelines. This approach automates data extraction, reducing the need for extensive manual coding. The library supports integration with various LLMs, including local models \cite{scapegraph_intro}. For instance, users have configured ScrapeGraphAI to work with local models like those served through vLLM \cite{gh_issue_810_scapegraph} or Ollama \cite{gh_issue_752_scapegraph}.
+ScrapeGraphAI is an open-source library that streamlines data extraction from websites and local documents by utilizing LLMs and graph logic to construct scraping pipelines \cite{scapegraph_repo}. The library supports integration with various LLMs, including local models through the use of Ollama \cite{ollama_repo} \cite{scapegraph_usage}.
 
-However, this solution does not address the issue of deploying such models directly on mobile devices. This presents significant challenges since mobile devices typically have limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}. 
+However, Scrapepraph AI provides only Python and Node.js SDKs \cite{scapegraph_sdks}, which could prove to be an issue with regard to mobile deployment, because neither Python nor Node.js is natively supported on iOS or Android \cite{android_dev_site} \cite{ios_dev_site}.
 
+Moreover, due to mobile devices typically having limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}, we cannot solely rely on the size of the model in order to improve performance. We believe that through fine-tuning LLMs, we are able to develop tools that are far more viable for edge device usage.
 
 % \section{}
 
@@ -195,60 +232,59 @@ However, this solution does not address the issue of deploying such models direc
 % \chapter{Summary}
 % \chapter{Charts}
 
- 
-
 \begin{thebibliography}{99}
 
 \addcontentsline{toc}{chapter}{Bibliography}
+\raggedright
 
 \bibitem{murmuras} 
 \textit{Murmuras website}.  
 \url{https://murmuras.com/}.  
 [Accessed 2025-02-11].
 
-\bibitem{coupon_definition} 
-\textit{Britannica Dictionary definition of COUPON}.  
-\url{https://www.britannica.com/dictionary/coupon}.  
+\bibitem{coupon_definition}
+\textit{Britannica Dictionary definition of COUPON}.
+\url{https://www.britannica.com/dictionary/coupon}.
 [Accessed 2025-02-03].
 
-\bibitem{benchmark} 
-\textit{Computer Benchmark}.  
-\url{https://bhatabhishek-ylp.medium.com/benchmarking-in-computer-c6d364681512}.  
-[Accessed 2025-02-03].
+% \bibitem{benchmark} 
+% \textit{Computer Benchmark}.
+% \url{https://bhatabhishek-ylp.medium.com/benchmarking-in-computer-c6d364681512}.
+% [Accessed 2025-02-03].
 
 \bibitem{design_of_coupons}
 Xiong Keyi, Yang Wensheng
-\textit{Research on the Design of E-coupons for Directional Marketing of Two Businesses in Competitive Environment}.  
-\url{https://www.sciencepublishinggroup.com/article/10.11648/j.ijefm.20200801.16}.  
+\textit{Research on the Design of E-coupons for Directional Marketing of Two Businesses in Competitive Environment}.
+\url{https://www.sciencepublishinggroup.com/article/10.11648/j.ijefm.20200801.16}.
 [Accessed 2025-02-04].
 
 \bibitem{targeted_reminders}
 Li Li, et. al.
-\textit{Targeted reminders of electronic coupons: using predictive analytics to facilitate coupon marketing}.  
-\url{https://link.springer.com/article/10.1007/s10660-020-09405-4}.  
+\textit{Targeted reminders of electronic coupons: using predictive analytics to facilitate coupon marketing}.
+\url{https://link.springer.com/article/10.1007/s10660-020-09405-4}.
 [Accessed 2025-02-04].
 
 \bibitem{competitor_tariffs}
 Bernhard König, et. al.
-\textit{Analysing competitor tariffs with machine learning}.  
-\url{https://www.milliman.com/en/insight/analysing-competitor-tariffs-with-machine-learning}.  
+\textit{Analysing competitor tariffs with machine learning}.
+\url{https://www.milliman.com/en/insight/analysing-competitor-tariffs-with-machine-learning}.
 [Accessed 2025-02-04].
 
 \bibitem{ml_general}
 Iqbal H. Sarker
-\textit{Machine Learning: Algorithms, Real-World Applications and Research Directions}.  
-\url{https://link.springer.com/article/10.1007/s42979-021-00592-x}.  
+\textit{Machine Learning: Algorithms, Real-World Applications and Research Directions}.
+\url{https://link.springer.com/article/10.1007/s42979-021-00592-x}.
 [Accessed 2025-02-05].
 
 \bibitem{emarketer_coupon_stats}
-Sara Lebow 
-\textit{How consumers access digital coupons}.  
-\url{https://www.emarketer.com/content/how-consumers-access-digital-coupons}.  
+Sara Lebow
+\textit{How consumers access digital coupons}.
+\url{https://www.emarketer.com/content/how-consumers-access-digital-coupons}.
 [Accessed 2025-02-05].
 
 \bibitem{coupon_stats_2}
-\textit{Unveiling IT Coupons Trends and Statistics}.  
-\url{https://www.go-globe.com/unveiling-it-coupons-trends-statistics/}.  
+\textit{Unveiling IT Coupons Trends and Statistics}
+\url{https://www.go-globe.com/unveiling-it-coupons-trends-statistics/}.
 [Accessed 2025-02-05].
 
 \bibitem{chatgpt_params}
@@ -260,24 +296,43 @@ Ziegler, Jeffrey Wu, Clemens Winter, Christopher Hesse, Mark Chen,
 Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin Chess, Jack Clark,
 Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, and
 Dario Amodei. Language models are few-shot learners, 2020}
-// Would be great to get the link and change this into APA
 
-\bibitem{scapegraph_intro}
-Satyam Tripathi
-\textit{ScrapeGraphAI Tutorial - Getting Started with LLMs Web Scraping}
-\url{https://scrapingant.com/blog/scrapegraphai-llms-web-scraping}
+\bibitem{scapegraph_repo}
+Marco Perini, Lorenzo Padoan, Marco Vinciguerra
+\textit{Scrapegraph-ai}.
+\url{https://github.com/VinciGit00/Scrapegraph-ai}.
+[Accessed 2025-02-24].
+
+\bibitem{ollama_repo}
+\textit{Ollama}.
+\url{https://github.com/ollama/ollama}.
+[Accessed 2025-02-24].
+
+\bibitem{scapegraph_usage}
+Marco Perini, Lorenzo Padoan, Marco Vinciguerra
+\textit{Scrapegraph-ai usage}.
+\url{https://github.com/ScrapeGraphAI/Scrapegraph-ai?tab=readme-ov-file#-usage}.
+[Accessed 2025-02-24].
+
+\bibitem{scapegraph_sdks}
+Marco Perini, Lorenzo Padoan, Marco Vinciguerra
+\textit{Scrapegraph-ai API and SDKs}.
+\url{https://github.com/ScrapeGraphAI/Scrapegraph-ai?tab=readme-ov-file#-scrapegraph-api--sdks}.
+[Accessed 2025-02-24].
+
+\bibitem{android_dev_site}
+\textit{Android developer fundamentals website}.
+\url{https://developer.android.com/guide/components/fundamentals}.
+[Accessed 2025-02-24].
+
+\bibitem{ios_dev_site}
+\textit{Apple developer website}.
+\url{https://developer.apple.com/develop/}.
+[Accessed 2025-02-24].
 
 \bibitem{omniparser_intro}
 \textit{Yadong Lu, Jianwei Yang, Yelong Shen, and Ahmed Awadallah. Omni-
 parser for pure vision based gui agent, 2024.}
-
-\bibitem{gh_issue_810_scapegraph}
-\textit{Can not Set Model Tokens to Local Model with OpenAI API Format \#810}
-\url{https://github.com/ScrapeGraphAI/Scrapegraph-ai/issues/810}
-
-\bibitem{gh_issue_752_scapegraph}
-\textit{Can't load tokenizer for 'gpt2' \#752}
-\url{https://github.com/ScrapeGraphAI/Scrapegraph-ai/issues/752}
 
 \bibitem{mobile_resources}
 Xiang Li, et. al.
