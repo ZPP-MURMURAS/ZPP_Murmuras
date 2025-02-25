@@ -22,6 +22,9 @@ class Coupon:
     other_discounts: List[str] = field(default_factory=list)
     dates: Optional[str] = None
 
+@dataclass()
+class CouponSimple:
+    
 
 # Regex matches to different types of discounts
 PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%'
