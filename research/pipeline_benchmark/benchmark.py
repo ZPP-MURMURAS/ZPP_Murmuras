@@ -4,12 +4,12 @@ import subprocess
 import difflib as diff
 import json
 import os
-from typing import Optional, List
+from typing import Optional, List, Union
 import sys
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
-from src.benchmark_utils.io_utils import get_default_datasets, validate_folders, Coupon, get_expected_coupons
+from src.benchmark_utils.io_utils import get_default_datasets, validate_folders, Coupon, CouponSimple, get_expected_coupons
 from src.llama_dataset_generation.input_parser import prepare_input_data
 
 os.chdir(CURRENT_PATH)
@@ -20,6 +20,11 @@ PRICE_WEIGHT = 0.2
 PERCENT_WEIGHT = 0.2
 OTHER_DISCOUNT_WEIGHT = 0.2
 VALIDITY_WEIGHT = 0.1
+
+# Weights for the simple coupons
+NAME_WEIGHT_SIMPLE = 0.4
+PRICE_WEIGHT_SIMPLE = 0.4
+VALIDITY_WEIGHT_SIMPLE = 0.2
 
 # Weights for the prices
 NEW_PRICE_WEIGHT = 0.5
@@ -93,6 +98,33 @@ def _compare_prices(generated_prices: list, expected_prices: list) -> float:
     return max(0.0, coupon_difference - length_difference * LENGTH_PENALTY)
 
 
+def compare_coupons_simple(coupon_1: Optional[CouponSimple],
+                           coupon_2: Optional[CouponSimple]) -> float:
+    """
+    This function will compare two simple coupons and return a float value that
+    represents the similarity between the two coupons. The higher the value, the
+    more similar the coupons are. The lower the value, the more different the
+    coupons are.
+
+    :param coupon_1, coupon_2: The first and second coupons to compare
+    :return: A float value that represents the similarity between the two coupons
+    """
+
+    if coupon_1 is None or coupon_2 is None:
+        return 0.0
+
+    name_ratio = diff.SequenceMatcher(a=coupon_1.product_name,
+                                      b=coupon_2.product_name).ratio()
+    discount_ratio = diff.SequenceMatcher(a=coupon_1.discount_text,
+                                          b=coupon_2.discount_text).ratio()
+    validity_ratio = diff.SequenceMatcher(a=coupon_1.validity_text,
+                                          b=coupon_2.validity_text).ratio()
+
+    return (name_ratio * NAME_WEIGHT_SIMPLE) + (
+        discount_ratio * PRICE_WEIGHT_SIMPLE) + (validity_ratio *
+                                                 VALIDITY_WEIGHT_SIMPLE)
+
+
 def compare_coupons(coupon_1: Optional[Coupon],
                     coupon_2: Optional[Coupon]) -> float:
     """
@@ -138,7 +170,8 @@ def compare_coupons(coupon_1: Optional[Coupon],
 
 
 def judge_pipeline(expected_coupons: List[Coupon],
-                   generated_coupons: List[Coupon]) -> tuple[float, int]:
+                   generated_coupons: List[Coupon],
+                   is_simple: bool = False) -> tuple[float, int]:
     """
     This function will judge the pipeline by comparing the expected coupons with the
     generated ones. The function will return a tuple with the average similarity
@@ -151,6 +184,8 @@ def judge_pipeline(expected_coupons: List[Coupon],
                             expected coupons
     :param generated_coupons: A list of Coupon objects that represent the
                             generated coupons
+    :param is_simple: A boolean value that indicates if the coupons are in the
+                    simple format (default is False)
     :return: A tuple with the average similarity between the coupons and the number
             of lonely coupons
     """
@@ -165,7 +200,11 @@ def judge_pipeline(expected_coupons: List[Coupon],
         max_coupon: int = -1
 
         for i, generated_coupon in generated_coupons.items():
-            similarity = compare_coupons(coupon, generated_coupon)
+            if is_simple:
+                similarity = compare_coupons_simple(coupon, generated_coupon)
+            else:
+                similarity = compare_coupons(coupon, generated_coupon,
+                                             is_simple)
             if similarity > max_similarity:
                 max_similarity = similarity
                 max_coupon = i
@@ -188,7 +227,8 @@ def judge_pipeline(expected_coupons: List[Coupon],
 
 def run_pipeline(pipeline_command: str,
                  input_folder: str,
-                 is_new_format: bool = False) -> Optional[List[Coupon]]:
+                 is_new_format: bool = False,
+                 is_simple: bool = False) -> Optional[List[Coupon]]:
     """
     This function will run the pipeline with the input data and return the
     generated coupons. The function will return None if the pipeline fails to run. 
@@ -196,6 +236,10 @@ def run_pipeline(pipeline_command: str,
     
     :param pipeline_command: The command to run the pipeline
     :param input_folder: The path to the folder with the input data
+    :param is_new_format: A boolean value that indicates if the input data is in the
+                        new format (default is False)
+    :param is_simple: A boolean value that indicates if the coupons are in the
+                    simple format (default is False)
     :return: A list of Coupon objects that represent the generated coupons
             or None if the pipeline fails to run
     """
@@ -219,6 +263,13 @@ def run_pipeline(pipeline_command: str,
             coupons = json.load(file)
 
         for coupon in coupons:
+            if is_simple:
+                proto_coupons.append(
+                    CouponSimple(product_name=coupon["name"],
+                                 discount_text=coupon["text"],
+                                 validity_text=coupon["validity"]))
+                continue
+
             proto_coupons.append(
                 Coupon(product_name=coupon["product_name"],
                        new_price=coupon["new_price"],
@@ -279,6 +330,11 @@ def _parse_args() -> argparse.Namespace:
                               action='store_false',
                               dest='newformat',
                               help='Use the old format')
+    parser.add_argument('-simple',
+                        '--simple',
+                        action='store_true',
+                        default=False,
+                        help='Use the simple format')
     args = parser.parse_args()
     return args
 
@@ -286,6 +342,7 @@ def _parse_args() -> argparse.Namespace:
 if __name__ == '__main__':
     args = _parse_args()
     new_format = True if args.newformat else False
+    is_simple = True if args.simple and new_format else False
 
     # Get the names of the invalid datasets
     if args.invalid is not None:
@@ -304,8 +361,9 @@ if __name__ == '__main__':
         input_dir = os.path.join(args.input, folder_name)
 
         try:
-            if not validate_folders(input_dir, expected_dir, new_format):
-                print("The input and expected folders are not valid.")
+            if not validate_folders(input_dir, expected_dir, new_format,
+                                    is_simple):
+                print("The input or expected folders are not valid.")
         except ValueError as e:
             continue
 
@@ -320,13 +378,15 @@ if __name__ == '__main__':
                     json.dump(prepared_data, json_file)
 
         # Get the expected coupons
-        expected_coupons: List[Coupon] = get_expected_coupons(
-            expected_dir, new_format)
-        generated_coupons: List[Coupon] = run_pipeline(args.pipeline,
-                                                       input_dir, new_format)
+        expected_coupons: List[Union[Coupon,
+                                     CouponSimple]] = get_expected_coupons(
+                                         expected_dir, new_format, is_simple)
+        generated_coupons: List[Union[Coupon, CouponSimple]] = run_pipeline(
+            args.pipeline, input_dir, new_format, is_simple)
 
         similarity, lonely_coupons = judge_pipeline(expected_coupons,
-                                                    generated_coupons)
+                                                    generated_coupons,
+                                                    is_simple)
 
         percent_similarity = round(similarity * 100, 3)
         print(f"Average similarity between the coupons: {percent_similarity}%")
@@ -336,4 +396,5 @@ if __name__ == '__main__':
         percents.append(percent_similarity)
         print(f"Final score: {final_score}%")
 
-    print(f"Average score: {round(np.mean(percents), 3)}%")
+    if percents:
+        print(f"Average score: {round(np.mean(percents), 3)}%")

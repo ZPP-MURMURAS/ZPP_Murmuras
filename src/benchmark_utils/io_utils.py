@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import sys
 
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 from dataclasses import dataclass, field
 
 
@@ -22,9 +22,16 @@ class Coupon:
     other_discounts: List[str] = field(default_factory=list)
     dates: Optional[str] = None
 
+
 @dataclass()
 class CouponSimple:
-    
+    """
+    Class representing a simple coupon.
+    """
+    product_name: str
+    discount_text: str
+    validity_text: str
+
 
 # Regex matches to different types of discounts
 PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%'
@@ -81,6 +88,14 @@ def _get_discounts(
 
 
 def _get_coupons_old(file_path: str) -> List[Coupon]:
+    """
+    Extracts the coupons from a CSV file. The function will return a list of Coupon
+    objects that represent the expected coupons.
+
+    :param file_path: The path to the CSV file
+    :return: A list of Coupon objects that represent the expected coupons
+    """
+
     expected_coupons = []
     with open(file_path, 'r') as file:
         reader = csv.DictReader(file)
@@ -100,12 +115,30 @@ def _get_coupons_old(file_path: str) -> List[Coupon]:
     return expected_coupons
 
 
-def _get_coupons_new(file_path: str) -> List[Coupon]:
+def _get_coupons_new(
+        file_path: str,
+        is_simple: bool = False) -> List[Union[Coupon, CouponSimple]]:
+    """
+    Extracts the coupons from a JSON file. The function will return a list of Coupon
+    or CouponSimple objects that represent the expected coupons. 
+
+    :param file_path: The path to the JSON file
+    :param is_simple: A boolean flag to indicate if the simple format is used
+    :return: A list of Coupon or CouponSimple objects that represent the expected coupons
+    """
+
     expected_coupons = []
     with open(file_path, 'r') as file:
         data = json.load(file)
 
         for item in data:
+            if is_simple:
+                coupon = CouponSimple(product_name=item["name"],
+                                      discount_text=item["text"],
+                                      validity_text=item["validity"])
+                expected_coupons.append(coupon)
+                continue
+
             new_price = item.get("new_price", None)
             old_price = item.get("old_price", None)
             percents = item.get("percents", [])
@@ -123,14 +156,18 @@ def _get_coupons_new(file_path: str) -> List[Coupon]:
     return expected_coupons
 
 
-def get_expected_coupons(file_path: Optional[str],
-                         is_new_format: bool = False) -> List[Coupon]:
+def get_expected_coupons(
+        file_path: Optional[str],
+        is_new_format: bool = False,
+        is_simple: bool = False) -> List[Union[Coupon, CouponSimple]]:
     """
     This function will return a list of Coupon objects that represent the 
     expected coupons. This function is used to benchmark the pipeline.
     
     :param file_path: The path to the folder with the expected coupons in csv 
                     format (like in the Murmuras datasets)
+    :param is_new_format: A boolean flag to indicate if the new format is used
+    :param is_simple: A boolean flag to indicate if the simple format is used
     :return: A list of Coupon objects that represent the expected coupons
     """
 
@@ -148,7 +185,8 @@ def get_expected_coupons(file_path: Optional[str],
         if not is_new_format:
             expected_coupons.extend(_get_coupons_old(file_path_full))
         else:
-            expected_coupons.extend(_get_coupons_new(file_path_full))
+            expected_coupons.extend(_get_coupons_new(file_path_full,
+                                                     is_simple))
 
     return expected_coupons
 
@@ -168,12 +206,14 @@ def _validate_output_file_format(fieldnames: list) -> bool:
     return all(header in fieldnames for header in required_headers)
 
 
-def _validate_output_file_new_format(file: str) -> bool:
+def _validate_output_file_new_format(file: str,
+                                     is_simple: bool = False) -> bool:
     """
     This function will validate the format of the json file that contains the
     expected coupons. The file must contain the keys defined below. 
     
     :param file: The path to the json file
+    :param is_simple: A boolean flag to indicate if the simple format is used
     :return: True if the file format is valid, False otherwise
     """
 
@@ -181,6 +221,10 @@ def _validate_output_file_new_format(file: str) -> bool:
         "product_name", "new_price", "old_price", "percents",
         "other_discounts", "dates"
     }
+
+    if is_simple:
+        required_keys = {"name", "text", "validity"}
+
     with open(file, 'r') as f:
         try:
             data = json.load(f)
@@ -232,6 +276,7 @@ def _validate_folder(folder: str,
 
     :param folder: The path to the folder
     :param validation_func: The function to validate the format of the CSV files
+    :param is_new_format: A boolean flag to indicate if the new format is used
     :return: True if the folder is valid, False otherwise
     """
     if not os.path.isdir(folder):
@@ -265,8 +310,10 @@ def _validate_folder(folder: str,
     return True
 
 
-def validate_folders(input_folder: str, output_folder: str,
-                     is_new_format: bool) -> bool:
+def validate_folders(input_folder: str,
+                     output_folder: str,
+                     is_new_format: bool,
+                     is_simple: bool = False) -> bool:
     """
     This function will validate the input and output folders. The input folder must
     contain csv files with the format defined in the _validate_input_file_format
@@ -276,6 +323,7 @@ def validate_folders(input_folder: str, output_folder: str,
     :param input_folder: The path to the folder with the input data
     :is_new_format: A boolean flag to indicate if the new format is used
     :param output_folder: The path to the folder with the expected coupons
+    :param is_simple: A boolean flag to indicate if the simple format is used
     :return: True if the folders are valid, False otherwise
     """
 
@@ -284,7 +332,7 @@ def validate_folders(input_folder: str, output_folder: str,
 
     if is_new_format:
         return valid_input and _validate_folder(
-            output_folder, _validate_output_file_new_format, is_new_format)
+            output_folder, _validate_output_file_new_format, is_simple)
 
     return valid_input and _validate_folder(output_folder,
                                             _validate_output_file_format)
