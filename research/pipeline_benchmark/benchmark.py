@@ -203,8 +203,7 @@ def judge_pipeline(expected_coupons: List[Coupon],
             if is_simple:
                 similarity = compare_coupons_simple(coupon, generated_coupon)
             else:
-                similarity = compare_coupons(coupon, generated_coupon,
-                                             is_simple)
+                similarity = compare_coupons(coupon, generated_coupon)
             if similarity > max_similarity:
                 max_similarity = similarity
                 max_coupon = i

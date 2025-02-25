@@ -6,7 +6,7 @@ import numpy as np
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from research.pipeline_benchmark.benchmark import _compare_prices, compare_coupons, judge_pipeline, Coupon
+from research.pipeline_benchmark.benchmark import _compare_prices, compare_coupons, Coupon, CouponSimple, compare_coupons_simple, judge_pipeline
 
 class TestBenchmark:
     @pytest.mark.parametrize("generated, expected, expected_score", [
@@ -42,6 +42,38 @@ class TestBenchmark:
     def test_compare_coupons(self, coupon1, coupon2, expected_score):
         assert np.isclose(compare_coupons(coupon1, coupon2), expected_score, atol=0.1)
 
+    @pytest.mark.parametrize("coupon1, coupon2, expected_score", [
+        (CouponSimple("Product A", "10.0", "valid till 900"),
+         CouponSimple("Product A", "10.0", "valid till 900"),
+         1.0),
+        (CouponSimple("A", "10.0", "20.0"),
+         CouponSimple("B", "234", "344"),
+         0.0),
+        (CouponSimple("Product ABC", "discount 123 from 234 and 60% off if you have a unicorn", "valid till 6969"),
+         CouponSimple("Product", "discount 90% from 76 to 9 and also we will give you a phoenix", "until 1169 AD"),
+         0.6),
+        (CouponSimple("A", "10.0", "valid till 900"),
+         CouponSimple("B", "10.0", "valid till 900"),
+         0.6),
+        (CouponSimple("unicorn", "10.0", "valid till 9000"),
+         CouponSimple("UNICORN", "10.0", "valid till 9000"),
+         0.6),
+        (CouponSimple("UNICORN", "10.0", "valid till 969"),
+         CouponSimple("UNICORN", "abc", "valid till 969"),
+         0.6),
+        (CouponSimple("UNICORN", "10.0", "valid till 969"),
+         CouponSimple("UNICORN", "10.3", "valid till 969"),
+         0.9),
+        (CouponSimple("UNICORN", "10.0", "valid till 969"),
+         CouponSimple("UNICORN", "10.0", "valid till 1212"),
+         0.9),
+        (CouponSimple("UNICORN", "10.0", "valid till 969"),
+         CouponSimple("UNICORN", "10.0", "uga buga"),
+         0.8),
+    ])
+    def test_compare_coupons_simple(self, coupon1, coupon2, expected_score):
+        assert np.isclose(compare_coupons_simple(coupon1, coupon2), expected_score, atol=0.1)
+
     def test_judge_pipeline(self):
         expected_coupons = [
             Coupon("Product A", "10.0", "20.0", [10], [5], ["2025-01-01"]),
@@ -50,6 +82,6 @@ class TestBenchmark:
         generated_coupons = [
             Coupon("Product A", "10.0", "20.0", [10], [5], ["2025-01-01"])
         ]
-        similarity, lonely = judge_pipeline(expected_coupons, generated_coupons)
+        similarity, lonely = judge_pipeline(expected_coupons, generated_coupons, False)
         assert np.isclose(similarity, 0.5, atol=0.1)
         assert lonely == 1
