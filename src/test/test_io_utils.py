@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from src.benchmark_utils.io_utils import _get_discounts, _get_coupons_old, _get_coupons_new, CouponSimple
+from src.pipeline_benchmark.io_utils import _get_discounts, _get_coupons_old, _get_coupons_new, CouponSimple
 
 
 class TestIOUtils:

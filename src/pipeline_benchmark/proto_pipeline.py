@@ -5,7 +5,7 @@ import sys
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
-from src.benchmark_utils.io_utils import Coupon, get_expected_coupons
+from src.pipeline_benchmark.io_utils import Coupon, get_expected_coupons
 os.chdir(CURRENT_PATH)
 
 """

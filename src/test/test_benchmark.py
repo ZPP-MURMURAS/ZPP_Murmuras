@@ -6,7 +6,7 @@ import numpy as np
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from research.pipeline_benchmark.benchmark import _compare_prices, compare_coupons, Coupon, CouponSimple, compare_coupons_simple, judge_pipeline
+from src.pipeline_benchmark.benchmark import _compare_prices, compare_coupons, Coupon, CouponSimple, compare_coupons_simple, judge_pipeline
 
 
 class TestBenchmark:
