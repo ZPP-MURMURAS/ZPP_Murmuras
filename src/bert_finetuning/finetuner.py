@@ -54,6 +54,7 @@ def create_custom_tags(tokens: list) -> list:
     For BERT finetuning, we need tokens to represent the beginning and the continuation of the entities.
     So, if the dataset does not provide this information, we need to create it.
     This function is responsible for converting labels from X to B-X and I-X format.
+    NOTE: this function assumes that used BERT model has 'O' mapped as UNKNOWN token.
 
     :param tokens: The tokens that will be converted
     :return: The converted tokens
@@ -113,6 +114,7 @@ def __tokenize_and_align_labels(input_column: str, labels_column: str, bi_split:
     param: examples: dataset from which the input_column will be tokenized
     return: The tokenized inputs with aligned labels
     """
+    __assert_init()
     tokenized_inputs = __TOKENIZER(
         examples[input_column], truncation=True, is_split_into_words=True
     )
