@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import huggingface_hub
 import sys
+import json
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
@@ -61,7 +62,7 @@ if __name__ == '__main__':
         cg_concat = ip.prepare_input_data(content_path)
         if not no_ai:
             # This will perform to OpenAI API, and overwrite ground_truth.json.
-            gtd = gtp.extract_discounts(discount_list, client)
+            gtd = json.loads(gtp.extract_discounts(discount_list, client))
 
             # Said json is produced by the gtp.extract_discounts call and stored under
             # the GROUND_TRUTH_JSON_PATH.
