@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from src.benchmark_utils.io_utils import _get_discounts, _get_coupons_old, _get_coupons_new
+from src.benchmark_utils.io_utils import _get_discounts, _get_coupons_old, _get_coupons_new, CouponSimple
 
 
 class TestIOUtils:
@@ -56,3 +56,26 @@ class TestIOUtils:
                 assert coupons[0].new_price == expected_new_price
                 assert expected_percent in coupons[
                     0].percents or expected_percent is None
+
+    @pytest.mark.parametrize(
+        "mock_json_data, expected_name, expected_text, expected_validity",
+        [("[{\"name\": \"Product B\", \"text\": \"Save 5%\", \"validity\": \"2024-06-30\"}]",
+          "Product B", "Save 5%", "2024-06-30"),
+         ("[{\"name\": \"Product D\", \"text\": \"Save 10%\", \"validity\": \"2025-12-31\"}]",
+          "Product D", "Save 10%", "2025-12-31"),
+         ("[{\"name\": \"Product X\", \"text\": \"Buy 1 Get 1 Free\", \"validity\": \"2026-01-15\"}]",
+          "Product X", "Buy 1 Get 1 Free", "2026-01-15"),
+         ("[{\"name\": \"Product Y\", \"text\": \"Flat 50% Off\", \"validity\": \"2023-12-01\"}]",
+          "Product Y", "Flat 50% Off", "2023-12-01"),
+         ("[{\"name\": \"Product Z\", \"text\": \"20% Cashback\", \"validity\": \"2024-09-30\"}]",
+          "Product Z", "20% Cashback", "2024-09-30")])
+    def test_get_coupons_new_simple(self, mock_json_data, expected_name,
+                                    expected_text, expected_validity):
+        with patch("builtins.open", mock_open(read_data=mock_json_data)):
+            with patch("json.load", return_value=json.loads(mock_json_data)):
+                simple_coupons = _get_coupons_new("dummy.json", is_simple=True)
+                assert len(simple_coupons) == 1
+                assert isinstance(simple_coupons[0], CouponSimple)
+                assert simple_coupons[0].product_name == expected_name
+                assert simple_coupons[0].discount_text == expected_text
+                assert simple_coupons[0].validity_text == expected_validity
