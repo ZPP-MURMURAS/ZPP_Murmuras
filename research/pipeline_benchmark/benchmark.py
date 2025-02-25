@@ -318,6 +318,11 @@ def _parse_args() -> argparse.Namespace:
         help=
         'List of invalid datasets to exclude from the benchmark. Input them as\
         a space-separated string.')
+    parser.add_argument('-simple',
+                        '--simple',
+                        action='store_true',
+                        default=False,
+                        help='Use the simple format')
     format_group = parser.add_mutually_exclusive_group()
     format_group.add_argument('-newformat',
                               '--newformat',
@@ -329,11 +334,6 @@ def _parse_args() -> argparse.Namespace:
                               action='store_false',
                               dest='newformat',
                               help='Use the old format')
-    parser.add_argument('-simple',
-                        '--simple',
-                        action='store_true',
-                        default=False,
-                        help='Use the simple format')
     args = parser.parse_args()
     return args
 

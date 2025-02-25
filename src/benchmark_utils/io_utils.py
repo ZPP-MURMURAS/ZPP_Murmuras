@@ -296,17 +296,16 @@ def _validate_folder(folder: str,
             if not validation_func(file_name_full):
                 raise ValueError(
                     f"The file {file_name} has an invalid format.")
-            continue
+        else:
+            if not file_name.endswith('.csv'):
+                raise ValueError(f"The file {file_name} is not a CSV file.")
 
-        if not file_name.endswith('.csv'):
-            raise ValueError(f"The file {file_name} is not a CSV file.")
-
-        with open(file_name_full, 'r') as file:
-            reader = csv.DictReader(file)
-            if reader.fieldnames is None or not validation_func(
-                    reader.fieldnames):
-                raise ValueError(
-                    f"The file {file_name} has an invalid format.")
+            with open(file_name_full, 'r') as file:
+                reader = csv.DictReader(file)
+                if reader.fieldnames is None or not validation_func(
+                        reader.fieldnames):
+                    raise ValueError(
+                        f"The file {file_name} has an invalid format.")
     return True
 
 
@@ -332,7 +331,7 @@ def validate_folders(input_folder: str,
 
     if is_new_format:
         return valid_input and _validate_folder(
-            output_folder, _validate_output_file_new_format, is_simple)
+            output_folder, _validate_output_file_new_format, is_new_format)
 
     return valid_input and _validate_folder(output_folder,
                                             _validate_output_file_format)
