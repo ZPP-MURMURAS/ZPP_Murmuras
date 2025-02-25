@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     client = None
     if not no_ai:
-        client = gtp.init_client(HF_API_KEY)
+        client = gtp.init_client(OPEN_API_KEY)
     huggingface_hub.login(HF_API_KEY)
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
