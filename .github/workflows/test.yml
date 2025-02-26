@@ -24,7 +24,8 @@ jobs:
         pip install pytest pytest-cov
     - name: Test with pytest
       run: |
-        PYTHONPATH=$(pwd) pytest $TEST_DIR --doctest-modules --junitxml=junit/test-results.xml --cov=src --cov-report=html
+        PYTHONPATH=$(pwd) pytest $TEST_DIR --doctest-modules --junitxml=junit/test-results.xml --cov=src --cov-report=html || echo "TEST_FAILED=true" >> $GITHUB_ENV
+      continue-on-error: true
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -37,3 +38,7 @@ jobs:
       with:
         name: coverage-report
         path: htmlcov
+
+    - name: Fail job if tests failed
+      if: env.TEST_FAILED == 'true'
+      run: exit 1
