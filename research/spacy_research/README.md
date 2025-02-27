@@ -27,6 +27,9 @@ The provided link has all the relevant information.
 ### spacy-huggingface-pipelines 
 [spacy-huggingface-pipelines](https://github.com/explosion/spacy-huggingface-pipelines) - "This package provides spaCy components to use pretrained Hugging Face Transformers pipelines for inference only."
 
+### spacy-llm
+[spacy-llm](https://spacy.io/usage/large-language-models#example-2) - a package that provides support for models from HF. You can integrate LLMs into spaCy NLP pipelines. 
+
 ### Conclusions
 First of all, spaCy's documentation is well-written and comprehensive, making it easier to work with. Furthermore, spaCy is highly customizable as it enables the integration of custom models and pipelines as well as fine-tuning existing ones to some extent; it is [optimized](https://www.seaflux.tech/blogs/NLP-libraries-spaCy-NLTK-differences) for performance, seen as it is implemented in cython, so it is appropriate for processing large quantities of data. 
 
