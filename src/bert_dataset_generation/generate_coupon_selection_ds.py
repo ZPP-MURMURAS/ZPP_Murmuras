@@ -5,13 +5,15 @@ import re
 import json
 import datasets
 import pandas as pd
+from datasets import DatasetDict, Dataset
 from huggingface_hub import login
 from huggingface_hub import HfApi
+from sklearn.model_selection import train_test_split
 
 # Constants
 TAG_B_COUPON = 'B-COUPON'  # begin coupon tag
 TAG_I_COUPON = 'I-COUPON'  # inside coupon tag
-TAG_UNKNOWN = 'UNKNOWN'  # not-a-coupon tag
+TAG_UNKNOWN = 'O'  # not-a-coupon tag
 
 COL_TEXT_FULL = 'content_full'  # column from coupons frame with full coupon text
 COL_CONTENT_TEXT = 'text'  # column from content_generic file containing text
@@ -316,7 +318,7 @@ def json_to_labeled_tokens(data: List[TreeNode], indent: Optional[int] = None) -
     return res
 
 
-def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str) -> None:
+def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str, new_repo: bool) -> None:
     """
     Creates dataset out of list of pairs of words and labels and pushes it to HF Hub.
     """
@@ -324,18 +326,32 @@ def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, a
         "texts": datasets.Sequence(datasets.Value("string")),
         "labels": datasets.Sequence(LABELS)
     })
-    ds = datasets.Dataset.from_dict(
-        {
-            "texts": list(sample[0] for sample in samples),
-            "labels": list(sample[1] for sample in samples)
-        },
-        features=features
-    )
-    login(token=apikey)
-    api = HfApi()
-    api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
+    # Convert samples into a dictionary
+    texts = [sample[0] for sample in samples]
+    labels = [sample[1] for sample in samples]
 
-    ds.push_to_hub(save_name, private=True)
+    # Initial train/test split (80% train, 20% temp)
+    train_texts, temp_texts, train_labels, temp_labels = train_test_split(
+        texts, labels, test_size=0.2, random_state=42
+    )
+
+    # Split temp set into validation (10%) and test (10%)
+    val_texts, test_texts, val_labels, test_labels = train_test_split(
+        temp_texts, temp_labels, test_size=0.5, random_state=42
+    )
+
+    # Create Dataset objects
+    dataset_dict = DatasetDict({
+        "train": Dataset.from_dict({"texts": train_texts, "labels": train_labels}, features=features),
+        "validation": Dataset.from_dict({"texts": val_texts, "labels": val_labels}, features=features),
+        "test": Dataset.from_dict({"texts": test_texts, "labels": test_labels}, features=features)
+    })
+    login(token=apikey)
+    if new_repo:
+        api = HfApi()
+        api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
+
+    dataset_dict.push_to_hub(save_name, private=True)
 
 
 def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: pd.DataFrame, json_output: bool) \
@@ -377,9 +393,13 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
 
 if __name__ == '__main__':
     HF_HUB_KEY = getenv('HF_HUB_KEY')
-    assert len(sys.argv) == 3, f"usage: {sys.argv[0]} <config_path> <ds_name>"
+    assert len(sys.argv) == 4, f"usage: {sys.argv[0]} <config_path> <ds_name> <create_repo: y/n>"
     config_path = sys.argv[1]
     ds_name = sys.argv[2]
+    create_repo = sys.argv[3]
+    if (create_repo != 'y') and (create_repo != 'n'):
+        print("create_repo must be either 'y' or 'n'")
+        exit(1)
     config = json.load(open(config_path))
     try:
         frame_pairs = list([(entry['content'], entry['coupons']) for entry in config['frames']])
@@ -397,4 +417,4 @@ if __name__ == '__main__':
         coupons_frame = pd.read_csv(coupons)
         examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
 
-    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY)
+    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')
