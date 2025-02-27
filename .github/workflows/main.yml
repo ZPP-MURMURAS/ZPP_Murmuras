@@ -16,10 +16,8 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: docs/HLD.tex
-      - name : Move PDF to docs
-        run: |
-          mv HLD.pdf docs/
+          working_directory: docs
+          root_file: HLD.tex
       - name: Commit and Push PDF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,10 +45,8 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: docs/licencjat.tex
-      - name : Move PDF to docs
-        run: |
-          mv licencjat.pdf docs/
+          working_directory: docs
+          root_file: licencjat.tex
       - name: Commit and Push PDF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
