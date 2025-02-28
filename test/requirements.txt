@@ -2,5 +2,5 @@ pytest
 pytest-cov
 pytest-lazy-fixtures
 -r ../src/bert_dataset_generation/requirements.txt
--r ../src/bert_finetuning/tequirements.txt
+-r ../src/bert_finetuning/requirements.txt
 -r ../src/llama_dataset_generation/requirements.txt
