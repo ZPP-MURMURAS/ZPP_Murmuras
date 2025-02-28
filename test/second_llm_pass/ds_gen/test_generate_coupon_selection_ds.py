@@ -1,12 +1,12 @@
-from research.second_llm_pass.ds_gen.generate_coupon_selection_ds import (
+from src.bert_dataset_generation.generate_coupon_selection_ds import (
     __insert_to_json_tree as _ds_gen__insert_to_json_tree,
     __encode_json_tree_into_tokens_rec as _ds_gen__encode_json_tree_into_tokens_rec,
     __encode_json_tree_node_with_children_into_tokens as _ds_gen__encode_json_tree_node_with_children_into_tokens,
     __samples_from_entry as _ds_gen__samples_from_entry,
     __construct_prefix_tree_for_coupon_frame as _ds_gen__construct_prefix_tree_for_coupon_frame
 )
-from research.second_llm_pass.ds_gen.generate_coupon_selection_ds import *
-from research.second_llm_pass.ds_gen.generate_coupon_selection_ds import __COL_IS_COUPON as _ds_gen__COL_IS_COUPON
+from src.bert_dataset_generation.generate_coupon_selection_ds import *
+from src.bert_dataset_generation.generate_coupon_selection_ds import __COL_IS_COUPON as _ds_gen__COL_IS_COUPON
 
 import pandas as pd
 from math import nan
