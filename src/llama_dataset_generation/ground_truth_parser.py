@@ -106,7 +106,8 @@ def __get_prompt(data_list: string) -> string:
     return prompt
 
 
-async def __extract_discount_details(coupons_list: list, client: AsyncOpenAI, batch_size: int = 15) -> list:
+async def __extract_discount_details(
+        coupons_list: list, client: AsyncOpenAI, batch_size: int = 15, max_requests_async: int = 20) -> list:
     """
     This function handles the logic of creating async tasks to process the coupon data in batches.
     Coupon data in this context refers to the list of coupon texts that need to be processed by the ChatGPT.
@@ -118,21 +119,29 @@ async def __extract_discount_details(coupons_list: list, client: AsyncOpenAI, ba
     :param coupons_list: The list of coupon data.
     :param client: The initialized Async OpenAI client.
     :param batch_size: The size of each batch.
+    :param max_requests_async: The maximum number of async tasks to run at once.
     :return res: The extracted discount details.
     """
-    tasks = []
-    for j in range(0, len(coupons_list), batch_size):
-        task = asyncio.create_task(
-            __get_data(__get_prompt(coupons_list[j:min(j + batch_size, len(coupons_list))]), client, model='gpt-4o'))
-        tasks.append(task)
-    results = await asyncio.gather(*tasks)
+    itr = 0
     res = []
-    for result in results:
-        list_start = result.find('[')
-        list_end = result.rfind(']')
-        result = result[list_start:list_end + 1]
-        result_json = json.loads(result)
-        res.extend(result_json)
+    while itr < len(coupons_list):
+        tasks = []
+        for j in range(itr, len(coupons_list), batch_size):
+            task = asyncio.create_task(
+                __get_data(__get_prompt(coupons_list[j:min(j + batch_size, len(coupons_list))]), client, model='gpt-4o'))
+            tasks.append(task)
+            if len(tasks) >= max_requests_async:
+                itr = j + batch_size
+                break
+        else:
+            itr = len(coupons_list)
+        results = await asyncio.gather(*tasks)
+        for result in results:
+            list_start = result.find('[')
+            list_end = result.rfind(']')
+            result = result[list_start:list_end + 1]
+            result_json = json.loads(result)
+            res.extend(result_json)
     return res
 
 
@@ -174,25 +183,59 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
     This function prepares the ground truth data by combining the extracted discount details
     with the original coupon data that was not processed by the ChatGPT.
     Then, it calls the ground_truth_to_dict function to convert the data to a dictionary format.
+    It will skip rows from the coupons frame with no content_full.
 
     :param ground_truth_json: The extracted discount details in a list of jsons.
     :param coupons: The original coupon data.
     :return result: The prepared ground truth data in list format.
     """
     result = []
+    coupons_itr = 0
     for i in range(len(ground_truth_json)):
-        res = {'time': coupons['time'][i], 'product_name': coupons['product_text'][i],
-               'valid_until': coupons['validity_text'][i], 'discount': ground_truth_json[i]['discount']}
-        prices = ground_truth_json[i]['prices']
-        if prices == 'None' or len(prices) == 0:
-            res['old_price'] = ''
-            res['new_price'] = ''
-        elif len(prices) == 1:
-            res['old_price'] = ''
-            res['new_price'] = prices[0]
+        if str(coupons["content_full"][coupons_itr]) == 'nan' or str(coupons["content_full"][coupons_itr]) == "['']":
+            continue
+        try:
+            res = {'time': coupons['time'][coupons_itr], 'product_name': coupons['product_text'][coupons_itr],
+                   'valid_until': coupons['validity_text'][coupons_itr], 'discount': ground_truth_json[i]['discount']}
+            prices = ground_truth_json[i]['prices']
+            if prices == 'None' or len(prices) == 0:
+                res['old_price'] = ''
+                res['new_price'] = ''
+            elif len(prices) == 1:
+                res['old_price'] = ''
+                res['new_price'] = prices[0]
+            else:
+                res['old_price'] = prices[0]
+                res['new_price'] = prices[len(prices) - 1]
+        except Exception as e:
+            print(e)
+            print(ground_truth_json[i])
         else:
-            res['old_price'] = prices[0]
-            res['new_price'] = prices[len(prices) - 1]
-        result.append(res)
+            result.append(res)
+        finally:
+            coupons_itr += 1
 
     return __ground_truth_to_dict(result)
+
+
+def prepare_ground_truth_data_no_ai(coupons: pd.DataFrame) -> dict:
+    """
+    Given a coupons dataframe, this function constructs the coupon jsons
+    aggregated by time of occurrence. It will skip rows with empty content_full
+    :param coupons: The coupons dataframe.
+    :return result: mapping from time values to lists of coupons jsons.
+    """
+    result = {}
+    for t, subframe in coupons.groupby('time'):
+        result[t] = []
+        for _, row in subframe.iterrows():
+            content_full = row['content_full']
+            if str(content_full) == 'nan' or str(content_full) == "['']" or str(content_full) == "[]":
+                continue
+            coupon_repr = {
+                "discount_text": row['discount_text'],
+                "product_name": row['product_text'],
+                "valid_until": row['validity_text']
+            }
+            result[t].append(coupon_repr)
+    return result
