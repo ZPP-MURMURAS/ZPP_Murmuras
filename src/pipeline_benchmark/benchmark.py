@@ -308,7 +308,7 @@ def _parse_args() -> argparse.Namespace:
         type=str,
         required=True,
         help=
-        'Command to run the pipeline (e.g., ./run_pipeline --data <input_path>)'
+        'Command to run the pipeline (e.g., ./run_pipeline --input <input_path>)'
     )
     parser.add_argument(
         '-invalid',
