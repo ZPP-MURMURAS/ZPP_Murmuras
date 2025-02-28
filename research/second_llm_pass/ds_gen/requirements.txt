@@ -1,4 +1,0 @@
-pandas
-huggingface-hub
-datasets
-jupyter
