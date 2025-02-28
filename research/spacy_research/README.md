@@ -6,6 +6,9 @@ spaCy is a library for advanced Natural Language Processing (NLP). It provides [
 
 Some examples of spaCy's capabilities can be seen in the `spaCy_research.ipynb` file that is found in this directory. 
 
+### Multi-language support
+spaCy [provides](https://spacy.io/usage/models#multi-language) multi-language support. In the training confic, you can set the `lang = "xx"` or call `spacy.blank("xx")`. 
+
 ### Saving and loading your model
 From my [research](https://spacy.io/usage/saving-loading), I found that you can do the following steps to save your model and then use it with spaCy. 
 
