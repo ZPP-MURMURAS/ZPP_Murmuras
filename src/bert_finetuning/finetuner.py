@@ -4,6 +4,7 @@ import numpy as np
 import evaluate
 from functools import partial
 import wandb
+from curriculer import Curriculer
 
 
 __MODEL_CHECKPOINT = ""
@@ -177,7 +178,7 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     }
 
 
-def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False):
+def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False, curriculum_learning: bool=False):
     """
     Function that is responsible for training the model. It assumes that the dataset
     is already tokenized and aligned with the labels. It should contain
@@ -189,6 +190,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     :param run_name: The name of the run
     :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
     :param wandb_log: Whether the model should be logged to wandb. Default is False
+    :param curriculum_learning: Whether the model should use curriculum learning. Default is False
     """
     __assert_init()
 
@@ -227,13 +229,35 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         tokenizer=__TOKENIZER,
     )
 
-    trainer.train()
-    eval_results = trainer.evaluate(dataset["test"])
+    if not curriculum_learning:
+        trainer.train()
+        eval_results = trainer.evaluate(dataset["test"])
 
-    if wandb_log:
-        wandb.log(eval_results)  # Log final evaluation metrics
-        wandb.finish()
+        if wandb_log:
+            wandb.log(eval_results)  # Log final evaluation metrics
+            wandb.finish()
 
-    # Left for historic purposes
-    if push_to_hub:
-        trainer.push_to_hub("Training completed")
+        # Left for historic purposes
+        if push_to_hub:
+            trainer.push_to_hub("Training completed")
+    else:
+        # Curriculum learning
+        curriculer = Curriculer(dataset, 10)
+        curr_dataset = curriculer.create_init_dataset()
+        trainer.train_dataset = curr_dataset["train"]
+        trainer.eval_dataset = curr_dataset["validation"]
+        trainer.train()
+        for i in range(10):
+            eval_results = trainer.evaluate(curr_dataset["test"])
+            if wandb_log:
+                wandb.log(eval_results)
+            curr_dataset = curriculer.create_next_dataset()
+            trainer.train_dataset = curr_dataset["train"]
+            trainer.eval_dataset = curr_dataset["validation"]
+            trainer.train()
+        eval_results = trainer.evaluate(curr_dataset["test"])
+        if wandb_log:
+            wandb.log(eval_results)
+            wandb.finish()
+        if push_to_hub:
+            trainer.push_to_hub("Training completed")
