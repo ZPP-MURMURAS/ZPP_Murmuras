@@ -191,9 +191,8 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
     """
     result = []
     coupons_itr = 0
+    print(len(coupons))
     for i in range(len(ground_truth_json)):
-        if str(coupons["content_full"][coupons_itr]) == 'nan' or str(coupons["content_full"][coupons_itr]) == "['']":
-            continue
         try:
             res = {'time': coupons['time'][coupons_itr], 'product_name': coupons['product_text'][coupons_itr],
                    'valid_until': coupons['validity_text'][coupons_itr], 'discount': ground_truth_json[i]['discount']}
@@ -214,7 +213,6 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
             result.append(res)
         finally:
             coupons_itr += 1
-
     return __ground_truth_to_dict(result)
 
 
