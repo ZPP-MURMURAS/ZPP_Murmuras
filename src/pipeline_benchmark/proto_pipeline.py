@@ -1,7 +1,13 @@
-from benchmark import Coupon, get_default_datasets, get_expected_coupons
 import json
 import random
 import os
+import sys
+
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
+from src.pipeline_benchmark.io_utils import Coupon, get_expected_coupons
+os.chdir(CURRENT_PATH)
+
 """
 This script is used to generate random data for the proto_pipeline 
 benchmark. It reads the ideal_data.json file and generates new data 

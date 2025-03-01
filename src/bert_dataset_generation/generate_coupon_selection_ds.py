@@ -5,13 +5,15 @@ import re
 import json
 import datasets
 import pandas as pd
+from datasets import DatasetDict, Dataset
 from huggingface_hub import login
 from huggingface_hub import HfApi
+from sklearn.model_selection import train_test_split
 
 # Constants
 TAG_B_COUPON = 'B-COUPON'  # begin coupon tag
 TAG_I_COUPON = 'I-COUPON'  # inside coupon tag
-TAG_UNKNOWN = 'UNKNOWN'  # not-a-coupon tag
+TAG_UNKNOWN = 'O'  # not-a-coupon tag
 
 COL_TEXT_FULL = 'content_full'  # column from coupons frame with full coupon text
 COL_CONTENT_TEXT = 'text'  # column from content_generic file containing text
@@ -39,7 +41,7 @@ def ptree_insert(root: PTreeNode, path: List[str]):
     """
     if not path:
         return
-    if path[0] not in root:
+    if path[0] not in root[0]:
         root[0][path[0]] = ({}, len(path) == 1)
     ptree_insert(root[0][path[0]], path[1:])
 
@@ -85,7 +87,7 @@ def __construct_prefix_tree_for_coupon_frame(coupons_frame: pd.DataFrame, ds_for
 
 def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeNode) -> pd.DataFrame:
     """
-    Adds column to dataframe with is_coupon flag.
+    Adds column to dataframe with tokenization labels.
     This function is created to deal with coupon frames with no beginning indices provided and should be
     executed on input for single value of COL_GROUPBY.
     """
@@ -95,7 +97,7 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
     text_col = content_frame[COL_CONTENT_TEXT]
     while ix < len(text_col):
         text = text_col[ix]
-        if not text == float('nan'):
+        if pd.isna(text):
             ix += 1
             continue
         else:
@@ -116,15 +118,31 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
                 if itr[2] - itr[1] + 1 > chosen_len:
                     chosen = itr
                     chosen_len = itr[2] - itr[1] + 1
-            is_coupon_array += [False] * (chosen[1] - len(is_coupon_array) - 1)
-            is_coupon_array += [True] * chosen_len
+            is_coupon_array += [LBL_UNK] * (chosen[1] - len(is_coupon_array))
+            is_coupon_array.append(LBL_BC)
+            is_coupon_array += [LBL_IC] * (chosen_len - 1)
             ptree_iters.clear()
             ix = chosen[2] + 1
             continue
         if text in coupons_ptree[0]:
             ptree_iters.append([coupons_ptree[0][text], ix, -1 if not coupons_ptree[0][text][1] else ix])
         ix += 1
-    is_coupon_array += [False] * (len(content_frame) - len(is_coupon_array))
+    # searching for possible coupons in running iterators
+    candidates = []
+    for itr in ptree_iters:
+        if itr[2] != -1:
+            candidates.append(itr)
+    if candidates:
+        chosen = None
+        chosen_len = 0
+        for itr in candidates:
+            if itr[2] - itr[1] + 1 > chosen_len:
+                chosen = itr
+                chosen_len = itr[2] - itr[1] + 1
+        is_coupon_array += [LBL_UNK] * (chosen[1] - len(is_coupon_array))
+        is_coupon_array.append(LBL_BC)
+        is_coupon_array += [LBL_IC] * (chosen_len - 1)
+    is_coupon_array += [LBL_UNK] * (len(content_frame) - len(is_coupon_array))
     new_content_frame = content_frame.copy()
     new_content_frame[__COL_IS_COUPON] = is_coupon_array
     return new_content_frame
@@ -133,7 +151,7 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeN
 class TreeNode(TypedDict):
     """helper class used to operating on json"""
     children: Dict[str, 'TreeNode']
-    is_coupon: bool
+    is_coupon: int
     text: Optional[str]
 
 
@@ -188,13 +206,13 @@ def batch_to_json(batch: pd.DataFrame) -> TreeNode:
     Takes batch representing single screen content and converts it to JSON representing XML structure.
     """
     tree_path = []
-    res = {"text": None, "children": {}, "is_coupon": False}
+    res = TreeNode(text=None, children={}, is_coupon=LBL_UNK)
     for row in batch.iterrows():
         text_field = row[1][COL_CONTENT_TEXT]
         name = row[1][COL_VIEW_ID]
-        if name != float('nan'):
+        if pd.isna(name):
             name = str(name).rsplit('/')[-1]
-        if text_field == float('nan'):
+        if pd.isna(text_field):
             text_field = None
         else:
             text_field = str(text_field)
@@ -205,7 +223,6 @@ def batch_to_json(batch: pd.DataFrame) -> TreeNode:
         __insert_to_json_tree(res, tree_path, name,
                               {"text": text_field, "children": {}, "is_coupon": row[1][__COL_IS_COUPON]})
         tree_path.append((name, depth))
-
     return res
 
 
@@ -216,7 +233,7 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
     res = []
     for i, (t, subframe) in enumerate(frame.groupby(COL_GROUPBY)):
         ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[COL_GROUPBY] == t], fmt)
-        subframe = __clear_content_frame(subframe)
+        subframe.reset_index(inplace=True, drop=True)
         subframe = annotate_frame_by_matches(subframe, ptree)
         tree = batch_to_json(subframe)
         tree = collapse_tree(tree)[0]
@@ -227,7 +244,7 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
     return res
 
 
-def __encode_json_tree_node_with_children_into_tokens(root: TreeNode, is_coupon, indent: Optional[int]):
+def __encode_json_tree_node_with_children_into_tokens(root: TreeNode, is_coupon: int, indent: Optional[int]):
     """
     Converts a node with children from json tree to a pair of lists of tokens (words) and labels associated with them.
     :param root: a node to convert, it is expected not to contain a is_coupon flag.
@@ -242,25 +259,32 @@ def __encode_json_tree_node_with_children_into_tokens(root: TreeNode, is_coupon,
     string1, string2 = string.rsplit('{}', maxsplit=1)
     string1 += '{'
     string2 = '}' + string2
-    words1 = re.split("[ \n\t]", string1)
-    words2 = re.split("[ \n\t]", string2)
-    labels1 = [is_coupon] * len(words1)
-    labels2 = [is_coupon] * len(words2)
+    words1 = re.split("[ \n\t]+", string1)
+    words2 = re.split("[ \n\t]+", string2)
+    labels1 = [is_coupon]
+    labels1 += [is_coupon if is_coupon != LBL_BC else LBL_IC] * (len(words1) - 1)
     first_child = True
     for name, child in children.items():
-        words_child, labels_child = __encode_json_tree_into_tokens_rec(child, is_coupon, indent)
-        words1.append(f'{name}:')
-        labels1.append(is_coupon)
+        words_child, labels_child = __encode_json_tree_into_tokens_rec(child, indent)
+        words1.append(f'"{name}":')
+        if labels_child[0] != LBL_IC:
+            labels1.append(LBL_UNK)
+        else:
+            labels1.append(LBL_IC)
+        is_coupon = LBL_UNK if labels_child[-1] == LBL_UNK else LBL_IC
         if not first_child:
             words1[-2] += ','
         first_child = False
         labels1 += labels_child
         words1 += words_child
+    if is_coupon == LBL_BC:
+        is_coupon = LBL_IC
+    labels2 = [is_coupon] * len(words2)
     return words1 + words2, labels1 + labels2
 
 
-def __encode_json_tree_into_tokens_rec(root: TreeNode, is_coupon, indent: Optional[int])\
-        -> Tuple[List[str], List[bool]]:
+def __encode_json_tree_into_tokens_rec(root: TreeNode, indent: Optional[int])\
+        -> Tuple[List[str], List[int]]:
     """
     Converts a node from json tree to a pair of lists of tokens (words) and labels associated with them.
     :param root: a node to convert
@@ -269,12 +293,16 @@ def __encode_json_tree_into_tokens_rec(root: TreeNode, is_coupon, indent: Option
     :return: a pair of list of tokens (words) and labels associated with them.
     """
     root = dict(root)
-    is_coupon |= root.pop('is_coupon')
+    is_coupon_local = root.pop('is_coupon')
     if 'children' in root:
-        return __encode_json_tree_node_with_children_into_tokens(root, is_coupon, indent)
+        return __encode_json_tree_node_with_children_into_tokens(root, is_coupon_local, indent)
     string = json.dumps(root, indent=indent)
-    words = re.split("[ \n\t]", string)
-    labels = [is_coupon] * len(words)
+    words = re.split("[ \n\t]+", string)
+    if is_coupon_local != LBL_UNK:
+        labels = [is_coupon_local]
+        labels += [LBL_IC] * (len(words) - 1)
+    else:
+        labels = [LBL_UNK] * len(words)
     return words, labels
 
 
@@ -285,14 +313,12 @@ def json_to_labeled_tokens(data: List[TreeNode], indent: Optional[int] = None) -
     """
     res = []
     for tree in data:
-        tkns, lbls = __encode_json_tree_into_tokens_rec(tree, False, indent)
-        prv = LBL_UNK
-        lbls = [prv := (LBL_UNK if not lbl else LBL_BC if prv == LBL_UNK else LBL_IC) for lbl in lbls]
+        tkns, lbls = __encode_json_tree_into_tokens_rec(tree, indent)
         res.append((tkns, lbls))
     return res
 
 
-def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str) -> None:
+def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str, new_repo: bool) -> None:
     """
     Creates dataset out of list of pairs of words and labels and pushes it to HF Hub.
     """
@@ -300,18 +326,32 @@ def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, a
         "texts": datasets.Sequence(datasets.Value("string")),
         "labels": datasets.Sequence(LABELS)
     })
-    ds = datasets.Dataset.from_dict(
-        {
-            "texts": list(sample[0] for sample in samples),
-            "labels": list(sample[1] for sample in samples)
-        },
-        features=features
-    )
-    login(token=apikey)
-    api = HfApi()
-    api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
+    # Convert samples into a dictionary
+    texts = [sample[0] for sample in samples]
+    labels = [sample[1] for sample in samples]
 
-    ds.push_to_hub(save_name, private=True)
+    # Initial train/test split (80% train, 20% temp)
+    train_texts, temp_texts, train_labels, temp_labels = train_test_split(
+        texts, labels, test_size=0.2, random_state=42
+    )
+
+    # Split temp set into validation (10%) and test (10%)
+    val_texts, test_texts, val_labels, test_labels = train_test_split(
+        temp_texts, temp_labels, test_size=0.5, random_state=42
+    )
+
+    # Create Dataset objects
+    dataset_dict = DatasetDict({
+        "train": Dataset.from_dict({"texts": train_texts, "labels": train_labels}, features=features),
+        "validation": Dataset.from_dict({"texts": val_texts, "labels": val_labels}, features=features),
+        "test": Dataset.from_dict({"texts": test_texts, "labels": test_labels}, features=features)
+    })
+    login(token=apikey)
+    if new_repo:
+        api = HfApi()
+        api.create_repo(repo_id=save_name, repo_type="dataset", private=True)
+
+    dataset_dict.push_to_hub(save_name, private=True)
 
 
 def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: pd.DataFrame, json_output: bool) \
@@ -329,34 +369,37 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
             ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[COL_GROUPBY] == val], fmt)
             subframe = __clear_content_frame(subframe)
             subframe = annotate_frame_by_matches(subframe, ptree)
-            last_label = LBL_UNK
             labels = []
             words = []
             for i, row in subframe.iterrows():
                 text = row[COL_CONTENT_TEXT]
-                is_coupon = row[__COL_IS_COUPON]
-                if text == float('nan') or text == '':
+                is_coupon_lbl = row[__COL_IS_COUPON]
+                if pd.isna(text) or text == '':
                     continue
                 else:
                     text = str(text)
                 words.extend(text.split())
-                if not is_coupon:
+                if is_coupon_lbl == LBL_UNK:
                     labels += [LBL_UNK] * len(text.split())
                 else:
-                    if last_label != LBL_UNK:
-                        labels += [LBL_IC] * len(text.split())
+                    if is_coupon_lbl == LBL_BC:
+                        labels.append(LBL_BC)
                     else:
-                        labels += [LBL_BC] + [LBL_IC] * (len(text.split()) - 1)
-                last_label = labels[-1]
+                        labels.append(LBL_IC)
+                    labels.extend([LBL_IC] * (len(text.split()) - 1))
             samples.append((words, labels))
         return samples
 
 
 if __name__ == '__main__':
     HF_HUB_KEY = getenv('HF_HUB_KEY')
-    assert len(sys.argv) == 3, f"usage: {sys.argv[0]} <config_path> <ds_name>"
+    assert len(sys.argv) == 4, f"usage: {sys.argv[0]} <config_path> <ds_name> <create_repo: y/n>"
     config_path = sys.argv[1]
     ds_name = sys.argv[2]
+    create_repo = sys.argv[3]
+    if (create_repo != 'y') and (create_repo != 'n'):
+        print("create_repo must be either 'y' or 'n'")
+        exit(1)
     config = json.load(open(config_path))
     try:
         frame_pairs = list([(entry['content'], entry['coupons']) for entry in config['frames']])
@@ -374,4 +417,4 @@ if __name__ == '__main__':
         coupons_frame = pd.read_csv(coupons)
         examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
 
-    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY)
+    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')
