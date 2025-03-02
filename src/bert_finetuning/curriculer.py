@@ -11,6 +11,7 @@ class RowData:
     def __init__(self):
         self.row_id: int = -1
         self.init_size: int = -1
+        self.max_size: int = -1
         self.labels: list[int] = []
         self.spans: list[SpanData] = []
 
@@ -50,6 +51,8 @@ class Curriculer:
                 nc = RowData()
                 c.row_id = row_iter
                 nc.row_id = row_iter
+                c.max_size = len(row['labels'])
+                nc.max_size = len(row['labels'])
                 labels_iter = 0
                 curr_span = None
                 for label in row['labels']:
@@ -91,8 +94,6 @@ class Curriculer:
         texts = []
         train_len = len(self.__dataset['train'])
         validation_len = len(self.__dataset['validation'])
-        test_len = len(self.__dataset['test'])
-        print(self.__dataset)
         for row in self.__rows_with_c:
             labels_list = []
             texts_list = []
@@ -141,23 +142,24 @@ class Curriculer:
             total_l = 0
             for i in range(len(row.spans)):
                 total_l += row.spans[i].length()
-            extend_spans(row.spans, total_l)
+            extend_spans(row.spans, total_l, row.max_size)
         return self.__create_dataset()
 
     def yield_dataset(self):
-        if self.__splits_iter >= self.__splits_amount:
-            raise StopIteration # Seems stupid, but I like it
+        #if self.__splits_iter > self.__splits_amount:
+         #   raise StopIteration # Seems stupid, but I like it
         init_new_dataset_len = len(self.__rows_with_c)
-        if self.__splits_iter % 2 == 10 and len(self.__rows_with_c) != len(self.__dataset['train']):
-            upper_append_limit = int((init_new_dataset_len + 9) / 10)
+        max_len = len(self.__dataset['train']) + len(self.__dataset['validation']) + len(self.__dataset['test'])
+        if self.__splits_iter % 2 == 1 and len(self.__rows_with_c) != max_len:
+            upper_append_limit = int((init_new_dataset_len + self.__splits_amount - 1) / self.__splits_amount)
             self.__rows_with_c.extend(self.__rows_with_counterparts[:min(upper_append_limit, len(self.__rows_with_counterparts))])
             self.__rows_with_counterparts = self.__rows_with_counterparts[min(upper_append_limit, len(self.__rows_with_counterparts)):]
         else:
             for row in self.__rows_with_c:
                 idx = binary_search(self.__rows_without_c, row.row_id)
                 if idx and len(self.__rows_without_c[idx].labels) > 0:
-                    total_l = int((self.__rows_without_c[idx].init_size + 9) / 10)
-                    extend_spans(row.spans, total_l)
+                    total_l = int((self.__rows_without_c[idx].init_size + self.__splits_amount - 1) / self.__splits_amount)
+                    extend_spans(row.spans, total_l, row.max_size)
         self.__splits_iter += 1
         return self.__create_dataset()
 
@@ -172,11 +174,19 @@ def binary_search(rows: list[RowData], target_value):
         return index  # Return the found object's index
     return None  # Not found
 
-def extend_spans(spans: list, extend_amount: int) -> None:
-    nmb_l = len(spans)
+def extend_spans(spans: list, extend_amount: int, max_len: int) -> None:
+    spans_count = len(spans)
+    # newly added row without any spans.
+    # Let's just divide this bad boy into equal parts
+    if spans_count == 0:
+        spans.append(SpanData())
+        spans[0].beg = 0
+        spans[0].end = extend_amount
+        return
     spans_len = extend_amount
-    for k in range(nmb_l):
-        l = extend_amount / nmb_l
+    l = extend_amount / spans_count
+    for k in range(spans_count):
+        l = extend_amount / (spans_count - k)
         left_l = int((l + 1) / 2)
         right_l = l - left_l
         beg = spans[k].beg
@@ -185,14 +195,14 @@ def extend_spans(spans: list, extend_amount: int) -> None:
             spans[k].beg = max(0, beg - left_l)
         else:
             spans[k].beg = max(spans[k - 1].end + 1, beg - left_l)
-        if k == nmb_l - 1:
-            spans[k].end = min(len(spans) - 1, end + right_l)
+        if k == spans_count - 1:
+            spans[k].end = min(max_len - 1, end + right_l)
         else:
             spans[k].end = min(spans[k + 1].beg - 1, end + right_l)
         extend_amount -= (beg - spans[k].beg) + (spans[k].end - end)
         spans_len += (beg - spans[k].beg) + (spans[k].end - end)
     k = 0
-    while extend_amount > 0 and k < nmb_l:
+    while extend_amount > 0 and k < spans_count:
         beg = spans[k].beg
         end = spans[k].end
         if k == 0:
@@ -200,7 +210,7 @@ def extend_spans(spans: list, extend_amount: int) -> None:
         else:
             spans[k].beg = max(spans[k - 1].end + 1, spans[k].beg - extend_amount)
         extend_amount -= beg - spans[k].beg
-        if k == nmb_l - 1:
+        if k == spans_count - 1:
             spans[k].end = min(len(spans) - 1, spans[k].end + extend_amount)
         else:
             spans[k].end = min(spans[k + 1].beg - 1, spans[k].end + extend_amount)
@@ -211,7 +221,7 @@ def extend_spans(spans: list, extend_amount: int) -> None:
 dpl = load_dataset('zpp-murmuras/bert_second_pass_pl', token='')
 print(dpl)
 CURRICULERPL = Curriculer(dpl, 10)
-print(CURRICULERPL.create_init_dataset())
-for i in range(10):
+for i in range(112):
+    pass
     print(CURRICULERPL.yield_dataset())
 
