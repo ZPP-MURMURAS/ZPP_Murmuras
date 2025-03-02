@@ -47,7 +47,7 @@ def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
 
     return model, tokenizer
 
-def train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_length, epoch_no):
+def train_model(model, tokenizer, training_data, eval_data, max_seq_length, epoch_no):
     from trl import SFTTrainer
     from transformers import TrainingArguments
     from unsloth import is_bfloat16_supported
@@ -87,10 +87,9 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_le
             fp16=not is_bfloat16_supported(),
             bf16=is_bfloat16_supported(),
             logging_steps=1,
-            optim="lion_8bit",
+            optim="adamw_8bit",
             weight_decay=0.01,
             warmup_steps=10,
-            output_dir=run_name,
             seed=0,
             report_to="wandb",
             eval_strategy="epoch",
@@ -102,14 +101,13 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_le
 
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no):
-    run_name = "example series lion_8bit"
+    run_name = "example series adamw_8bit"
     from datasets import load_dataset
 
     max_seq_length = 4096
     model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name, wandb_proj)
     training_data = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token, split='train')
     eval_data = load_dataset('zpp-murmuras/' + dataset_name, split='test')
-    print(len(training_data))
     train_model(model, tokenizer, dataset_name, training_data, eval_data, max_seq_length, epoch_no)
 
 

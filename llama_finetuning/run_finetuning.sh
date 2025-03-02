@@ -6,6 +6,8 @@ declare -a NAMES=("one_input_one_output_wrequest" "one_input_one_output_wthreque
 export HUGGING_FACE_TOKEN=
 export WANDB_KEY=
 export TIMEOUT=600
+export EPOCH_NO=25
+export WANDB_PROJECT="example_project"
 
 for NAME in "${NAMES[@]}"
 do
@@ -17,3 +19,5 @@ unset HUGGING_FACE_TOKEN
 unset WANDB_KEY
 unset DATASET_NAME
 unset TIMEOUT
+unset EPOCH_NO
+unset WANDB_PROJECT
