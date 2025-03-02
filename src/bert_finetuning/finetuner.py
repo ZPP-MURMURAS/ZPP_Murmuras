@@ -170,11 +170,14 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     ]
     # https://stackoverflow.com/questions/43162506/undefinedmetricwarning-f-score-is-ill-defined-and-being-set-to-0-0-in-labels-wi
     all_metrics = __METRIC.compute(predictions=true_predictions, references=true_labels, zero_division=0)
+
+
     return {
         "precision": all_metrics["overall_precision"],
         "recall": all_metrics["overall_recall"],
         "f1": all_metrics["overall_f1"],
-        "accuracy": all_metrics["overall_accuracy"],
+        "overall_accuracy": all_metrics["overall_accuracy"],
+        "per_class_accuracy": all_metrics["class_accuracy"],
     }
 
 
@@ -244,6 +247,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         # Curriculum learning
         curriculer = Curriculer(dataset, 10)
         curr_dataset = curriculer.create_init_dataset()
+        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
         trainer.train_dataset = curr_dataset["train"]
         trainer.eval_dataset = curr_dataset["validation"]
         trainer.train()
@@ -252,6 +256,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             if wandb_log:
                 wandb.log(eval_results)
             curr_dataset = curriculer.create_next_dataset()
+            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
             trainer.train_dataset = curr_dataset["train"]
             trainer.eval_dataset = curr_dataset["validation"]
             trainer.train()

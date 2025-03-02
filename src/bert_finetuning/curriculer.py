@@ -1,17 +1,18 @@
 from bisect import bisect_left
-from datasets import load_dataset, Dataset
+
+import datasets
+from datasets import load_dataset, Dataset, DatasetDict
 from functools import total_ordering
 
 from sklearn.model_selection import train_test_split
 
-
 @total_ordering
 class RowData:
     def __init__(self):
-        self.row_id = -1
-        self.init_size = -1
-        self.labels = []
-        self.spans = []
+        self.row_id: int = -1
+        self.init_size: int = -1
+        self.labels: list[int] = []
+        self.spans: list[SpanData] = []
 
     def __eq__(self, other_id):
         return self.row_id == other_id
@@ -22,8 +23,8 @@ class RowData:
 
 class SpanData:
     def __init__(self):
-        self.beg = -1
-        self.end = -1
+        self.beg:int  = -1
+        self.end: int = -1
 
     def length(self):
         return self.end - self.beg + 1
@@ -37,6 +38,7 @@ class Curriculer:
         self.__rows_with_counterparts = []
         self.__splits_amount = splits_amount
         self.__splits_iter = 0
+        self.__LABELS = datasets.ClassLabel(names=['B-COUPON', 'I-COUPON', 'O'])
 
         if self.__splits_amount <= self.__splits_iter:
             raise ValueError("Splits amount must be greater than zero")
@@ -54,20 +56,26 @@ class Curriculer:
                     if label == 0:
                         nc.labels.append(labels_iter)
                         if curr_span and curr_span.beg >= 0:
-                            curr_span.end = labels_iter
+                            curr_span.end = int(labels_iter) - 1
                             c.spans.append(curr_span)
                             curr_span = None
                     else:
                         if label == 1:
                             if curr_span:
-                                curr_span.end = labels_iter
+                                curr_span.end = int(labels_iter) - 1
                                 c.spans.append(curr_span)
                             curr_span = SpanData()
-                            curr_span.beg = labels_iter
+                            curr_span.beg = int(labels_iter)
                         c.labels.append(labels_iter)
                     labels_iter += 1
+
+                if curr_span and curr_span.beg >= 0:
+                    curr_span.end = labels_iter - 1
+                    c.spans.append(curr_span)
+
                 c.init_size = len(c.labels)
                 nc.init_size = len(nc.labels)
+
                 if c.init_size > 0:
                     self.__rows_with_c.append(c)
                     nc.counterpart = True
@@ -81,15 +89,31 @@ class Curriculer:
     def __create_dataset(self) -> Dataset:
         labels = []
         texts = []
-        for col in ['train', 'validation', 'test']:
-            for row in self.__rows_with_c:
-                labels_list = []
-                texts_list = []
-                for span in row.spans:
-                    labels_list.extend(self.__dataset[col][row.row_id]['labels'][span.beg:span.end + 1])
-                    texts_list.extend(self.__dataset[col][row.row_id]['texts'][span.beg:span.end + 1])
-                labels.append(labels_list)
-                texts.append(texts_list)
+        train_len = len(self.__dataset['train'])
+        validation_len = len(self.__dataset['validation'])
+        test_len = len(self.__dataset['test'])
+        print(self.__dataset)
+        for row in self.__rows_with_c:
+            labels_list = []
+            texts_list = []
+            rid = int(row.row_id)
+            col = 'train'
+            if row.row_id >= train_len + validation_len:
+                rid -= train_len + validation_len
+                col = 'test'
+            elif row.row_id >= train_len:
+                rid -= train_len
+                col = 'validation'
+            for span in row.spans:
+                labels_list.extend(self.__dataset[col][rid]['labels'][int(span.beg):int(span.end) + 1])
+                texts_list.extend(self.__dataset[col][rid]['texts'][int(span.beg):int(span.end) + 1])
+            labels.append(labels_list)
+            texts.append(texts_list)
+
+        features = datasets.Features({
+            "texts": datasets.Sequence(datasets.Value("string")),
+            "labels": datasets.Sequence(self.__LABELS)
+        })
 
         # Initial train/test split (80% train, 20% temp)
         train_texts, temp_texts, train_labels, temp_labels = train_test_split(
@@ -101,10 +125,15 @@ class Curriculer:
             temp_texts, temp_labels, test_size=0.5, random_state=42
         )
 
-        return Dataset.from_dict({
+        dataset_dict = {
             'train': {'texts': train_texts, 'labels': train_labels},
             'validation': {'texts': val_texts, 'labels': val_labels},
             'test': {'texts': test_texts, 'labels': test_labels}
+        }
+
+        return DatasetDict({
+            split: Dataset.from_dict(data, features=features)
+            for split, data in dataset_dict.items()
         })
 
     def create_init_dataset(self) -> Dataset:
@@ -177,4 +206,12 @@ def extend_spans(spans: list, extend_amount: int) -> None:
             spans[k].end = min(spans[k + 1].beg - 1, spans[k].end + extend_amount)
         extend_amount -= spans[k].end - end
         k += 1
+
+
+dpl = load_dataset('zpp-murmuras/bert_second_pass_pl', token='')
+print(dpl)
+CURRICULERPL = Curriculer(dpl, 10)
+print(CURRICULERPL.create_init_dataset())
+for i in range(10):
+    print(CURRICULERPL.yield_dataset())
 
