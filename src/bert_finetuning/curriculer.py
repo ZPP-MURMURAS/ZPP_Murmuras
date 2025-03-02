@@ -12,7 +12,6 @@ class RowData:
         self.row_id: int = -1
         self.init_size: int = -1
         self.max_size: int = -1
-        self.labels: list[int] = []
         self.spans: list[SpanData] = []
 
     def __eq__(self, other_id):
@@ -36,7 +35,6 @@ class Curriculer:
         self.__dataset = dataset
         self.__rows_with_c = []
         self.__rows_without_c = []
-        self.__rows_with_counterparts = []
         self.__splits_amount = splits_amount
         self.__splits_iter = 0
         self.__LABELS = datasets.ClassLabel(names=['B-COUPON', 'I-COUPON', 'O'])
@@ -48,16 +46,13 @@ class Curriculer:
         for col in ['train', 'validation', 'test']:
             for row in self.__dataset[col]:
                 c = RowData()
-                nc = RowData()
                 c.row_id = row_iter
-                nc.row_id = row_iter
                 c.max_size = len(row['labels'])
-                nc.max_size = len(row['labels'])
+                c.init_size = 0
                 labels_iter = 0
                 curr_span = None
                 for label in row['labels']:
                     if label == 0:
-                        nc.labels.append(labels_iter)
                         if curr_span and curr_span.beg >= 0:
                             curr_span.end = int(labels_iter) - 1
                             c.spans.append(curr_span)
@@ -69,27 +64,20 @@ class Curriculer:
                                 c.spans.append(curr_span)
                             curr_span = SpanData()
                             curr_span.beg = int(labels_iter)
-                        c.labels.append(labels_iter)
+                        c.init_size += 1
                     labels_iter += 1
 
                 if curr_span and curr_span.beg >= 0:
                     curr_span.end = labels_iter - 1
                     c.spans.append(curr_span)
 
-                c.init_size = len(c.labels)
-                nc.init_size = len(nc.labels)
-
                 if c.init_size > 0:
                     self.__rows_with_c.append(c)
-                    nc.counterpart = True
-                    self.__rows_with_counterparts.append(nc)
-                if nc.init_size > 0:
-                    self.__rows_without_c.append(nc)
-                if c.init_size == 0 and nc.init_size == 0:
-                    pass
+                else:
+                    self.__rows_without_c.append(c)
                 row_iter += 1
 
-    def __create_dataset(self) -> Dataset:
+    def __create_dataset(self) -> DatasetDict:
         labels = []
         texts = []
         train_len = len(self.__dataset['train'])
@@ -137,7 +125,7 @@ class Curriculer:
             for split, data in dataset_dict.items()
         })
 
-    def create_init_dataset(self) -> Dataset:
+    def create_init_dataset(self) -> DatasetDict:
         for row in self.__rows_with_c:
             total_l = 0
             for i in range(len(row.spans)):
@@ -152,13 +140,13 @@ class Curriculer:
         max_len = len(self.__dataset['train']) + len(self.__dataset['validation']) + len(self.__dataset['test'])
         if self.__splits_iter % 2 == 1 and len(self.__rows_with_c) != max_len:
             upper_append_limit = int((init_new_dataset_len + self.__splits_amount - 1) / self.__splits_amount)
-            self.__rows_with_c.extend(self.__rows_with_counterparts[:min(upper_append_limit, len(self.__rows_with_counterparts))])
-            self.__rows_with_counterparts = self.__rows_with_counterparts[min(upper_append_limit, len(self.__rows_with_counterparts)):]
+            self.__rows_with_c.extend(self.__rows_without_c[:min(upper_append_limit, len(self.__rows_without_c))])
+            self.__rows_without_c = self.__rows_without_c[min(upper_append_limit, len(self.__rows_without_c)):]
         else:
             for row in self.__rows_with_c:
                 idx = binary_search(self.__rows_without_c, row.row_id)
-                if idx and len(self.__rows_without_c[idx].labels) > 0:
-                    total_l = int((self.__rows_without_c[idx].init_size + self.__splits_amount - 1) / self.__splits_amount)
+                if idx:
+                    total_l = int((self.__rows_with_c[idx].max_size + self.__splits_amount - 1) / self.__splits_amount)
                     extend_spans(row.spans, total_l, row.max_size)
         self.__splits_iter += 1
         return self.__create_dataset()
