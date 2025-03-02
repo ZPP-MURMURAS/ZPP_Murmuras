@@ -47,7 +47,7 @@ def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
 
     return model, tokenizer
 
-def train_model(model, tokenizer, run_name, training_data, max_seq_length, epoch_no):
+def train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_length, epoch_no):
     from trl import SFTTrainer
     from transformers import TrainingArguments
     from unsloth import is_bfloat16_supported
@@ -72,15 +72,16 @@ def train_model(model, tokenizer, run_name, training_data, max_seq_length, epoch
         model=model,
         tokenizer=tokenizer,
         train_dataset=training_data,
+        eval_dataset=eval_data,
         dataset_text_field="text",
         #data_collator=collator,
         max_seq_length=max_seq_length,
         dataset_num_proc=2,
         packing=True, # True doesn't work with the current collator, BUT is faster.
         args=TrainingArguments(
-            learning_rate=3e-2,
+            learning_rate=3e-4,
             lr_scheduler_type="linear",
-            per_device_train_batch_size=8,
+            per_device_train_batch_size=16,
             gradient_accumulation_steps=8,
             num_train_epochs=epoch_no,
             fp16=not is_bfloat16_supported(),
@@ -89,9 +90,11 @@ def train_model(model, tokenizer, run_name, training_data, max_seq_length, epoch
             optim="adamw_8bit",
             weight_decay=0.01,
             warmup_steps=10,
-            output_dir=run_name,
             seed=0,
-            report_to="wandb"
+            report_to="wandb",
+            eval_strategy="epoch",
+            logging_strategy="epoch",
+            output_dir=run_name
         ),
     )
 
@@ -99,14 +102,14 @@ def train_model(model, tokenizer, run_name, training_data, max_seq_length, epoch
 
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no):
-    run_name = "example series adamw_8bit"
+    run_name = "example series adamw_8bit uwu"
     from datasets import load_dataset
 
     max_seq_length = 4096
     model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name, wandb_proj)
     training_data = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token, split='train')
-    print(len(training_data))
-    train_model(model, tokenizer, dataset_name, training_data, max_seq_length, epoch_no)
+    eval_data = load_dataset('zpp-murmuras/' + dataset_name, split='test')
+    train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_length, epoch_no)
 
 
 @app.local_entrypoint()
