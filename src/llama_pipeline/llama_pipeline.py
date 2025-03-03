@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 from io import StringIO
 from llama_cpp import Llama
 
@@ -20,7 +21,15 @@ if __name__ == "__main__":
     input_csv_str = sys.stdin.read()
     llama = Llama(model_path)
     input_data = prepare_input_data(StringIO(input_csv_str))
+
+    output_list = []
+
     for context in input_data:
-        output = llama(context, max_tokens=512)
-        print(output["choices"][0]["text"])
+        out = llama(context + "## Response:\n", max_tokens=512)["choices"][0]["text"]
+        json_data = json.loads(out)
+        output_list += json_data
+
+    cleaned_output_list = [obj for obj in output_list if obj != {}]
+
+    print(json.dumps(cleaned_output_list))
 
