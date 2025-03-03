@@ -1,4 +1,5 @@
 from bisect import bisect_left
+from datetime import time
 
 import datasets
 from datasets import load_dataset, Dataset, DatasetDict
@@ -38,6 +39,7 @@ class Curriculer:
         self.__splits_amount = splits_amount
         self.__splits_iter = 0
         self.__LABELS = datasets.ClassLabel(names=['B-COUPON', 'I-COUPON', 'O'])
+        self.__init_len = -1
 
         if self.__splits_amount <= self.__splits_iter:
             raise ValueError("Splits amount must be greater than zero")
@@ -77,7 +79,7 @@ class Curriculer:
                     self.__rows_without_c.append(c)
                 row_iter += 1
 
-    def __create_dataset(self) -> DatasetDict:
+    def __create_dataset(self, tv_split, tt_split) -> DatasetDict:
         labels = []
         texts = []
         train_len = len(self.__dataset['train'])
@@ -106,12 +108,12 @@ class Curriculer:
 
         # Initial train/test split (80% train, 20% temp)
         train_texts, temp_texts, train_labels, temp_labels = train_test_split(
-            texts, labels, test_size=0.2, random_state=42
+            texts, labels, test_size=tv_split, random_state=42
         )
 
         # Split temp set into validation (10%) and test (10%)
         val_texts, test_texts, val_labels, test_labels = train_test_split(
-            temp_texts, temp_labels, test_size=0.5, random_state=42
+            temp_texts, temp_labels, test_size=tt_split, random_state=42
         )
 
         dataset_dict = {
@@ -125,21 +127,24 @@ class Curriculer:
             for split, data in dataset_dict.items()
         })
 
-    def create_init_dataset(self) -> DatasetDict:
+    def create_init_dataset(self, tv_split = 0.2, tt_split = 0.5) -> DatasetDict:
         for row in self.__rows_with_c:
             total_l = 0
             for i in range(len(row.spans)):
                 total_l += row.spans[i].length()
             extend_spans(row.spans, total_l, row.max_size)
-        return self.__create_dataset()
+        self.__init_len = len(self.__rows_with_c)
+        return self.__create_dataset(tv_split, tt_split)
 
-    def yield_dataset(self):
-        #if self.__splits_iter > self.__splits_amount:
-         #   raise StopIteration # Seems stupid, but I like it
-        init_new_dataset_len = len(self.__rows_with_c)
+    def yield_dataset(self, tv_split = 0.2, tt_split = 0.5):
+        if self.__splits_iter >= self.__splits_amount:
+            raise StopIteration # Seems stupid, but I like it
         max_len = len(self.__dataset['train']) + len(self.__dataset['validation']) + len(self.__dataset['test'])
-        if self.__splits_iter % 2 == 1 and len(self.__rows_with_c) != max_len:
-            upper_append_limit = int((init_new_dataset_len + self.__splits_amount - 1) / self.__splits_amount)
+        if self.__splits_iter == self.__splits_amount - 1:
+            self.__rows_with_c.extend(self.__rows_without_c)
+            self.__rows_without_c = []
+        if self.__splits_iter % 2 == 0 and len(self.__rows_with_c) != max_len:
+            upper_append_limit = int((self.__init_len + self.__splits_amount - 1) / self.__splits_amount)
             self.__rows_with_c.extend(self.__rows_without_c[:min(upper_append_limit, len(self.__rows_without_c))])
             self.__rows_without_c = self.__rows_without_c[min(upper_append_limit, len(self.__rows_without_c)):]
         else:
@@ -149,7 +154,7 @@ class Curriculer:
                     total_l = int((self.__rows_with_c[idx].max_size + self.__splits_amount - 1) / self.__splits_amount)
                     extend_spans(row.spans, total_l, row.max_size)
         self.__splits_iter += 1
-        return self.__create_dataset()
+        return self.__create_dataset(tv_split, tt_split)
 
 
 
@@ -172,9 +177,9 @@ def extend_spans(spans: list, extend_amount: int, max_len: int) -> None:
         spans[0].end = extend_amount
         return
     spans_len = extend_amount
-    l = extend_amount / spans_count
+    l = int(extend_amount / spans_count)
     for k in range(spans_count):
-        l = extend_amount / (spans_count - k)
+        l = int(extend_amount / (spans_count - k))
         left_l = int((l + 1) / 2)
         right_l = l - left_l
         beg = spans[k].beg
@@ -190,7 +195,7 @@ def extend_spans(spans: list, extend_amount: int, max_len: int) -> None:
         extend_amount -= (beg - spans[k].beg) + (spans[k].end - end)
         spans_len += (beg - spans[k].beg) + (spans[k].end - end)
     k = 0
-    while extend_amount > 0 and k < spans_count:
+    while extend_amount > 0 and k < spans_count and spans_len < max_len:
         beg = spans[k].beg
         end = spans[k].end
         if k == 0:
@@ -199,17 +204,9 @@ def extend_spans(spans: list, extend_amount: int, max_len: int) -> None:
             spans[k].beg = max(spans[k - 1].end + 1, spans[k].beg - extend_amount)
         extend_amount -= beg - spans[k].beg
         if k == spans_count - 1:
-            spans[k].end = min(len(spans) - 1, spans[k].end + extend_amount)
+            spans[k].end = min(max_len - 1, spans[k].end + extend_amount)
         else:
             spans[k].end = min(spans[k + 1].beg - 1, spans[k].end + extend_amount)
         extend_amount -= spans[k].end - end
         k += 1
-
-
-dpl = load_dataset('zpp-murmuras/bert_second_pass_pl', token='')
-print(dpl)
-CURRICULERPL = Curriculer(dpl, 10)
-for i in range(112):
-    pass
-    print(CURRICULERPL.yield_dataset())
 
