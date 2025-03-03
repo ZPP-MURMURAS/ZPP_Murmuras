@@ -4,8 +4,8 @@ import modal
 
 app = modal.App("example-fine-tuning")
 
-SAVE_AS_GGUF = False
-SAVE_AS_UNSLOTH = False
+SAVE_AS_GGUF = True
+SAVE_AS_UNSLOTH = True
 
 HF_ORG = 'zpp-murmuras/'
 
@@ -120,9 +120,9 @@ def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no)
     train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_length, epoch_no)
 
     if SAVE_AS_GGUF:
-        model.push_to_hub_gguf(HF_ORG + run_name.replace(' ', '_') + "_gguf", token=hf_token, quantization_method='q5_k_m', tokenizer=tokenizer, private=True)
+        model.push_to_hub_gguf(HF_ORG + run_name.replace(' ', '-') + "-gguf", token=hf_token, quantization_method='q5_k_m', tokenizer=tokenizer, private=True)
     if SAVE_AS_UNSLOTH:
-        model.push_to_hub(HF_ORG + run_name.replace(' ', '_'), token=hf_token, tokenizer=tokenizer, private=True)
+        model.push_to_hub(HF_ORG + run_name.replace(' ', '-'), token=hf_token, tokenizer=tokenizer, private=True)
 
 
 @app.local_entrypoint()

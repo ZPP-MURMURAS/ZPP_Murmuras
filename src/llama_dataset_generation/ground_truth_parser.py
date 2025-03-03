@@ -2,6 +2,7 @@ import asyncio
 import json
 import string
 import pandas as pd
+from pandas import isna
 from openai import AsyncOpenAI
 
 __COUPON_COLUMN = 'discount_text'
@@ -207,6 +208,9 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
             else:
                 res['old_price'] = prices[0]
                 res['new_price'] = prices[len(prices) - 1]
+            for k, v in res.items():
+                if isna(v):
+                    res[k] = None
         except Exception as e:
             print(e)
             print(ground_truth_json[i])
@@ -233,9 +237,9 @@ def prepare_ground_truth_data_no_ai(coupons: pd.DataFrame) -> dict:
             if str(content_full) == 'nan' or str(content_full) == "['']" or str(content_full) == "[]":
                 continue
             coupon_repr = {
-                "discount_text": row['discount_text'],
-                "product_name": row['product_text'],
-                "valid_until": row['validity_text']
+                "discount_text": row['discount_text'] if not isna(row['discount_text']) else None,
+                "product_name": row['product_text'] if not isna(row['product_text']) else None,
+                "valid_until": row['validity_text'] if not isna(row['validity_text']) else None
             }
             result[t].append(coupon_repr)
     return result

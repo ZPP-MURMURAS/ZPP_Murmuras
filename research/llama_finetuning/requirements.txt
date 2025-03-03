@@ -171,3 +171,4 @@ xxhash==3.5.0
 yarl==1.18.3
 wandb
 ipywidgets
+ollama
