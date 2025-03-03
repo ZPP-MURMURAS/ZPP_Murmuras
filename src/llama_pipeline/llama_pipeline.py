@@ -26,8 +26,12 @@ if __name__ == "__main__":
 
     for context in input_data:
         out = llama(context + "## Response:\n", max_tokens=512)["choices"][0]["text"]
-        json_data = json.loads(out)
-        output_list += json_data
+
+        try:
+            json_data = json.loads(out)
+            output_list += json_data
+        except json.JSONDecodeError:
+            pass
 
     cleaned_output_list = [obj for obj in output_list if obj != {}]
 
