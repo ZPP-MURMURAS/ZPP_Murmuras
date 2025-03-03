@@ -1,5 +1,6 @@
 import sys
 import pandas as pd
+from io import StringIO
 import xml.etree.ElementTree as ET
 from scrapegraphai.graphs import XMLScraperGraph
 
@@ -52,7 +53,7 @@ def run_scrape_graph_ai(xml_string):
     }
 
     scraper_graph = XMLScraperGraph(
-        prompt='List all the coupons from the given data. Include the name, description, and discount of each coupon.',
+        prompt='A coupon consists of a name, a description, and a discount. Here is a list of all coupons from the given phone view data:',
         source=xml_string,
         config=graph_config,
     )
@@ -61,19 +62,9 @@ def run_scrape_graph_ai(xml_string):
 
 
 if __name__ == '__main__':
-    args = sys.argv
-
-    if len(args) < 3:
-        print('Usage: python scrapegraphai_pipeline.py <input_csv> <output_json>')
-        sys.exit()
-
-    input_csv = args[1]
-    output_json = args[2]
-
-    df = pd.read_csv(input_csv)
+    input_csv_str = sys.stdin.read()
+    df = pd.read_csv(StringIO(input_csv_str))
     xml = content_generic_2_xml(df)
     xml_string = ET.tostring(xml, encoding='utf-8').decode('utf-8')
     output = run_scrape_graph_ai(xml_string)
-
-    with open(output_json, 'w') as f:
-        f.write(str(output))
+    print(output)
