@@ -170,3 +170,4 @@ xformers==0.0.29.post1
 xxhash==3.5.0
 yarl==1.18.3
 wandb
+ipywidgets
