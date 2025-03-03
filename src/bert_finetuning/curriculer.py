@@ -15,10 +15,10 @@ class RowData:
         self.max_size: int = -1
         self.spans: list[SpanData] = []
 
-    def __eq__(self, other_id):
+    def __eq__(self, other_id: int):
         return self.row_id == other_id
 
-    def __lt__(self, other_id):
+    def __lt__(self, other_id: int):
         return self.row_id < other_id
 
 
@@ -33,6 +33,10 @@ class SpanData:
 
 class Curriculer:
     def __init__(self, dataset: Dataset, splits_amount: int):
+        """
+        :param dataset: Dataset object with 'train', 'validation' and 'test' keys
+        :param splits_amount: Amount of splits to perform
+        """
         self.__dataset = dataset
         self.__rows_with_c = []
         self.__rows_without_c = []
@@ -44,6 +48,13 @@ class Curriculer:
         if self.__splits_amount <= self.__splits_iter:
             raise ValueError("Splits amount must be greater than zero")
 
+        """
+        Constructor is responsible for the initial data processing;
+        It separates rows that contain coupons and those that don't,
+        and then creates spans for each row that contains coupons.
+        Spans represent the continuous sequence of coupon labels (so basically a coupon;
+        but, later on, it contans a coupon and its context).
+        """
         row_iter = 0
         for col in ['train', 'validation', 'test']:
             for row in self.__dataset[col]:
@@ -79,7 +90,16 @@ class Curriculer:
                     self.__rows_without_c.append(c)
                 row_iter += 1
 
-    def __create_dataset(self, tv_split, tt_split) -> DatasetDict:
+    def __create_dataset(self, tv_split: float, tt_split: float) -> DatasetDict:
+        """
+        Function that creates a dataset from the current state of the object.
+        What it means is that this function goes through the rows that contain coupons,
+        and extracts labels that are contained within the spans of each row.
+
+        :param tv_split: Train/Validation split ratio
+        :param tt_split: Train/Test split ratio
+        :return: DatasetDict object with 'train', 'validation' and 'test' keys
+        """
         labels = []
         texts = []
         train_len = len(self.__dataset['train'])
@@ -127,7 +147,16 @@ class Curriculer:
             for split, data in dataset_dict.items()
         })
 
-    def create_init_dataset(self, tv_split = 0.2, tt_split = 0.5) -> DatasetDict:
+    def create_init_dataset(self, tv_split: float = 0.2, tt_split: float = 0.5) -> DatasetDict:
+        """
+        Function that creates the initial dataset. It envolves
+        balancing the coupon and non-coupon classes on the per-row basis.
+        For now, rows without coupons are excluded.
+
+        :param tv_split: Train/Validation split ratio
+        :param tt_split: Train/Test split ratio
+        :return: DatasetDict object with 'train', 'validation' and 'test' keys
+        """
         for row in self.__rows_with_c:
             total_l = 0
             for i in range(len(row.spans)):
@@ -136,7 +165,16 @@ class Curriculer:
         self.__init_len = len(self.__rows_with_c)
         return self.__create_dataset(tv_split, tt_split)
 
-    def yield_dataset(self, tv_split = 0.2, tt_split = 0.5):
+    def yield_dataset(self, tv_split: float = 0.2, tt_split: float = 0.5) -> DatasetDict:
+        """
+        Main generation logic. Depending on whether the current iteration is even or odd,
+        the function either extends the spans of the rows that contain coupons, or
+        adds new rows that does not contain coupons.
+
+        :param tv_split: Train/Validation split ratio
+        :param tt_split: Train/Test split ratio
+        :return: DatasetDict object with 'train', 'validation' and 'test' keys
+        """
         if self.__splits_iter >= self.__splits_amount:
             raise StopIteration # Seems stupid, but I like it
         max_len = len(self.__dataset['train']) + len(self.__dataset['validation']) + len(self.__dataset['test'])
@@ -158,7 +196,14 @@ class Curriculer:
 
 
 
-def binary_search(rows: list[RowData], target_value):
+def binary_search(rows: list[RowData], target_value: int) -> int or None:
+    """
+    Binary search implementation for the list of RowData objects.
+
+    :param rows: List of RowData objects
+    :param target_value: Target value to search for
+    :return: Index of the target value in the list, or None if not found
+    """
     # Find the index where the target_value *should* be
     index = bisect_left(rows, target_value)
 
@@ -167,7 +212,16 @@ def binary_search(rows: list[RowData], target_value):
         return index  # Return the found object's index
     return None  # Not found
 
-def extend_spans(spans: list, extend_amount: int, max_len: int) -> None:
+def extend_spans(spans: list, extend_amount: int, max_len: int):
+    """
+    Function that extends the spans of the row that contains coupons.
+    It tries to distribute the extend_amount evenly between the spans,
+    and if it's not possible, it greedily extends the spans.
+
+    :param spans: List of SpanData objects
+    :param extend_amount: Amount of extension
+    :param max_len: Maximum length of the row
+    """
     spans_count = len(spans)
     # newly added row without any spans.
     # Let's just divide this bad boy into equal parts
