@@ -1,5 +1,7 @@
+import sys
 import pandas as pd
 import xml.etree.ElementTree as ET
+from scrapegraphai.graphs import XMLScraperGraph
 
 
 def prepare_content_generic(content_generic_df):
@@ -38,8 +40,40 @@ def content_generic_2_xml(content_generic_df):
     return xml
 
 
-input_csv = 'dm_content_generic_complete_from_2024.csv'
-df = pd.read_csv(input_csv)
-xml = content_generic_2_xml(df)
-tree = ET.ElementTree(xml)
-tree.write('out.xml')
+def run_scrape_graph_ai(xml_string):
+    graph_config = {
+       'llm': {
+          'model': 'ollama/llama3.2:1b',
+          'temperature': 0.0,
+          'format': 'json',
+          'model_tokens': 2024,
+          'base_url': 'http://localhost:11434',
+        }
+    }
+
+    scraper_graph = XMLScraperGraph(
+        prompt='List all the coupons from the given data. Include the name, description, and discount of each coupon.',
+        source=xml_string,
+        config=graph_config,
+    )
+
+    return scraper_graph.run()
+
+
+if __name__ == '__main__':
+    args = sys.argv
+
+    if len(args) < 3:
+        print('Usage: python scrapegraphai_pipeline.py <input_csv> <output_json>')
+        sys.exit()
+
+    input_csv = args[1]
+    output_json = args[2]
+
+    df = pd.read_csv(input_csv)
+    xml = content_generic_2_xml(df)
+    xml_string = ET.tostring(xml, encoding='utf-8').decode('utf-8')
+    output = run_scrape_graph_ai(xml_string)
+
+    with open(output_json, 'w') as f:
+        f.write(str(output))
