@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 
+from functools import partial
 from typing import Optional, List, Tuple, Union
 from dataclasses import dataclass, field
 
@@ -133,9 +134,9 @@ def _get_coupons_new(
 
         for item in data:
             if is_simple:
-                coupon = CouponSimple(product_name=item["name"],
-                                      discount_text=item["text"],
-                                      validity_text=item["validity"])
+                coupon = CouponSimple(product_name=item["product_name"],
+                                      discount_text=item["discount_text"],
+                                      validity_text=item["valid_until"])
                 expected_coupons.append(coupon)
                 continue
 
@@ -223,7 +224,7 @@ def _validate_output_file_new_format(file: str,
     }
 
     if is_simple:
-        required_keys = {"name", "text", "validity"}
+        required_keys = {"product_name", "discount_text", "valid_until"}
 
     with open(file, 'r') as f:
         try:
@@ -331,9 +332,9 @@ def validate_folders(input_folder: str,
 
     if is_new_format:
         return valid_input and _validate_folder(
-            output_folder, _validate_output_file_new_format, is_new_format)
-
-    return valid_input and _validate_folder(output_folder,
+            output_folder, partial(_validate_output_file_new_format, is_simple=is_simple), is_new_format)
+    else:
+        return valid_input and _validate_folder(output_folder,
                                             _validate_output_file_format)
 
 

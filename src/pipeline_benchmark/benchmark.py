@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import argparse
 import subprocess
 import difflib as diff
@@ -6,6 +7,7 @@ import json
 import os
 from typing import Optional, List, Union
 import sys
+import glob
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
@@ -33,7 +35,7 @@ LENGTH_PENALTY = 0.2
 
 # File to store the output of the pipeline
 OUTPUT_FILE = "output.json"
-INPUT_FILE = "input.json"
+INPUT_FILE = "input.csv"
 
 
 def _compare_prices(generated_prices: list, expected_prices: list) -> float:
@@ -264,9 +266,9 @@ def run_pipeline(pipeline_command: str,
         for coupon in coupons:
             if is_simple:
                 proto_coupons.append(
-                    CouponSimple(product_name=coupon["name"],
-                                 discount_text=coupon["text"],
-                                 validity_text=coupon["validity"]))
+                    CouponSimple(product_name=coupon["product_name"],
+                                 discount_text=coupon["discount_text"],
+                                 validity_text=coupon["valid_until"]))
                 continue
 
             proto_coupons.append(
@@ -364,17 +366,15 @@ if __name__ == '__main__':
                                     is_simple):
                 print("The input or expected folders are not valid.")
         except ValueError as e:
+            print(e)
             continue
 
         if new_format:
-            for file_name in os.listdir(input_dir):
-                file_path = os.path.join(input_dir, file_name)
-                if not os.path.isfile(file_path):
-                    continue
-                prepared_data = prepare_input_data(file_path)
-                input_file = os.path.join(input_dir, INPUT_FILE)
-                with open(input_file, 'w') as json_file:
-                    json.dump(prepared_data, json_file)
+            csv_files = glob.glob(os.path.join(input_dir, "*.csv"))
+            dfs = [pd.read_csv(file) for file in csv_files]
+            concat_df = pd.concat(dfs, ignore_index=True)
+            input_file = os.path.join(input_dir, INPUT_FILE)
+            concat_df.to_csv(input_file, index=False)
 
         # Get the expected coupons
         expected_coupons: List[Union[Coupon,
