@@ -7,9 +7,8 @@ from scrapegraphai.graphs import XMLScraperGraph
 
 def prepare_content_generic(content_generic_df):
     df = content_generic_df.copy()
-    df = df[df['is_visible'] != 0]
     df = df[df['text'].notna()]
-    df = df.drop(columns=['CAST(id, \'String\')', 'id', 'user_id', 'time', 'i', 'language', 'application_name', 'package_name', 'class_name', 'context', 'view_id', 'view_class_name', 'is_visible', 'x_1', 'y_1', 'x_2', 'y_2'])
+    df = df[df['seen_timestamp'] != 0]
     return df
 
 
@@ -47,13 +46,13 @@ def run_scrape_graph_ai(xml_string):
           'model': 'ollama/llama3.2:1b',
           'temperature': 0.0,
           'format': 'json',
-          'model_tokens': 2024,
+          'model_tokens': 2048,
           'base_url': 'http://localhost:11434',
         }
     }
 
     scraper_graph = XMLScraperGraph(
-        prompt='A coupon consists of a name, a description, and a discount. Here is a list of all coupons from the given phone view data:',
+        prompt='A coupon consists of a name, a description, and a discount. Extract all coupons from the given phone screen views.',
         source=xml_string,
         config=graph_config,
     )
@@ -63,7 +62,7 @@ def run_scrape_graph_ai(xml_string):
 
 if __name__ == '__main__':
     input_csv_str = sys.stdin.read()
-    df = pd.read_csv(StringIO(input_csv_str))
+    df = pd.read_csv(StringIO(input_csv_str), usecols=['seen_timestamp', 'view_depth', 'text'])
     xml = content_generic_2_xml(df)
     xml_string = ET.tostring(xml, encoding='utf-8').decode('utf-8')
     output = run_scrape_graph_ai(xml_string)
