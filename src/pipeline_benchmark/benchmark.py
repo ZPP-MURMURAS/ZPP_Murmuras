@@ -11,7 +11,7 @@ import glob
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
-from src.pipeline_benchmark.io_utils import get_default_datasets, validate_folders, Coupon, CouponSimple, get_expected_coupons
+from src.pipeline_benchmark.io_utils import get_default_datasets, validate_folders, Coupon, CouponSimple, get_expected_coupons, get_coupons_new
 from src.llama_dataset_generation.input_parser import prepare_input_data
 
 os.chdir(CURRENT_PATH)
@@ -34,8 +34,8 @@ OLD_PRICE_WEIGHT = 0.5
 LENGTH_PENALTY = 0.2
 
 # File to store the output of the pipeline
-OUTPUT_FILE = "output.json"
-INPUT_FILE = "input.csv"
+OUTPUT_FILE = "_bench_output.json"
+INPUT_FILE = "_bench_input.csv"
 
 
 def _compare_prices(generated_prices: list, expected_prices: list) -> float:
@@ -258,30 +258,16 @@ def run_pipeline(pipeline_command: str,
     try:
         subprocess.run(pipeline_command, shell=True, check=True)
 
-        # The pipeline must write the output to a file called output.json
-        proto_coupons = []
-        with open(OUTPUT_FILE, "r") as file:
-            coupons = json.load(file)
+        # The pipeline must write the output to the OUTPUT_FILE
+        coupons = get_coupons_new(OUTPUT_FILE, is_simple)
 
-        for coupon in coupons:
-            if is_simple:
-                proto_coupons.append(
-                    CouponSimple(product_name=coupon["product_name"],
-                                 discount_text=coupon["discount_text"],
-                                 validity_text=coupon["valid_until"]))
-                continue
-
-            proto_coupons.append(
-                Coupon(product_name=coupon["product_name"],
-                       new_price=coupon["new_price"],
-                       old_price=coupon["old_price"],
-                       percents=coupon["percents"],
-                       other_discounts=coupon["other_discounts"],
-                       dates=coupon["dates"]))
-        return proto_coupons
+        return coupons
 
     except subprocess.CalledProcessError as e:
-        print(f"Error running the pipeline: {e.stderr}")
+        print(f"Error running the pipeline: {e}")
+        return None
+    except ValueError as e:
+        print(f"Error decoding the output file: {e}")
         return None
 
 
@@ -310,7 +296,7 @@ def _parse_args() -> argparse.Namespace:
         type=str,
         required=True,
         help=
-        'Command to run the pipeline (e.g., ./run_pipeline --input <input_path>)'
+        'Command to run the pipeline (e.g., python llama_pipeline.py)'
     )
     parser.add_argument(
         '-invalid',
@@ -349,8 +335,7 @@ if __name__ == '__main__':
     if args.invalid is not None:
         INCORRECT_DATASETS = args.invalid.strip().split()
 
-    # If either the input or expected folders are not provided, get the default
-    # datasets
+    # If either the input or expected folders are not provided, get the default datasets
     if args.input is None or args.expected is None:
         args.input, args.expected = get_default_datasets()
 
@@ -362,11 +347,10 @@ if __name__ == '__main__':
         input_dir = os.path.join(args.input, folder_name)
 
         try:
-            if not validate_folders(input_dir, expected_dir, new_format,
-                                    is_simple):
-                print("The input or expected folders are not valid.")
-        except ValueError as e:
-            print(e)
+            validate_folders(input_dir, expected_dir, new_format,
+                                    is_simple)
+        except (ValueError, NotADirectoryError) as e:
+            print(f"Error validating the folders: {e}")
             continue
 
         if new_format:
@@ -377,9 +361,8 @@ if __name__ == '__main__':
             concat_df.to_csv(input_file, index=False)
 
         # Get the expected coupons
-        expected_coupons: List[Union[Coupon,
-                                     CouponSimple]] = get_expected_coupons(
-                                         expected_dir, new_format, is_simple)
+        expected_coupons: List[Union[Coupon, CouponSimple]] = get_expected_coupons(
+            expected_dir, new_format, is_simple)
         generated_coupons: List[Union[Coupon, CouponSimple]] = run_pipeline(
             args.pipeline, input_dir, new_format, is_simple)
 

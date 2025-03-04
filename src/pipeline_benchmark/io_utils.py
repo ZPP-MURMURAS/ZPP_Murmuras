@@ -39,13 +39,37 @@ PERCENT_REGEX = r'\b(100|[1-9]?[0-9])\s?%'
 PRICE_REGEX = r'\b\d+[.,]?\d*\b'
 
 # Column names for the expected coupons
-DISCOUNT_TEXT = 'discount_text'
-PRODUCT_TEXT = 'product_text'
-VALIDITY_TEXT = 'validity_text'
+EXP_COL_DISCOUNT = 'discount_text'
+EXP_COL_PRODUCT = 'product_text'
+EXP_COL_VALIDITY = 'validity_text'
+
+# Column names for the input data
+INP_COL_VIEW_DEPTH = 'view_depth'
+INP_COL_TEXT = 'text'
+INP_COL_DESCRIPTION = 'description'
+INP_COL_CLASS_NAME = 'class_name'
+INP_COL_APPLICATION_NAME = 'application_name'
+
+# Column names for the output data
+OUT_COL_OLD_PRODUCT = 'product_text'
+OUT_COL_OLD_DISCOUNT = 'discount_text'
+OUT_COL_OLD_DISCOUNT_DETAILS = 'discount_details'
+OUT_COL_OLD_VALIDITY = 'validity_text'
+
+OUT_COL_NEW_SIMP_PRODUCT = 'product_name'
+OUT_COL_NEW_SIMP_DISCOUNT = 'discount_text'
+OUT_COL_NEW_SIMP_VALIDITY = 'valid_until'
+
+OUT_COL_NEW_EXT_PRODUCT = 'product_name'
+OUT_COL_NEW_EXT_NEW_PRICE = 'new_price'
+OUT_COL_NEW_EXT_OLD_PRICE = 'old_price'
+OUT_COL_NEW_EXT_PERCENTS = 'percents'
+OUT_COL_NEW_EXT_OTHER_DISCOUNTS = 'other_discounts'
+OUT_COL_NEW_EXT_DATES = 'dates'
 
 INCORRECT_DATASETS = [
-    "rewe",
-    "dm",
+    'rewe',
+    'dm',
 ]
 
 
@@ -103,56 +127,63 @@ def _get_coupons_old(file_path: str) -> List[Coupon]:
 
         for row in reader:
             new_price, old_price, percents, other_discounts = _get_discounts(
-                row[DISCOUNT_TEXT])
+                row[EXP_COL_DISCOUNT])
 
-            coupon = Coupon(product_name=row[PRODUCT_TEXT],
+            coupon = Coupon(product_name=row[EXP_COL_PRODUCT],
                             new_price=new_price,
                             old_price=old_price,
                             percents=percents,
                             other_discounts=other_discounts,
-                            dates=row[VALIDITY_TEXT])
+                            dates=row[EXP_COL_VALIDITY])
             expected_coupons.append(coupon)
 
     return expected_coupons
 
 
-def _get_coupons_new(
+def get_coupons_new(
         file_path: str,
         is_simple: bool = False) -> List[Union[Coupon, CouponSimple]]:
     """
     Extracts the coupons from a JSON file. The function will return a list of Coupon
-    or CouponSimple objects that represent the expected coupons. 
+    or CouponSimple objects. 
 
     :param file_path: The path to the JSON file
     :param is_simple: A boolean flag to indicate if the simple format is used
-    :return: A list of Coupon or CouponSimple objects that represent the expected coupons
+    :return: A list of Coupon or CouponSimple objects read from the file
+
+    :raises ValueError: If the file format is invalid
     """
 
     expected_coupons = []
     with open(file_path, 'r') as file:
-        data = json.load(file)
+        try:
+            data = json.load(file)
 
-        for item in data:
-            if is_simple:
-                coupon = CouponSimple(product_name=item["product_name"],
-                                      discount_text=item["discount_text"],
-                                      validity_text=item["valid_until"])
-                expected_coupons.append(coupon)
-                continue
+            for item in data:
+                if is_simple:
+                    coupon = CouponSimple(product_name=item[OUT_COL_NEW_SIMP_PRODUCT],
+                                          discount_text=item[OUT_COL_NEW_SIMP_DISCOUNT],
+                                          validity_text=item[OUT_COL_NEW_SIMP_VALIDITY])
+                    expected_coupons.append(coupon)
+                else:
+                    new_price = item.get(OUT_COL_NEW_EXT_NEW_PRICE, None)
+                    old_price = item.get(OUT_COL_NEW_EXT_OLD_PRICE, None)
+                    percents = item.get(OUT_COL_NEW_EXT_PERCENTS, [])
+                    other_discounts = item.get(OUT_COL_NEW_EXT_OTHER_DISCOUNTS, [])
+                    dates = item.get(OUT_COL_NEW_EXT_DATES, None)
 
-            new_price = item.get("new_price", None)
-            old_price = item.get("old_price", None)
-            percents = item.get("percents", [])
-            other_discounts = item.get("other_discounts", [])
-            dates = item.get("dates", None)
+                    coupon = Coupon(product_name=item[OUT_COL_NEW_EXT_PRODUCT],
+                                    new_price=new_price,
+                                    old_price=old_price,
+                                    percents=percents,
+                                    other_discounts=other_discounts,
+                                    dates=dates)
+                    expected_coupons.append(coupon)
 
-            coupon = Coupon(product_name=item["product_name"],
-                            new_price=new_price,
-                            old_price=old_price,
-                            percents=percents,
-                            other_discounts=other_discounts,
-                            dates=dates)
-            expected_coupons.append(coupon)
+        except json.JSONDecodeError:
+            raise ValueError(
+                f"The file {file_path} is not a valid JSON file or contains invalid data."
+            )
 
     return expected_coupons
 
@@ -186,7 +217,7 @@ def get_expected_coupons(
         if not is_new_format:
             expected_coupons.extend(_get_coupons_old(file_path_full))
         else:
-            expected_coupons.extend(_get_coupons_new(file_path_full,
+            expected_coupons.extend(get_coupons_new(file_path_full,
                                                      is_simple))
 
     return expected_coupons
@@ -202,29 +233,30 @@ def _validate_output_file_format(fieldnames: list) -> bool:
     """
 
     required_headers = [
-        "product_text", "discount_text", "discount_details", "validity_text"
+        OUT_COL_OLD_PRODUCT, OUT_COL_OLD_DISCOUNT, OUT_COL_OLD_DISCOUNT_DETAILS, OUT_COL_OLD_VALIDITY
     ]
     return all(header in fieldnames for header in required_headers)
 
 
 def _validate_output_file_new_format(file: str,
-                                     is_simple: bool = False) -> bool:
+                                     is_simple: bool = False) -> None:
     """
     This function will validate the format of the json file that contains the
     expected coupons. The file must contain the keys defined below. 
     
     :param file: The path to the json file
     :param is_simple: A boolean flag to indicate if the simple format is used
-    :return: True if the file format is valid, False otherwise
+
+    :raises ValueError: If the file format is invalid
     """
 
     required_keys = {
-        "product_name", "new_price", "old_price", "percents",
-        "other_discounts", "dates"
+        OUT_COL_NEW_EXT_PRODUCT, OUT_COL_NEW_EXT_NEW_PRICE, OUT_COL_NEW_EXT_OLD_PRICE, OUT_COL_NEW_EXT_PERCENTS,
+        OUT_COL_NEW_EXT_OTHER_DISCOUNTS, OUT_COL_NEW_EXT_DATES
     }
 
     if is_simple:
-        required_keys = {"product_name", "discount_text", "valid_until"}
+        required_keys = {OUT_COL_NEW_SIMP_PRODUCT, OUT_COL_NEW_SIMP_DISCOUNT, OUT_COL_NEW_SIMP_VALIDITY}
 
     with open(file, 'r') as f:
         try:
@@ -249,27 +281,30 @@ def _validate_output_file_new_format(file: str,
                 f"Entry at index {idx} in {file} is missing keys: {missing_keys}"
             )
 
-    return True
 
-
-def _validate_input_file_format(fieldnames: list) -> bool:
+def _validate_input_file_format(fieldnames: list) -> None:
     """
     This function will validate the format of the csv file that contains the
     input data. The file must contain the headers defined below.
     
     :param fieldnames: The headers of the csv file
-    :return: True if the file format is valid, False otherwise
+
+    :raises ValueError: If the file format is invalid
     """
 
     required_headers = [
-        "view_depth", "text", "description", "class_name", "application_name"
+        INP_COL_VIEW_DEPTH, INP_COL_TEXT, INP_COL_DESCRIPTION, INP_COL_CLASS_NAME, INP_COL_APPLICATION_NAME
     ]
-    return all(header in fieldnames for header in required_headers)
+    
+    if not all(header in fieldnames for header in required_headers):
+        raise ValueError(
+            f"The input file must contain the following headers: {required_headers}"
+        )
 
 
 def _validate_folder(folder: str,
                      validation_func: callable,
-                     is_new_format: bool = False) -> bool:
+                     is_new_format: bool = False) -> None:
     """
     Validates a folder containing CSV files. The function will check if the folder
     exists, if it is a directory, and if it contains only CSV files in the correct
@@ -278,7 +313,9 @@ def _validate_folder(folder: str,
     :param folder: The path to the folder
     :param validation_func: The function to validate the format of the CSV files
     :param is_new_format: A boolean flag to indicate if the new format is used
-    :return: True if the folder is valid, False otherwise
+
+    :raises NotADirectoryError: If the input or output folder is not a directory
+    :raises ValueError: If the input or output folder contains invalid files
     """
     if not os.path.isdir(folder):
         raise NotADirectoryError(
@@ -294,26 +331,25 @@ def _validate_folder(folder: str,
             if not file_name.endswith('.json'):
                 raise ValueError(f"The file {file_name} is not a JSON file.")
 
-            if not validation_func(file_name_full):
-                raise ValueError(
-                    f"The file {file_name} has an invalid format.")
+            validation_func(file_name_full)
+
         else:
             if not file_name.endswith('.csv'):
                 raise ValueError(f"The file {file_name} is not a CSV file.")
 
             with open(file_name_full, 'r') as file:
                 reader = csv.DictReader(file)
-                if reader.fieldnames is None or not validation_func(
-                        reader.fieldnames):
+                if reader.fieldnames is None:
                     raise ValueError(
                         f"The file {file_name} has an invalid format.")
-    return True
+
+                validation_func(reader.fieldnames)
 
 
 def validate_folders(input_folder: str,
                      output_folder: str,
                      is_new_format: bool,
-                     is_simple: bool = False) -> bool:
+                     is_simple: bool = False) -> None:
     """
     This function will validate the input and output folders. The input folder must
     contain csv files with the format defined in the _validate_input_file_format
@@ -321,21 +357,20 @@ def validate_folders(input_folder: str,
     the _validate_output_file_format function.
     
     :param input_folder: The path to the folder with the input data
-    :is_new_format: A boolean flag to indicate if the new format is used
+    :param is_new_format: A boolean flag to indicate if the new format is used
     :param output_folder: The path to the folder with the expected coupons
     :param is_simple: A boolean flag to indicate if the simple format is used
-    :return: True if the folders are valid, False otherwise
+
+    :raises NotADirectoryError: If the input or output folder is not a directory
+    :raises ValueError: If the input or output folder contains invalid files
     """
 
-    valid_input: bool = _validate_folder(input_folder,
-                                         _validate_input_file_format)
+    _validate_folder(input_folder, _validate_input_file_format)
 
     if is_new_format:
-        return valid_input and _validate_folder(
-            output_folder, partial(_validate_output_file_new_format, is_simple=is_simple), is_new_format)
+        _validate_folder(output_folder, partial(_validate_output_file_new_format, is_simple=is_simple), is_new_format)
     else:
-        return valid_input and _validate_folder(output_folder,
-                                            _validate_output_file_format)
+        _validate_folder(output_folder, _validate_output_file_format)
 
 
 def get_default_datasets() -> Tuple[str, str]:
