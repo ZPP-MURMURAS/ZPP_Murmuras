@@ -193,7 +193,7 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     return result
 
 
-def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False, curriculum_learning: bool=False):
+def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False, curriculum_learning: bool=False, splits: int=10):
     """
     Function that is responsible for training the model. It assumes that the dataset
     is already tokenized and aligned with the labels. It should contain
@@ -206,6 +206,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
     :param wandb_log: Whether the model should be logged to wandb. Default is False
     :param curriculum_learning: Whether the model should use curriculum learning. Default is False
+    :param splits: The number of splits that will be used in curriculum learning. Default is 10
     """
     __assert_init()
 
@@ -251,20 +252,20 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             trainer.push_to_hub("Training completed")
     else:
         # Curriculum learning
-        curriculer = Curriculer(dataset, 10)
+        curriculer = Curriculer(dataset, splits)
         curr_dataset = curriculer.create_init_dataset()
         curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
         trainer.train_dataset = curr_dataset["train"]
         trainer.eval_dataset = curr_dataset["validation"]
         trainer.train()
-        # for i in range(10):
-        #     eval_results = trainer.evaluate(curr_dataset["test"])
-        #     if wandb_log:
-        #         wandb.log(eval_results)
-        #     curr_dataset = curriculer.yield_dataset()
-        #     curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
-        #     trainer.train_dataset = curr_dataset["train"]
-        #     trainer.eval_dataset = curr_dataset["validation"]
-        #     trainer.train()
+        for i in range(splits):
+            eval_results = trainer.evaluate(curr_dataset["test"])
+            if wandb_log:
+                wandb.log(eval_results)
+            curr_dataset = curriculer.yield_dataset()
+            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
+            trainer.train_dataset = curr_dataset["train"]
+            trainer.eval_dataset = curr_dataset["validation"]
+            trainer.train()
         if push_to_hub:
             trainer.push_to_hub("Training completed")
