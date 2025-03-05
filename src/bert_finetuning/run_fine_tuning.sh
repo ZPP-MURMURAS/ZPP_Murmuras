@@ -9,7 +9,7 @@ export TIMEOUT=600
 for DATASET in "${DATASETS[@]}"
 do
     export DATASET_NAME="$DATASET"
-    modal run modal_script.py
+    modal run src/bert_finetuning/modal_script.py
 done
 
 unset HUGGING_FACE_TOKEN

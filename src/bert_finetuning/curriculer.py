@@ -90,7 +90,7 @@ class Curriculer:
                     self.__rows_without_c.append(c)
                 row_iter += 1
 
-    def __create_dataset(self, tv_split: float, tt_split: float) -> DatasetDict:
+    def __create_dataset(self, tv_split: float, tt_split: float, shuffle: bool = True) -> DatasetDict:
         """
         Function that creates a dataset from the current state of the object.
         What it means is that this function goes through the rows that contain coupons,
@@ -98,6 +98,7 @@ class Curriculer:
 
         :param tv_split: Train/Validation split ratio
         :param tt_split: Train/Test split ratio
+        :param shuffle: Whether to shuffle the dataset after creation
         :return: DatasetDict object with 'train', 'validation' and 'test' keys
         """
         labels = []
@@ -142,10 +143,14 @@ class Curriculer:
             'test': {'texts': test_texts, 'labels': test_labels}
         }
 
-        return DatasetDict({
+        res = DatasetDict({
             split: Dataset.from_dict(data, features=features)
             for split, data in dataset_dict.items()
         })
+
+        if shuffle:
+            res = res.shuffle(seed=42)
+        return res
 
     def create_init_dataset(self, tv_split: float = 0.2, tt_split: float = 0.5) -> DatasetDict:
         """
@@ -165,7 +170,7 @@ class Curriculer:
         self.__init_len = len(self.__rows_with_c)
         return self.__create_dataset(tv_split, tt_split)
 
-    def yield_dataset(self, tv_split: float = 0.2, tt_split: float = 0.5) -> DatasetDict:
+    def yield_dataset(self, tv_split: float = 0.2, tt_split: float = 0.5, shuffle: bool = True) -> DatasetDict:
         """
         Main generation logic. Depending on whether the current iteration is even or odd,
         the function either extends the spans of the rows that contain coupons, or
@@ -173,6 +178,7 @@ class Curriculer:
 
         :param tv_split: Train/Validation split ratio
         :param tt_split: Train/Test split ratio
+        :param shuffle: Whether to shuffle the dataset after creation
         :return: DatasetDict object with 'train', 'validation' and 'test' keys
         """
         if self.__splits_iter >= self.__splits_amount:
@@ -192,7 +198,7 @@ class Curriculer:
                     total_l = int((self.__rows_with_c[idx].max_size + self.__splits_amount - 1) / self.__splits_amount)
                     extend_spans(row.spans, total_l, row.max_size)
         self.__splits_iter += 1
-        return self.__create_dataset(tv_split, tt_split)
+        return self.__create_dataset(tv_split, tt_split, shuffle)
 
 
 

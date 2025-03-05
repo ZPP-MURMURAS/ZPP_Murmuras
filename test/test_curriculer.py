@@ -4,6 +4,7 @@ from datasets import Dataset, DatasetDict
 
 from src.bert_finetuning.curriculer import Curriculer
 
+
 class TestFinetuner:
     curriculer: Curriculer
     test_data: Dataset
@@ -72,7 +73,7 @@ class TestFinetuner:
         assert len(dt['train']) + len(dt['validation']) + len(dt['test']) == desired_c
         for i in range(self.splits):
             it += 1
-            dt = self.curriculer.yield_dataset(tv_split= 2.0/5.0, tt_split=0.5)
+            dt = self.curriculer.yield_dataset(tv_split= 2.0/5.0, tt_split=0.5, shuffle=False)
             assert self.curriculer._Curriculer__splits_iter == it
             if i % 2 == 0:
                 desired_c += 1
