@@ -4,7 +4,9 @@ declare -a DATASETS=("bert_second_pass_json" "bert_second_pass_pl" )
 
 export HUGGING_FACE_TOKEN=
 export WANDB_KEY=
-export TIMEOUT=600
+export TIMEOUT=60000 # Alright, apparently (according to my experiments)
+# timeout is not for waiting; if program runs 600s, it will be stopped (happened to me).
+# So, this has to be big enough to finish the job.
 
 for DATASET in "${DATASETS[@]}"
 do

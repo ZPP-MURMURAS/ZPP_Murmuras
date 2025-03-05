@@ -7,6 +7,7 @@ import os
 
 app = modal.App("BERT-fine-tuning")
 MODEL_CHECKPOINT = "google-bert/bert-base-multilingual-cased"
+timeout = str(os.getenv('TIMEOUT'))
 
 finetune_image = (
     modal.Image.debian_slim(python_version="3.10")
@@ -23,7 +24,7 @@ finetune_image = (
 )
 
 
-@app.function(image=finetune_image, gpu="H100", timeout=600)
+@app.function(image=finetune_image, gpu="H100", timeout=60000)
 def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
     cs = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token)
     labels = cs['train'].features['labels'].feature.names
