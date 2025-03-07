@@ -188,7 +188,7 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     }
 
     for label in per_class:
-        result[label + "_accuracy"] = per_class[label][0] / per_class[label][1]
+        result[label + "_recall"] = per_class[label][0] / per_class[label][1]
 
     return result
 
@@ -209,6 +209,8 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     :param splits: The number of splits that will be used in curriculum learning. Default is 10
     """
     __assert_init()
+
+    # define test
 
     if wandb_log:
         wandb.init(

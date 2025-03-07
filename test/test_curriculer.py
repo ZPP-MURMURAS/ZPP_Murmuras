@@ -190,9 +190,4 @@ class TestFinetuner:
         }
 
         self.init_non_c = [1, 2, 5, 7]
-
-
-
         yield
-
-

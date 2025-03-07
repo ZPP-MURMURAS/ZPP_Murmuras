@@ -24,7 +24,7 @@ class RowData:
 
 class SpanData:
     def __init__(self):
-        self.beg:int  = -1
+        self.beg: int  = -1
         self.end: int = -1
 
     def length(self):
