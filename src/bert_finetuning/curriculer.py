@@ -117,8 +117,8 @@ class Curriculer:
                 rid -= train_len
                 col = 'validation'
             for span in row.spans:
-                labels_list.extend(self.__dataset[col][rid]['labels'][int(span.beg):int(span.end) + 1])
-                texts_list.extend(self.__dataset[col][rid]['texts'][int(span.beg):int(span.end) + 1])
+                labels_list.extend(self.__dataset[col][rid]['labels'][span.beg:span.end + 1])
+                texts_list.extend(self.__dataset[col][rid]['texts'][span.beg:span.end + 1])
             labels.append(labels_list)
             texts.append(texts_list)
 
