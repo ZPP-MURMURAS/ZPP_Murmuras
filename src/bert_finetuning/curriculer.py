@@ -35,7 +35,7 @@ class Curriculer:
     def __init__(self, dataset: Dataset, splits_amount: int):
         """
         :param dataset: Dataset object with 'train', 'validation' and 'test' keys
-        :param splits_amount: Amount of splits to perform
+        :param splits_amount: Amount of datasets to create
         """
         self.__dataset = dataset
         self.__rows_with_c = []
@@ -188,15 +188,13 @@ class Curriculer:
             self.__rows_with_c.extend(self.__rows_without_c)
             self.__rows_without_c = []
         if self.__splits_iter % 2 == 0 and len(self.__rows_with_c) != max_len:
-            upper_append_limit = int((self.__init_len + self.__splits_amount - 1) / self.__splits_amount)
+            upper_append_limit = int(2 * (self.__init_len + self.__splits_amount - 1) / self.__splits_amount)
             self.__rows_with_c.extend(self.__rows_without_c[:min(upper_append_limit, len(self.__rows_without_c))])
             self.__rows_without_c = self.__rows_without_c[min(upper_append_limit, len(self.__rows_without_c)):]
         else:
             for row in self.__rows_with_c:
-                idx = binary_search(self.__rows_without_c, row.row_id)
-                if idx:
-                    total_l = int((self.__rows_with_c[idx].max_size + self.__splits_amount - 1) / self.__splits_amount)
-                    extend_spans(row.spans, total_l, row.max_size)
+                total_l = int(2 * (row.max_size + self.__splits_amount - 1) / self.__splits_amount)
+                extend_spans(row.spans, total_l, row.max_size)
         self.__splits_iter += 1
         return self.__create_dataset(tv_split, tt_split, shuffle)
 

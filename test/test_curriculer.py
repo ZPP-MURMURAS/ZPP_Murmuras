@@ -71,6 +71,7 @@ class TestFinetuner:
         assert len(self.curriculer._Curriculer__rows_with_c) == desired_c
         assert len(self.curriculer._Curriculer__rows_without_c) == desired_non_c
         assert len(dt['train']) + len(dt['validation']) + len(dt['test']) == desired_c
+        desired_cs = [8, 8, 9, 9, 9]
         for i in range(self.splits):
             it += 1
             dt = self.curriculer.yield_dataset(tv_split= 2.0/5.0, tt_split=0.5, shuffle=False)
@@ -81,9 +82,22 @@ class TestFinetuner:
             if i == self.splits - 1:
                 desired_c = self.max_dataset_len
                 desired_non_c = 0
-            assert len(self.curriculer._Curriculer__rows_with_c) == desired_c
-            assert len(self.curriculer._Curriculer__rows_without_c) == desired_non_c
-            assert len(dt['train']) + len(dt['validation']) + len(dt['test']) == desired_c
+            assert len(self.curriculer._Curriculer__rows_with_c) == desired_cs[i]
+            assert len(self.curriculer._Curriculer__rows_without_c) == 9 - desired_cs[i]
+            assert len(dt['train']) + len(dt['validation']) + len(dt['test']) == desired_cs[i]
+
+        len_test_texts = 0
+        len_test_labels = 0
+        let_dt_texts = 0
+        let_dt_labels = 0
+        for col in ['train', 'validation', 'test']:
+            for i in range(len(self.test_data[col])):
+                len_test_texts += len(self.test_data[col][i]['texts'])
+                len_test_labels += len(self.test_data[col][i]['labels'])
+                let_dt_texts += len(dt[col][i]['texts'])
+                let_dt_labels += len(dt[col][i]['labels'])
+        assert len_test_texts == let_dt_texts
+        assert len_test_labels == let_dt_labels
 
         with pytest.raises(StopIteration):
             self.curriculer.yield_dataset(tv_split= 2.0/5.0, tt_split=0.5)
