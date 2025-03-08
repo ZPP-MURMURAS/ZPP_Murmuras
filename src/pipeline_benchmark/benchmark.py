@@ -52,7 +52,7 @@ LENGTH_PENALTY = 0.2
 # Column names for the output data
 OUT_COL_SIMP_PRODUCT = 'product_name'
 OUT_COL_SIMP_DISCOUNT = 'discount_text'
-OUT_CO_SIMPL_VALIDITY = 'valid_until'
+OUT_COL_SIMP_VALIDITY = 'valid_until'
 
 OUT_COL_EXT_PRODUCT = 'product_name'
 OUT_COL_EXT_NEW_PRICE = 'new_price'
@@ -401,12 +401,6 @@ if __name__ == '__main__':
                                                 is_simple)
 
     percent_similarity = round(similarity * 100, 3)
-    print(f"Average similarity between the coupons: {percent_similarity}%")
     print(f"Number of lonely coupons: {lonely_coupons}")
-
-    final_score = max(percent_similarity, 0)
-    percents.append(percent_similarity)
-    print(f"Final score: {final_score}%")
-
-    if percents:
-        print(f"Average score: {round(np.mean(percents), 3)}%")
+    score = max(percent_similarity, 0)
+    print(f"Score: {score}%")

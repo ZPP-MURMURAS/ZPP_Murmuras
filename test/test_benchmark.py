@@ -3,10 +3,7 @@ import sys
 import os
 import numpy as np
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-
-from src.pipeline_benchmark.benchmark import _compare_prices, compare_coupons, Coupon, CouponSimple, compare_coupons_simple, judge_pipeline
+from src.pipeline_benchmark.benchmark import compare_prices, compare_coupons, Coupon, CouponSimple, compare_coupons_simple, judge_pipeline
 
 
 class TestBenchmark:
@@ -22,7 +19,7 @@ class TestBenchmark:
         (["15.0", "25.0"], ["10.0", "20.0"], 0.0),
     ])
     def test_compare_prices(self, generated, expected, expected_score):
-        assert np.isclose(_compare_prices(generated, expected),
+        assert np.isclose(compare_prices(generated, expected),
                           expected_score,
                           atol=0.01)
 
