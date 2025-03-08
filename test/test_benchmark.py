@@ -2,14 +2,31 @@ import pytest
 import sys
 import os
 import numpy as np
+from unittest.mock import patch, mock_open
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-
-from src.pipeline_benchmark.benchmark import _compare_prices, compare_coupons, Coupon, CouponSimple, compare_coupons_simple, judge_pipeline
+from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, compare_prices, compare_coupons, compare_coupons_simple, judge_pipeline
 
 
 class TestBenchmark:
+
+    @pytest.mark.parametrize("input_string, is_simple, expected_coupons", [
+        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', True, [CouponSimple("Product A", "-20%", "2025-01-01")])
+    ])
+    def test_get_coupons_success(self, input_string, is_simple, expected_coupons):
+        with patch('builtins.open', mock_open(read_data=input_string)):
+            assert get_coupons('mock_filepath.json', is_simple) == expected_coupons
+
+
+    @pytest.mark.parametrize("input_string, is_simple", [
+        ('[{"name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', True),
+        ('[{"product_name": "Product A", "valid_until": "2025-01-01"}]', True),
+        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', False),
+        ('[{product_name: Product A, discount_text: -20%, valid_until: 2025-01-01}]', True),
+    ])
+    def test_get_coupons_failure(self, input_string, is_simple):
+        with pytest.raises(ValueError) as e, patch('builtins.open', mock_open(read_data=input_string)):
+            get_coupons('mock_filepath.json', is_simple)
+
 
     @pytest.mark.parametrize("generated, expected, expected_score", [
         (["10.0", "20.0"], ["10.0", "20.0"], 1.0),
@@ -22,7 +39,7 @@ class TestBenchmark:
         (["15.0", "25.0"], ["10.0", "20.0"], 0.0),
     ])
     def test_compare_prices(self, generated, expected, expected_score):
-        assert np.isclose(_compare_prices(generated, expected),
+        assert np.isclose(compare_prices(generated, expected),
                           expected_score,
                           atol=0.01)
 

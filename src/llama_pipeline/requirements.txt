@@ -1,0 +1,2 @@
+pandas
+llama-cpp-python
