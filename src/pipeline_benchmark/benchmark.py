@@ -68,7 +68,7 @@ OUTPUT_FILE = "pipeline_output.json"
 def get_coupons(file: str,
                 is_simple: bool) -> List[Union[Coupon, CouponSimple]]:
     """
-    This function will parse the json file that contains coupons. 
+    This function will parse a json file that contains coupons. 
     
     :param file: The path to the json file
     :param is_simple: A boolean flag to indicate if the simple format is used
