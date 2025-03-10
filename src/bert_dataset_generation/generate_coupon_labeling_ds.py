@@ -11,12 +11,12 @@ from huggingface_hub import HfApi
 from sklearn.model_selection import train_test_split
 
 # Constants
-TAG_B_PRODUCT = 'B-PRODUCT-NAME'  # begin product name tag
-TAG_I_PRODUCT = 'I-PRODUCT-NAME'  # inside product name tag
-TAG_B_DISCOUNT = 'B-DISCOUNT-TEXT'  # begin discount tag
-TAG_I_DISCOUNT = 'I-DISCOUNT-TEXT'  # inside discount tag
-TAG_B_VALIDITY = 'B-VALIDITY-TEXT'  # begin validity tag
-TAG_I_VALIDITY = 'I-VALIDITY-TEXT'  # inside validity tag
+TAG_B_PRODUCT = 'B-PRODUCT-NAME'  # begin product name
+TAG_I_PRODUCT = 'I-PRODUCT-NAME'  # inside product name
+TAG_B_DISCOUNT = 'B-DISCOUNT-TEXT'  # begin discount text
+TAG_I_DISCOUNT = 'I-DISCOUNT-TEXT'  # inside discount text
+TAG_B_VALIDITY = 'B-VALIDITY-TEXT'  # begin validity text
+TAG_I_VALIDITY = 'I-VALIDITY-TEXT'  # inside validity text
 TAG_UNKNOWN = 'O'  # unknown tag
 
 COL_PRODUCT = 'product_text'  # column from coupons frame with product text
@@ -151,5 +151,4 @@ if __name__ == '__main__':
         coupons_frame = pd.read_csv(coupon_path)
         examples.extend(__samples_from_entry(fmt, coupons_frame))
 
-    print(examples[:5])
-
+    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')
