@@ -210,7 +210,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     """
     __assert_init()
 
-    # define test
+    tokenized_dataset = tokenize_and_align_labels(dataset, "texts", "labels")
 
     if wandb_log:
         wandb.init(
@@ -240,8 +240,8 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     trainer = Trainer(
         model=model,
         args=args,
-        train_dataset=dataset["train"],
-        eval_dataset=dataset["validation"],
+        train_dataset=tokenized_dataset["train"],
+        eval_dataset=tokenized_dataset["validation"],
         data_collator=__DATA_COLLATOR,
         compute_metrics=partial(__compute_metrics, labels),
         processing_class=__TOKENIZER,
