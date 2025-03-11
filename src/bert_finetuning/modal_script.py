@@ -20,7 +20,7 @@ finetune_image = (
     .pip_install("evaluate")
     .pip_install("seqeval")
     .pip_install("wandb")
-    .env({"HALT_AND_CATCH_FIRE": 0})
+    .env({"HALT_AND_CATCH_FIRE": '0'})
 )
 
 

@@ -254,6 +254,9 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         # Left for historic purposes
         if push_to_hub:
             trainer.push_to_hub("Training completed")
+        test_res = trainer.evaluate(tokenized_dataset["test"])
+        if wandb_log:
+            wandb.log(test_res)
     else:
         # Curriculum learning
         curriculer = Curriculer(dataset, splits)
