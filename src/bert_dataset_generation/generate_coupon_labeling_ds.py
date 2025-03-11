@@ -69,13 +69,20 @@ def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, a
     dataset_dict.push_to_hub(save_name, private=True)
 
 
-def __samples_from_entry_2(coupons_frame: pd.DataFrame) -> List[Tuple[List[str], List[int]]]:
+def __samples_from_entry_2(coupons_frame: pd.DataFrame, seed: int) -> List[Tuple[List[str], List[int]]]:
     """
     Extracts samples from a single entry in the config file. This strategy is based on DM dataset from coupons big.
+
+    :param coupons_frame: pandas DataFrame with coupons
+    :param seed: random seed
+    :return: list of samples
     """
     SHUFFLE_PROB = 0.4
     DISCOUNT_DROP_PROB = 0.1
     VALIDITY_DROP_PROB = 0.1
+    ACTIVATION_DROP_PROB = 0.1
+
+    random.seed(seed)
 
     samples = []
     coupons = coupons_frame.replace('', None).dropna(subset=[COL_PRODUCT, COL_DISCOUNT_TEXT, COL_DISCOUNT_DETAILS, COL_VALIDITY])
@@ -107,7 +114,7 @@ def __samples_from_entry_2(coupons_frame: pd.DataFrame) -> List[Tuple[List[str],
             elif idx == VALIDITY_IDX and random.random() > VALIDITY_DROP_PROB:
                 all_texts.append(validity_text)
                 all_labels.append(LBL_V)
-            elif idx == ACTIVATION_IDX and not pd.isnull(activation_text):
+            elif idx == ACTIVATION_IDX and random.random() > ACTIVATION_DROP_PROB and not pd.isnull(activation_text):
                 all_texts.append(activation_text)
                 all_labels.append(LBL_UNK)
 
@@ -116,12 +123,17 @@ def __samples_from_entry_2(coupons_frame: pd.DataFrame) -> List[Tuple[List[str],
     return samples
 
 
-def __samples_from_entry(fmt: int, coupons_frame: pd.DataFrame) -> List[Tuple[List[str], List[int]]]:
+def __samples_from_entry(fmt: int, coupons_frame: pd.DataFrame, seed: int) -> List[Tuple[List[str], List[int]]]:
     """
     Extracts samples from a single entry in the config file.
+
+    :param fmt: format of the coupons frame
+    :param coupons_frame: pandas DataFrame with coupons
+    :param seed: random seed
+    :return: list of samples
     """
     if fmt == 2:
-        return __samples_from_entry_2(coupons_frame)
+        return __samples_from_entry_2(coupons_frame, seed)
     else:
         print(f"Unsupported format: {fmt}")
         return []
@@ -149,6 +161,6 @@ if __name__ == '__main__':
     examples = []
     for fmt, coupon_path in zip(formats, coupon_paths, strict=True):
         coupons_frame = pd.read_csv(coupon_path)
-        examples.extend(__samples_from_entry(fmt, coupons_frame))
+        examples.extend(__samples_from_entry(fmt, coupons_frame, seed=42))
 
     publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')
