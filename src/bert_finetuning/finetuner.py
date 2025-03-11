@@ -70,7 +70,7 @@ def create_custom_tags(tokens: list) -> list:
     return custom_tokens
 
 
-def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> list:
+def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> list[int]:
     """
     Function that is responsible for aligning the labels with the tokens.
     This is necessary because the tokenizer splits the tokens into subtokens, and we need to align the labels with them.
@@ -94,11 +94,13 @@ def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> 
         elif word_id is None:
             # Special token
             new_labels.append(-100)
-        else:
-            # Same word as previous token
+        else: # Same word as previous token
             label = labels[word_id]
             if not bi_split:
                 label = 2*label
+            else: # Adjust so that one word has only one B-X token.
+                if label%2 == 1: # I-X are even; Unknown is even also. B-X is odd.
+                    label += 1 # from (2*label)-1 to 2*label
             new_labels.append(label)
 
     return new_labels

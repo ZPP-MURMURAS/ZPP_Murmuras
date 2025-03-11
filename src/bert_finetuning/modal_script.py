@@ -32,8 +32,6 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
 
     wandb.login(key=wandb_key)
 
-    tokenized_dataset = ft.tokenize_and_align_labels(cs, "texts", "labels")
-
     id2label, label2id = ft.two_way_id2label(labels)
 
     model = AutoModelForTokenClassification.from_pretrained(
