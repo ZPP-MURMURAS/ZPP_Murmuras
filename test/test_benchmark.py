@@ -9,15 +9,16 @@ from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, 
 
 class TestBenchmark:
 
-    @pytest.mark.parametrize("input_string, is_simple, expected_coupons", [
-        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', True, [CouponSimple("Product A", "-20%", "2025-01-01")])
+    @pytest.mark.parametrize("input_string,is_simple,expected_coupons", [
+        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', True, [CouponSimple("Product A", "-20%", "2025-01-01")]),
+        ('[{"product_name": "Product B", "new_price": "5$", "old_price": "6$", "percents": ["1", "2"], "other_discounts": ["3", "4"], "dates": ["1410", "1812"]}]', False, [Coupon("Product B", "5$", "6$", ["1", "2"], ["3", "4"], ["1410", "1812"])]),
     ])
     def test_get_coupons_success(self, input_string, is_simple, expected_coupons):
         with patch('builtins.open', mock_open(read_data=input_string)):
             assert get_coupons('mock_filepath.json', is_simple) == expected_coupons
 
 
-    @pytest.mark.parametrize("input_string, is_simple", [
+    @pytest.mark.parametrize("input_string,is_simple", [
         ('[{"name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', True),
         ('[{"product_name": "Product A", "valid_until": "2025-01-01"}]', True),
         ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', False),
