@@ -1,5 +1,8 @@
+import random
+
 from datasets import Dataset, DatasetDict
-from transformers import AutoTokenizer, DataCollatorForTokenClassification, TrainingArguments, Trainer
+from transformers import AutoTokenizer, DataCollatorForTokenClassification, TrainingArguments, Trainer, TrainerCallback, \
+    pipeline
 import numpy as np
 import evaluate
 from functools import partial
@@ -11,6 +14,9 @@ __MODEL_CHECKPOINT = ""
 __TOKENIZER = None
 __DATA_COLLATOR = None
 __METRIC = None
+
+# Needs to be global so tha both the curriculer algorithm and Trainer callback work
+__LEARNING_RATE = 2e-5
 
 
 def init_finetuner(model_checkpoint: str):
@@ -194,6 +200,35 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
 
     return result
 
+def __print_random_sample(model: callable, dataset: DatasetDict) -> None:
+    """
+    Function that is responsible for printing a random sample from the dataset.
+
+    :param model: The model that will be used to predict the output
+    :param tokenized_dataset: The dataset that contains the samples
+    """
+    classifier = pipeline("token-classification", model=model, tokenizer=__TOKENIZER, device=0)
+    sample = dataset["train"][0]
+    text_input = sample.get("texts")
+    label_input = sample.get("labels")
+    tokenized_text_input = __TOKENIZER(text_input, truncation=True, is_split_into_words=True)
+    word_ids = tokenized_text_input.word_ids
+    aligned_labels = __align_labels_with_tokens(label_input, word_ids(0), True)
+    print(f"Input labels: {aligned_labels}")
+
+    predictions = classifier(text_input)
+    predicted_labels = ['O'] * len(aligned_labels)
+    for pred in predictions:
+        if len(pred) > 0:
+            for entry in pred:
+                if len(entry['entity']) == 'B-COUPON':
+                    for i in range(pred['start'], pred['end']):
+                        predicted_labels[i] = '1'
+                    else:
+                        for i in range(pred['start'], pred['end']):
+                            predicted_labels[i] = '2'
+
+    print(f"Predicted Labels: {predicted_labels}")
 
 def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False, curriculum_learning: bool=False, splits: int=10):
     """
@@ -202,7 +237,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     train, validation and test splits. Otherwise, an exception will be thrown.
 
     :param model: The model that will be trained (assumed BERT architecture)
-    :param dataset: The dataset that contains the train, validation and test splits
+    :param dataset: The dataset that contains the train, and test splits (other parts of the splits are allowed; they will be ignored)
     :param labels: The labels that will be used to compute the metrics
     :param run_name: The name of the run
     :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
@@ -226,27 +261,35 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             }
         )
 
+    global __LEARNING_RATE
     args = TrainingArguments(
         "zpp-murmuras/bert",
         eval_strategy="epoch",
         save_strategy="epoch",
-        learning_rate=2e-5,
+        learning_rate=__LEARNING_RATE,
         num_train_epochs=3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
         logging_dir="./logs",  # Directory for logs
         logging_steps=10,  # Log every 10 steps
-        report_to=["wandb"] if wandb_log else ["none"],  # Enable wandb logging
+        report_to=['wandb'] if wandb_log else ['none'],  # Enable wandb logging
     )
+
+    class StopCallback(TrainerCallback):
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            if 'learning_rate' in logs:
+                global __LEARNING_RATE
+                __LEARNING_RATE = logs['learning_rate']
 
     trainer = Trainer(
         model=model,
         args=args,
         train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["validation"],
+        eval_dataset=tokenized_dataset["test"],
         data_collator=__DATA_COLLATOR,
         compute_metrics=partial(__compute_metrics, labels),
         processing_class=__TOKENIZER,
+        callbacks=[StopCallback()]
     )
 
     if not curriculum_learning:
@@ -254,25 +297,31 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         # Left for historic purposes
         if push_to_hub:
             trainer.push_to_hub("Training completed")
-        test_res = trainer.evaluate(tokenized_dataset["test"])
-        if wandb_log:
-            wandb.log(test_res)
     else:
         # Curriculum learning
+        __print_random_sample(model, dataset)
         curriculer = Curriculer(dataset, splits)
         curr_dataset = curriculer.create_init_dataset()
         curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
         trainer.train_dataset = curr_dataset["train"]
-        trainer.eval_dataset = curr_dataset["validation"]
+        trainer.eval_dataset = tokenized_dataset["test"]
         trainer.train()
+        __print_random_sample(model, dataset)
         for i in range(splits):
-            eval_results = trainer.evaluate(curr_dataset["test"])
-            if wandb_log:
-                wandb.log(eval_results)
+            args.learning_rate = __LEARNING_RATE
             curr_dataset = curriculer.yield_dataset()
             curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
-            trainer.train_dataset = curr_dataset["train"]
-            trainer.eval_dataset = curr_dataset["validation"]
+            trainer = Trainer(
+                model=model,
+                args=args,
+                train_dataset=curr_dataset["train"],
+                eval_dataset=tokenized_dataset["test"],
+                data_collator=__DATA_COLLATOR,
+                compute_metrics=partial(__compute_metrics, labels),
+                processing_class=__TOKENIZER,
+                callbacks=[StopCallback()]
+            )
             trainer.train()
+            __print_random_sample(model, dataset)
         if push_to_hub:
             trainer.push_to_hub("Training completed")
