@@ -17,6 +17,8 @@ TAG_B_DISCOUNT = 'B-DISCOUNT-TEXT'  # begin discount text
 TAG_I_DISCOUNT = 'I-DISCOUNT-TEXT'  # inside discount text
 TAG_B_VALIDITY = 'B-VALIDITY-TEXT'  # begin validity text
 TAG_I_VALIDITY = 'I-VALIDITY-TEXT'  # inside validity text
+TAG_B_ACTIVATION = 'B-ACTIVATION-TEXT'  # begin activation text
+TAG_I_ACTIVATION = 'I-ACTIVATION-TEXT'  # inside activation text
 TAG_UNKNOWN = 'O'  # unknown tag
 
 COL_PRODUCT = 'product_text'  # column from coupons frame with product text
@@ -26,41 +28,31 @@ COL_VALIDITY = 'validity_text'  # column from coupons frame with validity text
 COL_ACTIVATION = 'activation_text'  # column from coupons frame with activation text
 
 # target labels
-LABELS = datasets.ClassLabel(names=[TAG_UNKNOWN, TAG_B_PRODUCT, TAG_I_PRODUCT, TAG_B_DISCOUNT, TAG_I_DISCOUNT, TAG_B_VALIDITY, TAG_I_VALIDITY])
+LABELS = datasets.ClassLabel(names=[TAG_UNKNOWN, TAG_B_PRODUCT, 
+    TAG_I_PRODUCT, TAG_B_DISCOUNT, TAG_I_DISCOUNT, TAG_B_VALIDITY, 
+    TAG_I_VALIDITY, TAG_B_ACTIVATION, TAG_I_ACTIVATION])
 LBL_UNK = LABELS.str2int(TAG_UNKNOWN)
 LBL_P = LABELS.str2int(TAG_B_PRODUCT)
 LBL_D = LABELS.str2int(TAG_B_DISCOUNT)
 LBL_V = LABELS.str2int(TAG_B_VALIDITY)
+LBL_A = LABELS.str2int(TAG_B_ACTIVATION)
 
 
-def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str, new_repo: bool) -> None:
+def publish_to_hub(dss: List[List[Tuple[List[str], List[int]]]], ds_names :List[str], save_name: str, apikey: str, new_repo: bool) -> None:
     """
-    Creates dataset out of list of pairs of words and labels and pushes it to HF Hub.
+    Creates a HuggingFace dataset out of a list of raw datasets and pushes it to HF Hub.
     """
     features = datasets.Features({
         "texts": datasets.Sequence(datasets.Value("string")),
         "labels": datasets.Sequence(LABELS)
     })
-    # Convert samples into a dictionary
-    texts = [sample[0] for sample in samples]
-    labels = [sample[1] for sample in samples]
 
-    # Initial train/test split (80% train, 20% temp)
-    train_texts, temp_texts, train_labels, temp_labels = train_test_split(
-        texts, labels, test_size=0.2, random_state=42
-    )
+    dataset_dict = DatasetDict()
+    for samples, ds_name in zip(dss, ds_names, strict=True):
+        texts = [sample[0] for sample in samples]
+        labels = [sample[1] for sample in samples]
+        dataset_dict[ds_name] = Dataset.from_dict({"texts": texts, "labels": labels}, features=features)
 
-    # Split temp set into validation (10%) and test (10%)
-    val_texts, test_texts, val_labels, test_labels = train_test_split(
-        temp_texts, temp_labels, test_size=0.5, random_state=42
-    )
-
-    # Create Dataset objects
-    dataset_dict = DatasetDict({
-        "train": Dataset.from_dict({"texts": train_texts, "labels": train_labels}, features=features),
-        "validation": Dataset.from_dict({"texts": val_texts, "labels": val_labels}, features=features),
-        "test": Dataset.from_dict({"texts": test_texts, "labels": test_labels}, features=features)
-    })
     login(token=apikey)
     if new_repo:
         api = HfApi()
@@ -85,7 +77,7 @@ def __samples_from_entry_2(coupons_frame: pd.DataFrame, seed: int) -> List[Tuple
     random.seed(seed)
 
     samples = []
-    coupons = coupons_frame.replace('', None).dropna(subset=[COL_PRODUCT, COL_DISCOUNT_TEXT, COL_DISCOUNT_DETAILS, COL_VALIDITY])
+    coupons = coupons_frame.replace('', None).dropna(subset=[COL_PRODUCT])
     for _, row in coupons.iterrows():
         product_text = row[COL_PRODUCT]
         discount_text = row[COL_DISCOUNT_TEXT]
@@ -96,8 +88,8 @@ def __samples_from_entry_2(coupons_frame: pd.DataFrame, seed: int) -> List[Tuple
         PRODUCT_IDX, DISCOUNT_IDX, VALIDITY_IDX, ACTIVATION_IDX = 0, 1, 2, 3
         order = [PRODUCT_IDX, DISCOUNT_IDX, VALIDITY_IDX, ACTIVATION_IDX]
 
-        # With 50% probability, shuffle the order of the sections
         if random.random() < SHUFFLE_PROB:
+            # Shuffle the order of the sections
             order = random.sample(order, len(order))
 
         all_texts = []
@@ -107,16 +99,18 @@ def __samples_from_entry_2(coupons_frame: pd.DataFrame, seed: int) -> List[Tuple
                 all_texts.append(product_text)
                 all_labels.append(LBL_P)
             elif idx == DISCOUNT_IDX and random.random() > DISCOUNT_DROP_PROB:
-                all_texts.append(discount_details)
-                all_texts.append(discount_text)
-                all_labels.append(LBL_UNK)
-                all_labels.append(LBL_D)
-            elif idx == VALIDITY_IDX and random.random() > VALIDITY_DROP_PROB:
+                if not pd.isnull(discount_details):
+                    all_texts.append(discount_details)
+                    all_labels.append(LBL_UNK)
+                if not pd.isnull(discount_text):
+                    all_texts.append(discount_text)
+                    all_labels.append(LBL_D)
+            elif idx == VALIDITY_IDX and random.random() > VALIDITY_DROP_PROB and not pd.isnull(validity_text):
                 all_texts.append(validity_text)
                 all_labels.append(LBL_V)
             elif idx == ACTIVATION_IDX and random.random() > ACTIVATION_DROP_PROB and not pd.isnull(activation_text):
                 all_texts.append(activation_text)
-                all_labels.append(LBL_UNK)
+                all_labels.append(LBL_A)
 
         samples.append((all_texts, all_labels))
 
@@ -161,6 +155,6 @@ if __name__ == '__main__':
     examples = []
     for fmt, coupon_path in zip(formats, coupon_paths, strict=True):
         coupons_frame = pd.read_csv(coupon_path)
-        examples.extend(__samples_from_entry(fmt, coupons_frame, seed=42))
+        examples.append(__samples_from_entry(fmt, coupons_frame, seed=42))
 
-    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')
+    publish_to_hub(examples, coupon_paths, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')

@@ -21,12 +21,16 @@ def coupons_fmt2_1():
 
 @pytest.fixture
 def expected_fmt2_1_seed42():
-    return [(['Product1', 'Valid till 31st Dec', 'Activated'], [1, 5, 0]), (['Product2', 'Up to 50% off', '20% off', 'Valid till 31st Dec'], [1, 0, 3, 5]), (['Product3', 'Valid till 31st Dec'], [1, 5])]
+    return [(['Product1', 'Valid till 31st Dec', 'Activated'], [1, 5, 7]), 
+            (['Product2', 'Up to 50% off', '20% off', 'Valid till 31st Dec'], [1, 0, 3, 5]), 
+            (['Product3', 'Valid till 31st Dec'], [1, 5])]
 
 
 @pytest.fixture
 def expected_fmt2_1_seed69():
-    return [(['Product1', 'Valid till 31st Dec', 'Activated'], [1, 5, 0]), (['Activated', 'Up to 50% off', '20% off', 'Valid till 31st Dec', 'Product2'], [0, 0, 3, 5, 1]), (['Product3', 'Up to 50% off', '30% off', 'Valid till 31st Dec'], [1, 0, 3, 5])]
+    return [(['Product1', 'Valid till 31st Dec', 'Activated'], [1, 5, 7]), 
+            (['Activated', 'Up to 50% off', '20% off', 'Valid till 31st Dec', 'Product2'], [7, 0, 3, 5, 1]), 
+            (['Product3', 'Up to 50% off', '30% off', 'Valid till 31st Dec'], [1, 0, 3, 5])]
 
 
 class TestGenerateCouponLabelingDS:
@@ -36,6 +40,7 @@ class TestGenerateCouponLabelingDS:
     ])
     def test_samples_from_entry_2(self, coupons, expected, seed):
         labeled = _ds_gen__samples_from_entry_2(coupons, seed)
+        print(labeled)
         assert labeled == expected
 
 
@@ -44,5 +49,6 @@ class TestGenerateCouponLabelingDS:
     ])
     def test_samples_from_entry(self, fmt, coupons, expected, seed):
         labeled = _ds_gen__samples_from_entry(fmt, coupons, seed)
+        print(labeled)
         assert labeled == expected
 
