@@ -40,7 +40,7 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
         label2id=label2id,
     )
 
-    ft.train_model(model, cs, labels, wandb_log=True, run_name=dataset_name, curriculum_learning=True)
+    ft.train_model(model, cs, labels, wandb_log='bert_multiling_test3', run_name=dataset_name, curriculum_learning=True)
     if push_to_hub:
         model_repo = 'zpp-murmuras/bert_' + dataset_name
         model.push_to_hub(model_repo, token=hf_token)

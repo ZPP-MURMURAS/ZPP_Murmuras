@@ -18,6 +18,10 @@ __METRIC = None
 # Needs to be global so tha both the curriculer algorithm and Trainer callback work
 __LEARNING_RATE = 2e-5
 
+class LrContainer:
+    def __init__(self, lr):
+        self.lr = lr
+
 
 def init_finetuner(model_checkpoint: str):
     """
@@ -200,37 +204,30 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
 
     return result
 
-def __print_random_sample(model: callable, dataset: DatasetDict) -> None:
+def __print_random_sample(model: callable, dataset: Dataset) -> None:
     """
     Function that is responsible for printing a random sample from the dataset.
 
     :param model: The model that will be used to predict the output
-    :param tokenized_dataset: The dataset that contains the samples
+    :param dataset: The dataset that contains the samples
     """
-    classifier = pipeline("token-classification", model=model, tokenizer=__TOKENIZER, device=0)
-    sample = dataset["train"][0]
+    classifier = pipeline("token-classification", model=model, tokenizer=__TOKENIZER, device=0, aggregation_strategy="simple")
+
+    random_index = random.randint(0, len(dataset["train"]) - 1)
+    sample = dataset["train"][random_index]
     text_input = sample.get("texts")
     label_input = sample.get("labels")
-    tokenized_text_input = __TOKENIZER(text_input, truncation=True, is_split_into_words=True)
-    word_ids = tokenized_text_input.word_ids
-    aligned_labels = __align_labels_with_tokens(label_input, word_ids(0), True)
-    print(f"Input labels: {aligned_labels}")
 
     predictions = classifier(text_input)
-    predicted_labels = ['O'] * len(aligned_labels)
+    res = []
     for pred in predictions:
         if len(pred) > 0:
             for entry in pred:
-                if len(entry['entity']) == 'B-COUPON':
-                    for i in range(pred['start'], pred['end']):
-                        predicted_labels[i] = '1'
-                    else:
-                        for i in range(pred['start'], pred['end']):
-                            predicted_labels[i] = '2'
+                res.append(entry['entity_group'][len(entry['entity_group'])-1:])
+    for en in zip(label_input, text_input, res):
+        print(en)
 
-    print(f"Predicted Labels: {predicted_labels}")
-
-def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False, curriculum_learning: bool=False, splits: int=10):
+def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: str='', curriculum_learning: bool=False, splits: int=10):
     """
     Function that is responsible for training the model. It assumes that the dataset
     is already tokenized and aligned with the labels. It should contain
@@ -241,7 +238,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     :param labels: The labels that will be used to compute the metrics
     :param run_name: The name of the run
     :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
-    :param wandb_log: Whether the model should be logged to wandb. Default is False
+    :param wandb_log: If empty, wandb logging is disabled. Otherwise, it is enabled (string will be used as target project). Default is empty
     :param curriculum_learning: Whether the model should use curriculum learning. Default is False
     :param splits: The number of splits that will be used in curriculum learning. Default is 10
     """
@@ -249,10 +246,10 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
 
     tokenized_dataset = tokenize_and_align_labels(dataset, "texts", "labels")
 
-    if wandb_log:
+    if wandb_log != '':
         wandb.init(
-            project="bert-multiling-training",
-            name="bert-finetuning-" + run_name,
+            project=wandb_log,
+            name= wandb_log + "-" + run_name,
             config={
                 "learning_rate": 2e-5,
                 "epochs": 3,
@@ -261,12 +258,12 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             }
         )
 
-    global __LEARNING_RATE
+    lr_container = LrContainer(__LEARNING_RATE)
     args = TrainingArguments(
         "zpp-murmuras/bert",
         eval_strategy="epoch",
         save_strategy="epoch",
-        learning_rate=__LEARNING_RATE,
+        learning_rate=lr_container.lr,
         num_train_epochs=3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
@@ -276,10 +273,14 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     )
 
     class StopCallback(TrainerCallback):
+        def __init__(self, lr_container):
+            super().__init__()
+            self.lr_container = lr_container
+
         def on_log(self, args, state, control, logs=None, **kwargs):
             if 'learning_rate' in logs:
-                global __LEARNING_RATE
-                __LEARNING_RATE = logs['learning_rate']
+                lr_container.lr = logs['learning_rate']
+
 
     trainer = Trainer(
         model=model,
@@ -289,7 +290,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         data_collator=__DATA_COLLATOR,
         compute_metrics=partial(__compute_metrics, labels),
         processing_class=__TOKENIZER,
-        callbacks=[StopCallback()]
+        callbacks=[StopCallback(lr_container)]
     )
 
     if not curriculum_learning:
@@ -308,7 +309,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         trainer.train()
         __print_random_sample(model, dataset)
         for i in range(splits):
-            args.learning_rate = __LEARNING_RATE
+            args.learning_rate = lr_container.lr
             curr_dataset = curriculer.yield_dataset()
             curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
             trainer = Trainer(
@@ -319,7 +320,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
                 data_collator=__DATA_COLLATOR,
                 compute_metrics=partial(__compute_metrics, labels),
                 processing_class=__TOKENIZER,
-                callbacks=[StopCallback()]
+                callbacks=[StopCallback(lr_container)]
             )
             trainer.train()
             __print_random_sample(model, dataset)
