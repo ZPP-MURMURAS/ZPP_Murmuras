@@ -30,6 +30,7 @@ class CouponSimple:
     product_name: str
     discount_text: str
     validity_text: str
+    activation_text: str
 
 
 # Weights for each attribute of the coupon
@@ -41,8 +42,9 @@ VALIDITY_WEIGHT = 0.1
 
 # Weights for the simple coupons
 NAME_WEIGHT_SIMPLE = 0.4
-PRICE_WEIGHT_SIMPLE = 0.4
+DISCOUNT_WEIGHT_SIMPLE = 0.3
 VALIDITY_WEIGHT_SIMPLE = 0.2
+ACTIVATION_WEIGHT_SIMPLE = 0.1
 
 # Weights for the prices
 NEW_PRICE_WEIGHT = 0.5
@@ -53,6 +55,7 @@ LENGTH_PENALTY = 0.2
 OUT_COL_SIMP_PRODUCT = 'product_name'
 OUT_COL_SIMP_DISCOUNT = 'discount_text'
 OUT_COL_SIMP_VALIDITY = 'valid_until'
+OUT_COL_SIMP_ACTIVATION = 'activation_text'
 
 OUT_COL_EXT_PRODUCT = 'product_name'
 OUT_COL_EXT_NEW_PRICE = 'new_price'
@@ -83,7 +86,7 @@ def get_coupons(file: str,
     }
 
     if is_simple:
-        required_keys = {OUT_COL_SIMP_PRODUCT, OUT_COL_SIMP_DISCOUNT, OUT_COL_SIMP_VALIDITY}
+        required_keys = {OUT_COL_SIMP_PRODUCT, OUT_COL_SIMP_DISCOUNT, OUT_COL_SIMP_VALIDITY, OUT_COL_SIMP_ACTIVATION}
 
     with open(file, 'r') as f:
         try:
@@ -114,7 +117,8 @@ def get_coupons(file: str,
         if is_simple:
             coupon = CouponSimple(product_name=item[OUT_COL_SIMP_PRODUCT],
                                   discount_text=item[OUT_COL_SIMP_DISCOUNT],
-                                  validity_text=item[OUT_COL_SIMP_VALIDITY])
+                                  validity_text=item[OUT_COL_SIMP_VALIDITY],
+                                  activation_text=item[OUT_COL_SIMP_ACTIVATION])
             coupons.append(coupon)
         else:
             new_price = item.get(OUT_COL_EXT_NEW_PRICE, None)
@@ -217,10 +221,11 @@ def compare_coupons_simple(coupon_1: Optional[CouponSimple],
                                           b=coupon_2.discount_text).ratio()
     validity_ratio = diff.SequenceMatcher(a=coupon_1.validity_text,
                                           b=coupon_2.validity_text).ratio()
+    activation_ratio = diff.SequenceMatcher(a=coupon_1.activation_text,
+                                            b=coupon_2.activation_text).ratio()
 
-    return (name_ratio * NAME_WEIGHT_SIMPLE) + (
-        discount_ratio * PRICE_WEIGHT_SIMPLE) + (validity_ratio *
-                                                 VALIDITY_WEIGHT_SIMPLE)
+    return (name_ratio * NAME_WEIGHT_SIMPLE) + (discount_ratio * DISCOUNT_WEIGHT_SIMPLE) + \
+        (validity_ratio * VALIDITY_WEIGHT_SIMPLE) + (activation_ratio * ACTIVATION_WEIGHT_SIMPLE)
 
 
 def compare_coupons(coupon_1: Optional[Coupon],

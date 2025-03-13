@@ -10,7 +10,7 @@ from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, 
 class TestBenchmark:
 
     @pytest.mark.parametrize("input_string,is_simple,expected_coupons", [
-        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', True, [CouponSimple("Product A", "-20%", "2025-01-01")]),
+        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', True, [CouponSimple("Product A", "-20%", "2025-01-01", "active")]),
         ('[{"product_name": "Product B", "new_price": "5$", "old_price": "6$", "percents": ["1", "2"], "other_discounts": ["3", "4"], "dates": ["1410", "1812"]}]', False, [Coupon("Product B", "5$", "6$", ["1", "2"], ["3", "4"], ["1410", "1812"])]),
     ])
     def test_get_coupons_success(self, input_string, is_simple, expected_coupons):
@@ -19,10 +19,10 @@ class TestBenchmark:
 
 
     @pytest.mark.parametrize("input_string,is_simple", [
-        ('[{"name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', True),
-        ('[{"product_name": "Product A", "valid_until": "2025-01-01"}]', True),
-        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01"}]', False),
-        ('[{product_name: Product A, discount_text: -20%, valid_until: 2025-01-01}]', True),
+        ('[{"name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', True),
+        ('[{"product_name": "Product A", "valid_until": "2025-01-01", "activation_text": "active"}]', True),
+        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', False),
+        ('[{product_name: Product A, discount_text: -20%, valid_until: 2025-01-01, activation_text: active}]', True),
     ])
     def test_get_coupons_failure(self, input_string, is_simple):
         with pytest.raises(ValueError) as e, patch('builtins.open', mock_open(read_data=input_string)):
@@ -62,30 +62,34 @@ class TestBenchmark:
                           atol=0.1)
 
     @pytest.mark.parametrize("coupon1, coupon2, expected_score", [
-        (CouponSimple("Product A", "10.0", "valid till 900"),
-         CouponSimple("Product A", "10.0", "valid till 900"), 1.0),
-        (CouponSimple("A", "10.0", "20.0"), CouponSimple("B", "234",
-                                                         "344"), 0.0),
+        (CouponSimple("Product A", "10.0", "valid till 900", "active"),
+         CouponSimple("Product A", "10.0", "valid till 900", "active"), 1.0),
+        (CouponSimple("A", "10.0", "20.0", "active"), 
+         CouponSimple("B", "234", "344", "active"), 0.0),
         (CouponSimple(
             "Product ABC",
             "discount 123 from 234 and 60% off if you have a unicorn",
-            "valid till 6969"),
+            "valid till 6969",
+            "active"),
          CouponSimple(
              "Product",
              "discount 90% from 76 to 9 and also we will give you a phoenix",
-             "until 1169 AD"), 0.6),
-        (CouponSimple("A", "10.0", "valid till 900"),
-         CouponSimple("B", "10.0", "valid till 900"), 0.6),
-        (CouponSimple("unicorn", "10.0", "valid till 9000"),
-         CouponSimple("UNICORN", "10.0", "valid till 9000"), 0.6),
-        (CouponSimple("UNICORN", "10.0", "valid till 969"),
-         CouponSimple("UNICORN", "abc", "valid till 969"), 0.6),
-        (CouponSimple("UNICORN", "10.0", "valid till 969"),
-         CouponSimple("UNICORN", "10.3", "valid till 969"), 0.9),
-        (CouponSimple("UNICORN", "10.0", "valid till 969"),
-         CouponSimple("UNICORN", "10.0", "valid till 1212"), 0.9),
-        (CouponSimple("UNICORN", "10.0", "valid till 969"),
-         CouponSimple("UNICORN", "10.0", "uga buga"), 0.8),
+             "until 1169 AD",
+             "not active"), 0.6),
+        (CouponSimple("A", "10.0", "valid till 900", "active"),
+         CouponSimple("B", "10.0", "valid till 900", "active"), 0.6),
+        (CouponSimple("unicorn", "10.0", "valid till 9000", "active"),
+         CouponSimple("UNICORN", "10.0", "valid till 9000", "active"), 0.6),
+        (CouponSimple("UNICORN", "10.0", "valid till 969", "active"),
+         CouponSimple("UNICORN", "abc", "valid till 969", "active"), 0.6),
+        (CouponSimple("UNICORN", "10.0", "valid till 969", "active"),
+         CouponSimple("UNICORN", "10.3", "valid till 969", "active"), 0.9),
+        (CouponSimple("UNICORN", "10.0", "valid till 969", "active"),
+         CouponSimple("UNICORN", "10.0", "valid till 1212", "active"), 0.9),
+        (CouponSimple("UNICORN", "10.0", "valid till 969", "active"),
+         CouponSimple("UNICORN", "10.0", "uga buga", "active"), 0.8),
+        (CouponSimple("UNICORN", "10.0", "valid till 969", "active"),
+         CouponSimple("UNICORN", "10.0", "valid till 969", "dziekan"), 0.9),
     ])
     def test_compare_coupons_simple(self, coupon1, coupon2, expected_score):
         assert np.isclose(compare_coupons_simple(coupon1, coupon2),
