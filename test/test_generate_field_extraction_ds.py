@@ -1,4 +1,4 @@
-from src.bert_dataset_generation.generate_coupon_labeling_ds import (
+from src.bert_dataset_generation.generate_field_extraction_ds import (
     __samples_from_entry as _ds_gen__samples_from_entry,
     __samples_from_entry_2 as _ds_gen__samples_from_entry_2
 )
