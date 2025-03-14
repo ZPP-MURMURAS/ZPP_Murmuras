@@ -87,7 +87,7 @@ def __parse_to_oimo(df: pd.DataFrame) -> pd.DataFrame:
 def run_mapping(df: pd.DataFrame, map_func: Callable) -> Dataset:
     """
     This function takes a pandas dataframe and a mapping function, and returns a Dataset object
-    with the mapping function applied to it (it adds a prompt to the data).
+    with the mapping function applied to it.
     :param df: A pandas dataframe to be mapped.
     :param map_func: A mapping function to be applied to the dataframe.
     :return training_data: A Dataset object with the mapping function applied.

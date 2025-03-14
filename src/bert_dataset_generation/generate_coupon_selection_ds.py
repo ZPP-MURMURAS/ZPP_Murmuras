@@ -73,7 +73,7 @@ def __construct_prefix_tree_for_coupon_frame(coupons_frame: pd.DataFrame, ds_for
     is content of COL_TEXT column for some row.
     ds_format is int specifying format of COL_TEXT_FULL in coupons_frame:
     - 1: format from "coupons_1" dataset
-    - 2: format from "coupons big" dataset
+    - 2: format from "coupons_big" dataset
     """
     coupons_list = coupons_frame[COL_TEXT_FULL].dropna().tolist()
     if ds_format == 2:
