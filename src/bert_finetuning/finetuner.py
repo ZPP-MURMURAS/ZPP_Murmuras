@@ -204,17 +204,25 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
 
     return result
 
-def __print_random_sample(model: callable, dataset: Dataset) -> None:
+def print_vibe_check(model: callable, dataset: Dataset, index: int = -1, column: str = 'train') -> None:
     """
-    Function that is responsible for printing a random sample from the dataset.
+    Function that is responsible for performing the "vibe-check" of the model.
+    It means that it print the specified sample from the dataset (words and its labels),
+    and the predictions of the model (which is UNKNOWN if none of the tokens of the word was
+    classified as part of the coupon, and COUPON otherwise (e.g. if ABC gets split into tokens
+    A, B, B and at lets one of them is classified as part of the COUPON, the whole word is created as COUPON)).
+    This function is mainly used during training, but you can use it outside it as well.
 
     :param model: The model that will be used to predict the output
     :param dataset: The dataset that contains the samples
+    :param index: The index of the sample that will be used for the vibe-check. Default: random
+    :param column: The column that will be used for the vibe-check. Default: train
     """
     classifier = pipeline("token-classification", model=model, tokenizer=__TOKENIZER, device=0, aggregation_strategy="simple")
 
-    random_index = random.randint(0, len(dataset["train"]) - 1)
-    sample = dataset["train"][random_index]
+    if index == -1:
+        index = random.randint(0, len(dataset[column]) - 1)
+    sample = dataset[column][index]
     text_input = sample.get("texts")
     label_input = sample.get("labels")
 
@@ -300,14 +308,14 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             trainer.push_to_hub("Training completed")
     else:
         # Curriculum learning
-        __print_random_sample(model, dataset)
+        print_vibe_check(model, dataset)
         curriculer = Curriculer(dataset, splits)
         curr_dataset = curriculer.create_init_dataset()
         curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
         trainer.train_dataset = curr_dataset["train"]
         trainer.eval_dataset = tokenized_dataset["test"]
         trainer.train()
-        __print_random_sample(model, dataset)
+        print_vibe_check(model, dataset)
         for i in range(splits):
             args.learning_rate = lr_container.lr
             curr_dataset = curriculer.yield_dataset()
@@ -323,6 +331,6 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
                 callbacks=[StopCallback(lr_container)]
             )
             trainer.train()
-            __print_random_sample(model, dataset)
+            print_vibe_check(model, dataset)
         if push_to_hub:
             trainer.push_to_hub("Training completed")
