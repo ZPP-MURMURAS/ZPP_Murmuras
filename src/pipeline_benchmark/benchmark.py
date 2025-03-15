@@ -339,7 +339,7 @@ def run_pipeline(pipeline_command: str,
     :raises subprocess.CalledProcessError: If the pipeline fails to run
     """
 
-    pipeline_command = pipeline_command + " < " + input + " > " + OUTPUT_FILE
+    pipeline_command = pipeline_command + " < \"" + input + "\" > " + OUTPUT_FILE
     subprocess.run(pipeline_command, shell=True, check=True)
     coupons = get_coupons(OUTPUT_FILE, is_simple)
 
