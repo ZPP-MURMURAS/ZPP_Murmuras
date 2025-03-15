@@ -4,3 +4,6 @@ google-auth-oauthlib
 huggingface-hub
 pandas
 transformers
+openai
+datasets
+torch
