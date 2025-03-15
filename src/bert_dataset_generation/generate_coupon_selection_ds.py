@@ -1,6 +1,6 @@
 from os import getenv
 import sys
-from typing import List, Tuple, Dict, Optional, Callable, TypedDict
+from typing import List, Tuple, Dict, Optional, TypedDict
 import re
 import json
 import datasets
@@ -240,14 +240,14 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
         if tree is not None:
             res.append(tree)
         else:
-            res.append({"text": None, "children": {}, "is_coupon": False})
+            res.append({"text": None, "children": {}, "is_coupon": LBL_UNK})
     return res
 
 
 def __encode_json_tree_node_with_children_into_tokens(root: TreeNode, is_coupon: int, indent: Optional[int]):
     """
     Converts a node with children from json tree to a pair of lists of tokens (words) and labels associated with them.
-    :param root: a node to convert, it is expected not to contain a is_coupon flag.
+    :param root: a node to convert, it is expected not to contain an is_coupon flag.
     :param is_coupon: a flag carrying information if we are already inside a part of tree that is considered a coupon
     :param indent: indent for dumping JSON into string
     :return: a pair of list of tokens (words) and labels associated with them.
@@ -288,7 +288,6 @@ def __encode_json_tree_into_tokens_rec(root: TreeNode, indent: Optional[int])\
     """
     Converts a node from json tree to a pair of lists of tokens (words) and labels associated with them.
     :param root: a node to convert
-    :param is_coupon: a flag carrying information if we are already inside a part of tree that is considered a coupon
     :param indent: indent for dumping JSON into string
     :return: a pair of list of tokens (words) and labels associated with them.
     """
@@ -318,34 +317,48 @@ def json_to_labeled_tokens(data: List[TreeNode], indent: Optional[int] = None) -
     return res
 
 
-def publish_to_hub(samples: List[Tuple[List[str], List[int]]], save_name: str, apikey: str, new_repo: bool) -> None:
+def publish_to_hub(samples: List[List[Tuple[List[str], List[int]]]], save_name: str, apikey: str, new_repo: bool, custom_splits: Optional[List[str]]) -> None:
     """
-    Creates dataset out of list of pairs of words and labels and pushes it to HF Hub.
+    Creates dataset out of list of lists (one for each pair of frames) of pairs of words and labels and pushes it to HF Hub.
     """
     features = datasets.Features({
         "texts": datasets.Sequence(datasets.Value("string")),
         "labels": datasets.Sequence(LABELS)
     })
-    # Convert samples into a dictionary
-    texts = [sample[0] for sample in samples]
-    labels = [sample[1] for sample in samples]
+    if custom_splits is None:
+        # Convert samples into a dictionary
+        texts = [sample[0] for samples_pack in samples for sample in samples_pack]
+        labels = [sample[1] for samples_pack in samples for sample in samples_pack]
 
-    # Initial train/test split (80% train, 20% temp)
-    train_texts, temp_texts, train_labels, temp_labels = train_test_split(
-        texts, labels, test_size=0.2, random_state=42
-    )
+        # Initial train/test split (80% train, 20% temp)
+        train_texts, temp_texts, train_labels, temp_labels = train_test_split(
+            texts, labels, test_size=0.2, random_state=42
+        )
 
-    # Split temp set into validation (10%) and test (10%)
-    val_texts, test_texts, val_labels, test_labels = train_test_split(
-        temp_texts, temp_labels, test_size=0.5, random_state=42
-    )
+        # Split temp set into validation (10%) and test (10%)
+        val_texts, test_texts, val_labels, test_labels = train_test_split(
+            temp_texts, temp_labels, test_size=0.5, random_state=42
+        )
 
-    # Create Dataset objects
-    dataset_dict = DatasetDict({
-        "train": Dataset.from_dict({"texts": train_texts, "labels": train_labels}, features=features),
-        "validation": Dataset.from_dict({"texts": val_texts, "labels": val_labels}, features=features),
-        "test": Dataset.from_dict({"texts": test_texts, "labels": test_labels}, features=features)
-    })
+        # Create Dataset objects
+        dataset_dict = DatasetDict({
+            "train": Dataset.from_dict({"texts": train_texts, "labels": train_labels}, features=features),
+            "validation": Dataset.from_dict({"texts": val_texts, "labels": val_labels}, features=features),
+            "test": Dataset.from_dict({"texts": test_texts, "labels": test_labels}, features=features)
+        })
+    else:
+        grouped = {}
+        for name, samples_pack in zip(custom_splits, samples):
+            if name not in grouped:
+                grouped[name] = [[], []]
+            texts = [sample[0] for sample in samples_pack]
+            labels = [sample[1] for sample in samples_pack]
+            grouped[name][0].extend(texts)
+            grouped[name][1].extend(labels)
+        for k, v in grouped.items():
+            grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]})
+        dataset_dict = DatasetDict(grouped)
+
     login(token=apikey)
     if new_repo:
         api = HfApi()
@@ -393,28 +406,33 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
 
 if __name__ == '__main__':
     HF_HUB_KEY = getenv('HF_HUB_KEY')
-    assert len(sys.argv) == 4, f"usage: {sys.argv[0]} <config_path> <ds_name> <create_repo: y/n>"
+    assert len(sys.argv) == 5, f"usage: {sys.argv[0]} <config_path> <ds_name> <create_repo: y/n> <custom_split: y/n>"
     config_path = sys.argv[1]
     ds_name = sys.argv[2]
     create_repo = sys.argv[3]
+    custom_split = sys.argv[4]
     if (create_repo != 'y') and (create_repo != 'n'):
         print("create_repo must be either 'y' or 'n'")
+        exit(1)
+    if custom_split not in ('y', 'n'):
+        print("custom_split must be either 'y', 'n'")
         exit(1)
     config = json.load(open(config_path))
     try:
         frame_pairs = list([(entry['content'], entry['coupons']) for entry in config['frames']])
         formats = list([entry["format"] for entry in config['frames']])
         json_format = config['json_format']
+        splits = list([entry['split'] for entry in config['frames']]) if custom_split == 'y' else None
     except KeyError as e:
         print(
             f"KeyError: {e}, config should be in format {{\"json_format\": true,\"frames\": "
-            f"[{{\"coupons\": path, \"content\": path, \"format\": 1}},...]}}")
+            f"[{{\"coupons\": path, \"content\": path, \"format\": 1, \"split\": \"obligatory if custom_split=y\"}},...]}}")
         exit(1)
 
     examples = []
     for fmt, (content, coupons) in zip(formats, frame_pairs):
         content_frame = pd.read_csv(content)
         coupons_frame = pd.read_csv(coupons)
-        examples.extend(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
+        examples.append(__samples_from_entry(fmt, content_frame, coupons_frame, json_format))
 
-    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y')
+    publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y', splits)

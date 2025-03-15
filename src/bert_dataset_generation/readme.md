@@ -3,10 +3,10 @@ This directory contains a script that can be used for creating and publishing da
 The script works on a pair of a coupon frame and a content frame. It finds coupons from the first file in the second file.<br/>
 Running the script:<br/>
 ```bash
-python generate_coupon_selection_ds.py <config_path> <ds_name> <create_repo>
+python generate_coupon_selection_ds.py <config_path> <ds_name> <create_repo> <custom_split>
 ```
 Where `config_path` is a path to the configuration file in format demonstrated by `example_config.json` file, and
-create_repo is either 'y' or 'n'; it is used to mark whetver the dataset is being pushed to an existing or new repo. <br/>
+create_repo is either 'y' or 'n'; it is used to mark whether the dataset is being pushed to an existing or new repo. `custom_split` indicates if frames should be divided into splits with the usage of `"split"` fields from config file. It should be either `y` or `n`.<br/>
 To run the script `HF_HUB_KEY` env variable is expected to be set to your access key to hf hub.
 ## Dataset Format
 The dataset contains a list of pairs of word sequences and labels:
@@ -16,6 +16,7 @@ The dataset contains a list of pairs of word sequences and labels:
 ## Example config explained
 * `config["frames"]`: list of pairs of frames with screen content and coupons
   * `config["frames"][i]["format"]`: format of frame; datasets from `coupons_1` have `format=1`, and datasets from `coupons big` have `format=2`
+  * `config["frames"][i]["split"]`: name of the dataset split to save samples from this pair of frames
 * `config["json_format"]`: whether to produce output in form of split json string instead of plain text tokens
 ## Some design choices
 ### Matching coupons
