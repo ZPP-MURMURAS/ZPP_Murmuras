@@ -3,16 +3,35 @@ import argparse
 import subprocess
 import difflib as diff
 import json
-import os
-from typing import Optional, List, Union
 import sys
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
-from src.pipeline_benchmark.io_utils import get_default_datasets, validate_folders, Coupon, CouponSimple, get_expected_coupons
-from src.llama_dataset_generation.input_parser import prepare_input_data
+from dataclasses import dataclass, field
+from typing import Optional, List, Union
 
-os.chdir(CURRENT_PATH)
+
+@dataclass()
+class Coupon:
+    """
+    Class representing data associated with a single coupon.
+    """
+    product_name: str
+    new_price: Optional[str] = None
+    old_price: Optional[str] = None
+    percents: List[str] = field(default_factory=list)
+    other_discounts: List[str] = field(default_factory=list)
+    dates: Optional[str] = None
+
+
+@dataclass()
+class CouponSimple:
+    """
+    Class representing a simple coupon.
+    """
+    product_name: str
+    discount_text: str
+    validity_text: str
+    activation_text: str
+
 
 # Weights for each attribute of the coupon
 NAME_WEIGHT = 0.3
@@ -23,20 +42,103 @@ VALIDITY_WEIGHT = 0.1
 
 # Weights for the simple coupons
 NAME_WEIGHT_SIMPLE = 0.4
-PRICE_WEIGHT_SIMPLE = 0.4
+DISCOUNT_WEIGHT_SIMPLE = 0.3
 VALIDITY_WEIGHT_SIMPLE = 0.2
+ACTIVATION_WEIGHT_SIMPLE = 0.1
 
 # Weights for the prices
 NEW_PRICE_WEIGHT = 0.5
 OLD_PRICE_WEIGHT = 0.5
 LENGTH_PENALTY = 0.2
 
+# Column names for the output data
+OUT_COL_SIMP_PRODUCT = 'product_name'
+OUT_COL_SIMP_DISCOUNT = 'discount_text'
+OUT_COL_SIMP_VALIDITY = 'valid_until'
+OUT_COL_SIMP_ACTIVATION = 'activation_text'
+
+OUT_COL_EXT_PRODUCT = 'product_name'
+OUT_COL_EXT_NEW_PRICE = 'new_price'
+OUT_COL_EXT_OLD_PRICE = 'old_price'
+OUT_COL_EXT_PERCENTS = 'percents'
+OUT_COL_EXT_OTHER_DISCOUNTS = 'other_discounts'
+OUT_COL_EXT_DATES = 'dates'
+
 # File to store the output of the pipeline
-OUTPUT_FILE = "output.json"
-INPUT_FILE = "input.json"
+OUTPUT_FILE = "pipeline_output.json"
 
 
-def _compare_prices(generated_prices: list, expected_prices: list) -> float:
+def get_coupons(file: str,
+                is_simple: bool) -> List[Union[Coupon, CouponSimple]]:
+    """
+    This function will parse a json file that contains coupons. 
+    
+    :param file: The path to the json file
+    :param is_simple: A boolean flag to indicate if the simple format is used
+    :return: A list of Coupon or CouponSimple objects read from the file
+
+    :raises ValueError: If the file format is invalid
+    """
+
+    required_keys = {
+        OUT_COL_EXT_PRODUCT, OUT_COL_EXT_NEW_PRICE, OUT_COL_EXT_OLD_PRICE, OUT_COL_EXT_PERCENTS,
+        OUT_COL_EXT_OTHER_DISCOUNTS, OUT_COL_EXT_DATES
+    }
+
+    if is_simple:
+        required_keys = {OUT_COL_SIMP_PRODUCT, OUT_COL_SIMP_DISCOUNT, OUT_COL_SIMP_VALIDITY, OUT_COL_SIMP_ACTIVATION}
+
+    with open(file, 'r') as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            raise ValueError(
+                f"The file {file} is not a valid JSON file or contains invalid data."
+            )
+
+    if not isinstance(data, list):
+        raise ValueError(
+            f"The file {file} must contain a list of dictionaries.")
+
+    for idx, item in enumerate(data):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"Entry at index {idx} in {file} must be a dictionary.")
+
+        if not required_keys.issubset(item.keys()):
+            missing_keys = required_keys - item.keys()
+            raise ValueError(
+                f"Entry at index {idx} in {file} is missing keys: {missing_keys}"
+            )
+
+    coupons = []
+
+    for item in data:
+        if is_simple:
+            coupon = CouponSimple(product_name=item[OUT_COL_SIMP_PRODUCT],
+                                  discount_text=item[OUT_COL_SIMP_DISCOUNT],
+                                  validity_text=item[OUT_COL_SIMP_VALIDITY],
+                                  activation_text=item[OUT_COL_SIMP_ACTIVATION])
+            coupons.append(coupon)
+        else:
+            new_price = item.get(OUT_COL_EXT_NEW_PRICE, None)
+            old_price = item.get(OUT_COL_EXT_OLD_PRICE, None)
+            percents = item.get(OUT_COL_EXT_PERCENTS, [])
+            other_discounts = item.get(OUT_COL_EXT_OTHER_DISCOUNTS, [])
+            dates = item.get(OUT_COL_EXT_DATES, None)
+
+            coupon = Coupon(product_name=item[OUT_COL_EXT_PRODUCT],
+                            new_price=new_price,
+                            old_price=old_price,
+                            percents=percents,
+                            other_discounts=other_discounts,
+                            dates=dates)
+            coupons.append(coupon)
+
+    return coupons
+
+
+def compare_prices(generated_prices: list, expected_prices: list) -> float:
     """
     This function will compare two lists of prices and return a float value that 
     represents the similarity between them. The higher the value, the more similar 
@@ -119,10 +221,11 @@ def compare_coupons_simple(coupon_1: Optional[CouponSimple],
                                           b=coupon_2.discount_text).ratio()
     validity_ratio = diff.SequenceMatcher(a=coupon_1.validity_text,
                                           b=coupon_2.validity_text).ratio()
+    activation_ratio = diff.SequenceMatcher(a=coupon_1.activation_text,
+                                            b=coupon_2.activation_text).ratio()
 
-    return (name_ratio * NAME_WEIGHT_SIMPLE) + (
-        discount_ratio * PRICE_WEIGHT_SIMPLE) + (validity_ratio *
-                                                 VALIDITY_WEIGHT_SIMPLE)
+    return (name_ratio * NAME_WEIGHT_SIMPLE) + (discount_ratio * DISCOUNT_WEIGHT_SIMPLE) + \
+        (validity_ratio * VALIDITY_WEIGHT_SIMPLE) + (activation_ratio * ACTIVATION_WEIGHT_SIMPLE)
 
 
 def compare_coupons(coupon_1: Optional[Coupon],
@@ -141,7 +244,7 @@ def compare_coupons(coupon_1: Optional[Coupon],
 
     name_ratio = diff.SequenceMatcher(a=coupon_1.product_name,
                                       b=coupon_2.product_name).ratio()
-    prices_ratio = _compare_prices([coupon_1.new_price, coupon_1.old_price],
+    prices_ratio = compare_prices([coupon_1.new_price, coupon_1.old_price],
                                    [coupon_2.new_price, coupon_2.old_price])
 
     percents_1 = sorted([str(percent) for percent in coupon_1.percents])
@@ -171,7 +274,7 @@ def compare_coupons(coupon_1: Optional[Coupon],
 
 def judge_pipeline(expected_coupons: List[Coupon],
                    generated_coupons: List[Coupon],
-                   is_simple: bool = False) -> tuple[float, int]:
+                   is_simple: bool) -> tuple[float, int]:
     """
     This function will judge the pipeline by comparing the expected coupons with the
     generated ones. The function will return a tuple with the average similarity
@@ -180,14 +283,10 @@ def judge_pipeline(expected_coupons: List[Coupon],
     coupon. The number of lonely coupons is the number of expected coupons that
     could not be matched with any generated coupon and vice versa. 
     
-    :param expected_coupons: A list of Coupon objects that represent the
-                            expected coupons
-    :param generated_coupons: A list of Coupon objects that represent the
-                            generated coupons
-    :param is_simple: A boolean value that indicates if the coupons are in the
-                    simple format (default is False)
-    :return: A tuple with the average similarity between the coupons and the number
-            of lonely coupons
+    :param expected_coupons: A list of Coupon objects that represent the expected coupons
+    :param generated_coupons: A list of Coupon objects that represent the generated coupons
+    :param is_simple: A boolean value that indicates if the coupons are in the simple format
+    :return: A tuple with the average similarity between the coupons and the number of lonely coupons
     """
 
     generated_coupons = dict(
@@ -225,65 +324,29 @@ def judge_pipeline(expected_coupons: List[Coupon],
 
 
 def run_pipeline(pipeline_command: str,
-                 input_folder: str,
-                 is_new_format: bool = False,
-                 is_simple: bool = False) -> Optional[List[Coupon]]:
+                 input: str,
+                 is_simple: bool) -> List[Union[Coupon, CouponSimple]]:
     """
     This function will run the pipeline with the input data and return the
-    generated coupons. The function will return None if the pipeline fails to run. 
-    The result of the pipeline must be written to a file called output.json.
+    generated coupons.
     
     :param pipeline_command: The command to run the pipeline
-    :param input_folder: The path to the folder with the input data
-    :param is_new_format: A boolean value that indicates if the input data is in the
-                        new format (default is False)
-    :param is_simple: A boolean value that indicates if the coupons are in the
-                    simple format (default is False)
-    :return: A list of Coupon objects that represent the generated coupons
-            or None if the pipeline fails to run
+    :param input: The path to the file with the input data
+    :param is_simple: A boolean value that indicates if the coupons are in the simple format
+    :return: A list of Coupon or CouponSimple objects generated by the pipeline
+
+    :raises ValueError: If the output file is not in the expected format
+    :raises subprocess.CalledProcessError: If the pipeline fails to run
     """
 
-    if os.path.exists(OUTPUT_FILE):
-        os.remove(OUTPUT_FILE)
+    pipeline_command = pipeline_command + " < \"" + input + "\" > " + OUTPUT_FILE
+    subprocess.run(pipeline_command, shell=True, check=True)
+    coupons = get_coupons(OUTPUT_FILE, is_simple)
 
-    if is_new_format:
-        input_file = os.path.join(input_folder, INPUT_FILE)
-        pipeline_command = pipeline_command + " < " + input_file + " > " + OUTPUT_FILE
-    else:
-        pipeline_command = pipeline_command + " > " + OUTPUT_FILE
-    print(f"Running the pipeline with the command: {pipeline_command}")
-
-    try:
-        subprocess.run(pipeline_command, shell=True, check=True)
-
-        # The pipeline must write the output to a file called output.json
-        proto_coupons = []
-        with open(OUTPUT_FILE, "r") as file:
-            coupons = json.load(file)
-
-        for coupon in coupons:
-            if is_simple:
-                proto_coupons.append(
-                    CouponSimple(product_name=coupon["name"],
-                                 discount_text=coupon["text"],
-                                 validity_text=coupon["validity"]))
-                continue
-
-            proto_coupons.append(
-                Coupon(product_name=coupon["product_name"],
-                       new_price=coupon["new_price"],
-                       old_price=coupon["old_price"],
-                       percents=coupon["percents"],
-                       other_discounts=coupon["other_discounts"],
-                       dates=coupon["dates"]))
-        return proto_coupons
-
-    except subprocess.CalledProcessError as e:
-        print(f"Error running the pipeline: {e.stderr}")
-        return None
+    return coupons
 
 
-def _parse_args() -> argparse.Namespace:
+def parse_args() -> argparse.Namespace:
     """
     This function will parse the input arguments.
 
@@ -295,105 +358,54 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument('-i',
                         '--input',
                         type=str,
-                        required=False,
-                        help='Path to the folder with the input data')
+                        required=True,
+                        help='Path to the file with the input data')
     parser.add_argument('-e',
                         '--expected',
                         type=str,
-                        required=False,
-                        help='Path to the folder with the expected coupons')
-    parser.add_argument(
-        '-p',
-        '--pipeline',
-        type=str,
-        required=True,
-        help=
-        'Command to run the pipeline (e.g., ./run_pipeline --input <input_path>)'
+                        required=True,
+                        help='Path to the file with the expected coupons')
+    parser.add_argument('-p',
+                        '--pipeline',
+                        type=str,
+                        required=True,
+                        help='Command to run the pipeline (e.g., python llama_pipeline.py)'
     )
-    parser.add_argument(
-        '-invalid',
-        '--invalid',
-        type=str,
-        required=False,
-        help=
-        'List of invalid datasets to exclude from the benchmark. Input them as\
-        a space-separated string.')
-    parser.add_argument('-simple',
+    parser.add_argument('-s',
                         '--simple',
                         action='store_true',
                         default=False,
                         help='Use the simple format')
-    format_group = parser.add_mutually_exclusive_group()
-    format_group.add_argument('-newformat',
-                              '--newformat',
-                              action='store_true',
-                              default=True,
-                              help='Use the new format (default)')
-    format_group.add_argument('-oldformat',
-                              '--oldformat',
-                              action='store_false',
-                              dest='newformat',
-                              help='Use the old format')
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-    args = _parse_args()
-    new_format = True if args.newformat else False
-    is_simple = True if args.simple and new_format else False
+    args = parse_args()
+    expected = args.expected
+    input = args.input
+    pipeline = args.pipeline
+    is_simple = args.simple
 
-    # Get the names of the invalid datasets
-    if args.invalid is not None:
-        INCORRECT_DATASETS = args.invalid.strip().split()
+    try:
+        expected_coupons = get_coupons(expected, is_simple)
+    except ValueError as e:
+        print(f'Error getting expected coupons: {e}')
+        sys.exit(1)
 
-    # If either the input or expected folders are not provided, get the default
-    # datasets
-    if args.input is None or args.expected is None:
-        args.input, args.expected = get_default_datasets()
+    try:
+        generated_coupons = run_pipeline(pipeline, input, is_simple)
+    except subprocess.CalledProcessError as e:
+        print(f'Error running the pipeline: {e}')
+        sys.exit(1)
+    except ValueError as e:
+        print(f'Error getting generated coupons: {e}')
 
-    folder_names = [folder_name for folder_name in os.listdir(args.expected)]
-    percents = []
+    similarity, lonely_coupons = judge_pipeline(expected_coupons,
+                                                generated_coupons,
+                                                is_simple)
 
-    for folder_name in folder_names:
-        expected_dir = os.path.join(args.expected, folder_name)
-        input_dir = os.path.join(args.input, folder_name)
-
-        try:
-            if not validate_folders(input_dir, expected_dir, new_format,
-                                    is_simple):
-                print("The input or expected folders are not valid.")
-        except ValueError as e:
-            continue
-
-        if new_format:
-            for file_name in os.listdir(input_dir):
-                file_path = os.path.join(input_dir, file_name)
-                if not os.path.isfile(file_path):
-                    continue
-                prepared_data = prepare_input_data(file_path)
-                input_file = os.path.join(input_dir, INPUT_FILE)
-                with open(input_file, 'w') as json_file:
-                    json.dump(prepared_data, json_file)
-
-        # Get the expected coupons
-        expected_coupons: List[Union[Coupon,
-                                     CouponSimple]] = get_expected_coupons(
-                                         expected_dir, new_format, is_simple)
-        generated_coupons: List[Union[Coupon, CouponSimple]] = run_pipeline(
-            args.pipeline, input_dir, new_format, is_simple)
-
-        similarity, lonely_coupons = judge_pipeline(expected_coupons,
-                                                    generated_coupons,
-                                                    is_simple)
-
-        percent_similarity = round(similarity * 100, 3)
-        print(f"Average similarity between the coupons: {percent_similarity}%")
-        print(f"Number of lonely coupons: {lonely_coupons}")
-
-        final_score = max(percent_similarity, 0)
-        percents.append(percent_similarity)
-        print(f"Final score: {final_score}%")
-
-    if percents:
-        print(f"Average score: {round(np.mean(percents), 3)}%")
+    percent_similarity = round(similarity * 100, 3)
+    print(f"Number of lonely coupons: {lonely_coupons}")
+    score = max(percent_similarity, 0)
+    print(f"Score: {score}%")
