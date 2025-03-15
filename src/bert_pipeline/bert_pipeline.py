@@ -23,7 +23,7 @@ def download_model(model_name: str, cache_dir: str) -> str:
 
 
 def perform_ner(model_path: str, text: str | List[str]) -> List[Dict[str, any]] | List[List[Dict[str, any]]]:
-    """Uses a BERT-based model to perform Named Entity Recognition (NER) on the input text using the BIO2 scheme."""
+    """Uses a model to perform Named Entity Recognition (NER) on the input text using the BIO2 scheme."""
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     config = AutoConfig.from_pretrained(model_path)
     model = AutoModelForTokenClassification.from_pretrained(model_path, config=config)
@@ -33,7 +33,7 @@ def perform_ner(model_path: str, text: str | List[str]) -> List[Dict[str, any]] 
 
 
 def coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
-    """Converts a coupon tagged by the model to a JSON object."""
+    """Converts a coupon tagged by the model to a JSON object. Only the first entity of each type is considered."""
     coupon = {"product_name": "", "discount_text": "", "valid_until": "", "activation_text": ""}
     for entity in reversed(model_coupon):
         if entity["entity_group"] == "PRODUCT-NAME":
@@ -49,7 +49,7 @@ def coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
 
 
 def coupon_to_json_concat(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
-    """Converts a coupon tagged by the model to a JSON object."""
+    """Converts a coupon tagged by the model to a JSON object. All entities of each type are concatenated."""
     coupon = {"product_name": "", "discount_text": "", "valid_until": "", "activation_text": ""}
     for entity in model_coupon:
         if entity["entity_group"] == "PRODUCT-NAME":
@@ -78,10 +78,10 @@ def coupon_to_json(model_coupon: List[Dict[str, any]], strategy: str) -> Dict[st
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Perform Named Entity Recognition using a Hugging Face model.")
+    parser = argparse.ArgumentParser(description="Perform two NER passes to extract coupons from a CSV.")
     parser.add_argument("cs_model", type=str, help="Name of the coupon selection Hugging Face model.")
     parser.add_argument("fe_model", type=str, help="Name of the field extraction Hugging Face model.")
-    parser.add_argument("--strategy", type=str, default="first", help="Strategy to use for coupon extraction.")
+    parser.add_argument("--strategy", type=str, default="first", help="Strategy to use for field extraction.")
     parser.add_argument("--cache_dir", type=str, default="./models", help="Directory to store the downloaded model.")
     
     args = parser.parse_args()
