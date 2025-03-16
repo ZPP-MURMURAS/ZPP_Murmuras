@@ -6,7 +6,7 @@ Running the script:<br/>
 python generate_coupon_selection_ds.py <config_path> <ds_name> <create_repo> <custom_split>
 ```
 Where `config_path` is a path to the configuration file in format demonstrated by `example_config.json` file, and
-create_repo is either 'y' or 'n'; it is used to mark whether the dataset is being pushed to an existing or new repo. `custom_split` indicates if frames should be divided into splits with the usage of `"split"` fields from config file. It should be either `y` or `n`.<br/>
+create_repo is either 'y' or 'n'; it is used to mark whether the dataset is being pushed to an existing or new repo. If `custom_split`==`n` samples from the provided dataframes are merged and the traditional train-val-test split is performed. Otherwise, if `custom_split`=`y`, each dataframe is assigned to the split specified by the `split` field in the config. For example, in the config at `res/coupon_selection_big_ds_config.json` each dataframe is assigned to the split represented by the source application name.<br/>
 To run the script `HF_HUB_KEY` env variable is expected to be set to your access key to hf hub.
 ## Dataset Format
 The dataset contains a list of pairs of word sequences and labels:
