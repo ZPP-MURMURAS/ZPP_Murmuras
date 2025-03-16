@@ -1,3 +1,4 @@
+import time
 from os import getenv
 import sys
 from typing import List, Tuple, Dict, Optional, TypedDict
@@ -358,6 +359,7 @@ def publish_to_hub(samples: List[List[Tuple[List[str], List[int]]]], save_name: 
         for k, v in grouped.items():
             grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]})
         dataset_dict = DatasetDict(grouped)
+        dataset_dict = dataset_dict.shuffle(seed=time.time_ns())
 
     login(token=apikey)
     if new_repo:
