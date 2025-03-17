@@ -31,7 +31,7 @@ def __concat_column_x_by_column_y(column_x: string, df: pd.DataFrame) -> dict:
                 result[time] = sub_result
             sub_result = str(row[column_x])
             prev_col_val = row['seen_timestamp']
-            time = row['time']
+            time = row['seen_timestamp']
     if sub_result != '':
         result[time] = sub_result
 

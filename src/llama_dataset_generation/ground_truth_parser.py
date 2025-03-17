@@ -228,7 +228,7 @@ def prepare_ground_truth_data_no_ai(coupons: pd.DataFrame) -> dict:
     :return result: mapping from time values to lists of coupons jsons.
     """
     result = {}
-    for t, subframe in coupons.groupby('time'):
+    for t, subframe in coupons.groupby('seen_timestamp'):
         result[t] = []
         for _, row in subframe.iterrows():
             content_full = row['content_full']
