@@ -69,12 +69,7 @@ def traverse_files(data_dir: str):
     if content_path is not None and coupons_path is not None:
         new_dts = create_dataset(content_path, coupons_path)
         dts_list.append(new_dts)
-        if os.name =='nt':
-            dts_names_list.append(content_path.split("\\")[-2])
-        elif os.name == 'posix':
-            dts_names_list.append(content_path.split("/")[-2])
-        else:
-            raise Exception("Unsupported OS")
+        dts_names_list.append(os.path.basename(os.path.dirname(content_path)))
     return dts_list, dts_names_list
 
 
