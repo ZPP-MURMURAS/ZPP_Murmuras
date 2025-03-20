@@ -110,4 +110,8 @@ The Llama models receive a dictionary as input containing timestamps as keys, an
 
 The function responsible for processing the input data from the .csv file is called `prepare_input_data` found in the `input_parser.py` file. 
 
-I'm not sure what the output is 
+The output of the Llama model is a dictionary
+```json
+{"text": texts }
+```
+where `texts` is a list of strings in the format `{context} {response}` each string corresponding to a coupon extracted from the input data.
