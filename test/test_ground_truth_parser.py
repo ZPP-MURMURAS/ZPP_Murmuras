@@ -9,7 +9,7 @@ from src.llama_dataset_generation.ground_truth_parser import load_coupons, prepa
 
 EXAMPLE_COUPON_FRAME = pd.DataFrame({
     'discount_text': ['heh', 'hah', 'hoh'],
-    'time': ['1-1', '2-2', '3-3'],
+    'seen_timestamp': ['1-1', '2-2', '3-3'],
     'product_text': ['product1', 'product2', 'product3'],
     'validity_text': ['valid1', 'valid2', 'valid3'],
     "content_full": ["['bydle']", "['bydle']", "['bydle']"],
@@ -128,7 +128,7 @@ class TestGroundTruthParser:
                 EXAMPLE_GTD_NEW_FORMAT
         ),
         (
-            pd.DataFrame({'discount_text': [], 'time': [], 'product_text': [], 'validity_text': [], "content_full": []}),
+            pd.DataFrame({'discount_text': [], 'seen_timestamp': [], 'product_text': [], 'validity_text': [], "content_full": []}),
             {}
         ),
         (
@@ -136,7 +136,7 @@ class TestGroundTruthParser:
                 'discount_text': ['10zł', '2137gr', 'pół piwa'],
                 'product_text': ['apples', 'sword', 'piwo'],
                 'validity_text': ['N/A', 'N/A', '31.02.2025'],
-                'time': ['t0', 't0', 't0'],
+                'seen_timestamp': ['t0', 't0', 't0'],
                 'content_full': ["['bydle']", "['bydle']", "['bydle', 'dziekan]"],
                 'activation_text': ['bydle', 'cydle', 'dydle']
             }),

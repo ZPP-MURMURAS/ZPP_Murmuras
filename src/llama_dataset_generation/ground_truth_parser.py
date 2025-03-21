@@ -155,7 +155,7 @@ def __ground_truth_to_dict(ground_truth_data: list) -> dict:
     """
     gtd_dict = {}
     for item in ground_truth_data:
-        key = item['time']
+        key = item['seen_timestamp']
         if key not in gtd_dict:
             gtd_dict[key] = []
         tmp = {'product_name': item['product_name'], 'valid_until': item['valid_until'], 'discount': item['discount'],
@@ -195,7 +195,7 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
     print(len(coupons))
     for i in range(len(ground_truth_json)):
         try:
-            res = {'time': coupons['time'][coupons_itr], 'product_name': coupons['product_text'][coupons_itr],
+            res = {'seen_timestamp': coupons['seen_timestamp'][coupons_itr], 'product_name': coupons['product_text'][coupons_itr],
                    'valid_until': coupons['validity_text'][coupons_itr], 'discount': ground_truth_json[i]['discount']}
             prices = ground_truth_json[i]['prices']
             if prices == 'None' or len(prices) == 0:
