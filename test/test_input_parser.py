@@ -26,9 +26,9 @@ class TestInputParser:
         os.makedirs('test_data', exist_ok=True)
         csv_df.to_csv(self.csv_path, index=False)
         self.csv_dict = {
-            '2-2': '2t 4t',
-            '6-6': '6t',
-            '10-10': '10t'
+            1: '2t 4t',
+            2: '6t',
+            3: '10t'
         }
 
         self.input_dict = {
