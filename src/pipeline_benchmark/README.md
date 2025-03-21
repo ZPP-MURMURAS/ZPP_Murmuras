@@ -29,7 +29,7 @@ python3 benchmark.py -e expected.json -i input.csv -p "python3 proto_pipeline.py
 
 The pipeline should receive the input through stdin and output the results through stdout.
 Both expected output and pipeline output must be a list of coupons in an appropriate format (simple or extended).
-The input is not validated as it is assumed that the pipeline will handle it.
+No validation checks are performed regarding the input format.
 
 #### Benchmarking process
 The script reads the coupons that the pipeline generated and compares them to the expected coupons to calculate the accuracy of the pipeline. For each expected coupon, the script finds the most similar generated coupon using the `compare_coupons` function; the similarity score (0 ≤ score ≤ 1) is added to a list. If no match is found (similarity score = 0), the expected coupon is marked as "lonely." Any leftover generated coupons (unmatched after the first pass) are also counted as "lonely." The average similarity score is calculated and the number of lonely coupons is counted; the pipeline is punished accordingly for the number of lonely coupons. 
