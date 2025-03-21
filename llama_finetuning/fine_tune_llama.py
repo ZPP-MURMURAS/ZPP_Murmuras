@@ -4,6 +4,11 @@ import modal
 
 app = modal.App("example-fine-tuning")
 
+SAVE_AS_GGUF = True
+SAVE_AS_UNSLOTH = True
+
+HF_ORG = 'zpp-murmuras/'
+
 finetune_image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("git")
@@ -17,6 +22,9 @@ finetune_image = (
     .pip_install("wandb")
     .env({"HALT_AND_CATCH_FIRE": 0,
           "TIMEOUT": os.getenv('TIMEOUT')})
+    .apt_install("cmake")
+    .apt_install("curl")
+    .apt_install("libcurl4-openssl-dev")
 )
 
 def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
@@ -79,9 +87,9 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_le
         dataset_num_proc=2,
         packing=True, # True doesn't work with the current collator, BUT is faster.
         args=TrainingArguments(
-            learning_rate=3e-4,
+            learning_rate=5e-4,
             lr_scheduler_type="linear",
-            per_device_train_batch_size=16,
+            per_device_train_batch_size=8,
             gradient_accumulation_steps=8,
             num_train_epochs=epoch_no,
             fp16=not is_bfloat16_supported(),
@@ -102,14 +110,19 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_le
 
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no):
-    run_name = "example series adamw_8bit uwu"
+    run_name = "llama-3.2-1b-dm"
     from datasets import load_dataset
 
     max_seq_length = 4096
     model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name, wandb_proj)
-    training_data = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token, split='train')
-    eval_data = load_dataset('zpp-murmuras/' + dataset_name, split='test')
+    training_data = load_dataset(HF_ORG + dataset_name, token=hf_token, split='train')
+    eval_data = load_dataset(HF_ORG + dataset_name, split='test', token=hf_token)
     train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_length, epoch_no)
+
+    if SAVE_AS_GGUF:
+        model.push_to_hub_gguf(HF_ORG + run_name.replace(' ', '-') + "-gguf", token=hf_token, quantization_method='q5_k_m', tokenizer=tokenizer, private=True)
+    if SAVE_AS_UNSLOTH:
+        model.push_to_hub(HF_ORG + run_name.replace(' ', '-'), token=hf_token, tokenizer=tokenizer, private=True)
 
 
 @app.local_entrypoint()

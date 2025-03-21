@@ -12,7 +12,7 @@ __PROMPT = (
 )
 
 
-__PROMPT_WTH_DESC = """
+PROMPT_WTH_DESC = """
 ### Input:
 {}
 
@@ -45,7 +45,7 @@ def one_input_one_output_wrequest(training_dts: Dataset) -> dict:
     return __map_logic(training_dts, __PROMPT)
 
 def one_input_one_output_wthrequest(training_dts: Dataset) -> dict:
-    return __map_logic(training_dts, __PROMPT_WTH_DESC)
+    return __map_logic(training_dts, PROMPT_WTH_DESC)
 
 
 def one_input_multiple_outputs_wrequest(training_dts: Dataset) -> dict:
@@ -53,7 +53,7 @@ def one_input_multiple_outputs_wrequest(training_dts: Dataset) -> dict:
 
 
 def one_input_multiple_outputs_wthrequest(training_dts: Dataset) -> dict:
-    return __map_logic(training_dts, __PROMPT_WTH_DESC)
+    return __map_logic(training_dts, PROMPT_WTH_DESC)
 
 
 def __parse_to_oimo(df: pd.DataFrame) -> pd.DataFrame:
