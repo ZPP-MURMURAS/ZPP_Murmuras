@@ -79,8 +79,12 @@ def __parse_to_oimo(df: pd.DataFrame) -> pd.DataFrame:
     pre_df_dict = {'Context': [], 'Response': []}
     for key, value in concat_outputs.items():
         pre_df_dict['Context'].append(key)
-        pre_df_dict['Response'].append(value)
+        if value != '{}':
+            pre_df_dict['Response'].append(value)
     output_df = pd.DataFrame.from_dict(pre_df_dict)
+    for index, row in output_df.iterrows():
+        if row['Response'] == '[{}]':
+            row['Response'] = '[]'
     return output_df
 
 
