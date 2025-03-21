@@ -1,9 +1,11 @@
 import modal
 import wandb
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from transformers import AutoModelForTokenClassification, AutoTokenizer
 import finetuner as ft
 import os
+
+__IGNORED_DS_SOURCES = ['penny', 'edeka']
 
 app = modal.App("BERT-fine-tuning")
 MODEL_CHECKPOINT = "google-bert/bert-base-multilingual-cased"
@@ -27,7 +29,12 @@ finetune_image = (
 @app.function(image=finetune_image, gpu="H100", timeout=60000)
 def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
     cs = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token)
-    labels = cs['train'].features['labels'].feature.names
+    extracted_dts = []
+    for ds_name in cs:
+        if ds_name not in __IGNORED_DS_SOURCES:
+            extracted_dts.append(cs[ds_name])
+    train_test_dataset = concatenate_datasets(extracted_dts)
+    labels = train_test_dataset['train'].features['labels'].feature.names
     ft.init_finetuner(MODEL_CHECKPOINT)
 
     wandb.login(key=wandb_key)
@@ -40,7 +47,7 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
         label2id=label2id,
     )
 
-    ft.train_model(model, cs, labels, wandb_log='bert_multiling_test3', run_name=dataset_name, curriculum_learning=True)
+    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_ft', run_name=dataset_name, curriculum_learning=True)
     if push_to_hub:
         model_repo = 'zpp-murmuras/bert_' + dataset_name
         model.push_to_hub(model_repo, token=hf_token)
@@ -53,4 +60,4 @@ def main():
     hf_token = os.getenv('HUGGING_FACE_TOKEN')
     wandb_key = os.getenv('WANDB_KEY')
     dataset_name = os.getenv('DATASET_NAME')
-    run_fine_tuning.remote(hf_token, wandb_key, dataset_name, True)
+    run_fine_tuning.remote(hf_token, wandb_key, dataset_name, False)
