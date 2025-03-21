@@ -20,16 +20,15 @@
 #### Running the benchmark
 To run the benchmark, the user must run the following command: 
 ```bash
-python3 benchmark.py -e [path to a json file with expected output] -i [path to a file with input] -p [a command to run the pipeline]
+python3 benchmark.py -d [name of the HuggingFace dataset to download] -p [a command to run the pipeline]
 ```
 for example: 
 ```bash
-python3 benchmark.py -e expected.json -i input.csv -p "python3 proto_pipeline.py"
+python3 benchmark.py -d zpp-murmuras/llama-ds-wth -p "python3 proto_pipeline.py"
 ```
 
 The pipeline should receive the input through stdin and output the results through stdout.
-Both expected output and pipeline output must be a list of coupons in an appropriate format (simple or extended).
-No validation checks are performed regarding the input format.
+The dataset is expexted to have a field 'Context' with the string input to the pipeline and a field 'Response' with the expected output of the pipeline.
 
 #### Benchmarking process
 The script reads the coupons that the pipeline generated and compares them to the expected coupons to calculate the accuracy of the pipeline. For each expected coupon, the script finds the most similar generated coupon using the `compare_coupons` function; the similarity score (0 ≤ score ≤ 1) is added to a list. If no match is found (similarity score = 0), the expected coupon is marked as "lonely." Any leftover generated coupons (unmatched after the first pass) are also counted as "lonely." The average similarity score is calculated and the number of lonely coupons is counted; the pipeline is punished accordingly for the number of lonely coupons. 
@@ -54,13 +53,15 @@ class CouponSimple:
 #### Arguments/options
 `-h, --help`: show this help message and exit
 
-`-i INPUT, --input INPUT`: Path to the file with the input data
-
-`-e EXPECTED, --expected EXPECTED`: Path to the file with the expected coupons
+`-d DATASET, --dataset DATASET`: Name of the HuggingFace dataset to download (e.g., zpp-murmuras/llama-ds-wth)
 
 `-p PIPELINE, --pipeline PIPELINE`: Command to run the pipeline (e.g., ./run_pipeline)
 
 `-s, --simple`: Use the simple format (ie. CouponSimple)
+
+`-c, --cache_dir`: Directory to cache the dataset (defaulf: ./datasets)
+
+`-sp, --split`: The split from the dataset to use. If you want to use split A and B, write A+B (default: Edeka+Penny)
   
 #### Sources 
 - [Benchmarking AI](https://mlsysbook.ai/contents/core/benchmarking/benchmarking.html)
