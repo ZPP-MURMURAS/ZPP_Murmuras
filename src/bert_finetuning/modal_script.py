@@ -47,9 +47,15 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
         label2id=label2id,
     )
 
-    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_ft', run_name=dataset_name, curriculum_learning=True)
+    model_name = 'bert-selection-'
+    if dataset_name == 'coupon_select_big_plain':
+        model_name += 'plain'
+    else:
+        model_name += 'json'
+    model_name += '-no_curr'
+    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_ft', run_name=model_name, curriculum_learning=False)
     if push_to_hub:
-        model_repo = 'zpp-murmuras/bert_' + dataset_name
+        model_repo = 'zpp-murmuras/__' + model_name
         model.push_to_hub(model_repo, token=hf_token)
         tokenizer = AutoTokenizer.from_pretrained(MODEL_CHECKPOINT)
         tokenizer.push_to_hub(model_repo, token=hf_token)
