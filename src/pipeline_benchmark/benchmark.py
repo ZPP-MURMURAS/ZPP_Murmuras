@@ -76,34 +76,36 @@ INPUT = 'Context'
 OUTPUT = 'Response'
 
 
-def get_coupons(json_str: str, is_simple: bool) -> List[Union[Coupon, CouponSimple]]:
+def get_coupons(json_str: str, is_simple: bool, source_name: str) -> List[Union[Coupon, CouponSimple]]:
     """
     This function will parse a json string that contains coupons. 
     
     :param json_str: A json string that contains the coupons
     :param is_simple: A boolean flag to indicate if the simple format is used
+    :param source_name: The name of the source of the coupons (needed for logging)
     :return: A list of Coupon or CouponSimple objects read from the file
     """
+    source_info = f"{source_name} - "
 
     try:
         data = json.loads(json_str)
     except json.JSONDecodeError:
-        logging.warning(f"String {json_str} is not a valid JSON.")
+        logging.warning(source_info + f"String {json_str} is not a valid JSON.")
         return []
 
     if not isinstance(data, list):
-        logging.warning(f"String {json_str} does not contain a list of dictionaries.")
+        logging.warning(source_info + f"String {json_str} does not contain a list of dictionaries.")
         return []
 
     coupons = []
     for item in data:
         if is_simple:
             if not isinstance(item, dict):
-                logging.warning(f"Item {item} is not a dictionary.")
+                logging.warning(source_info + f"Item {item} is not a dictionary.")
                 continue
 
             if OUT_COL_SIMP_PRODUCT not in item or item[OUT_COL_SIMP_PRODUCT] is None:
-                logging.warning(f"Item {item} does not contain the product name.")
+                logging.warning(source_info + f"Item {item} does not contain the product name.")
                 continue
 
             coupon = CouponSimple(product_name=item[OUT_COL_SIMP_PRODUCT],
@@ -116,19 +118,19 @@ def get_coupons(json_str: str, is_simple: bool) -> List[Union[Coupon, CouponSimp
             coupon.activation_text = coupon.activation_text if coupon.activation_text is not None else ''
 
             if type(coupon.product_name) is not str:
-                logging.warning(f"Product name is not a string in item {item}.")
+                logging.warning(source_info + f"Product name is not a string in item {item}.")
                 coupon.product_name = ''
 
             if type(coupon.discount_text) is not str:
-                logging.warning(f"Discount text is not a string or null in item {item}.")
+                logging.warning(source_info + f"Discount text is not a string or null in item {item}.")
                 coupon.discount_text = ''
 
             if type(coupon.validity_text) is not str:
-                logging.warning(f"Validity text is not a string or null in item {item}.")
+                logging.warning(source_info + f"Validity text is not a string or null in item {item}.")
                 coupon.validity_text = ''
 
             if type(coupon.activation_text) is not str:
-                logging.warning(f"Activation text is not a string or null in item {item}.")
+                logging.warning(source_info + f"Activation text is not a string or null in item {item}.")
                 coupon.activation_text = ''
 
             coupons.append(coupon)
@@ -360,7 +362,7 @@ def run_pipeline(pipeline_command: str,
         return []
 
     with open(OUTPUT_FILE, 'r') as file:
-        coupons = get_coupons(file.read(), is_simple)
+        coupons = get_coupons(file.read(), is_simple, "Generated output")
 
     return coupons
 
@@ -426,7 +428,7 @@ if __name__ == '__main__':
         input = entry[INPUT]
         expected = entry[OUTPUT]
 
-        expected_coupons = get_coupons(expected, not is_extended)
+        expected_coupons = get_coupons(expected, not is_extended, "Expected output")
 
         generated_coupons = run_pipeline(pipeline, input, not is_extended)
 
