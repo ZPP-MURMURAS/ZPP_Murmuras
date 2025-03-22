@@ -15,7 +15,10 @@ if __name__ == "__main__":
     model_path = args[1]
     llama = Llama(model_path)
     input_data = sys.stdin.read()
+    
+    prompt = input_data + "\n\n### Response:\n"
+    prompt = prompt.encode("utf-8", "replace").decode("utf-8")
 
-    out = llama("\n### Input:\n" + input_data + "\n\n### Response:\n", max_tokens=512)["choices"][0]["text"]
+    out = llama(prompt, max_tokens=512)["choices"][0]["text"]
 
     print(out)
