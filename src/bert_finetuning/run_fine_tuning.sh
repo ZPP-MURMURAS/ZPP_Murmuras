@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a DATASETS=("bert_second_pass_json" "bert_second_pass_pl" )
+declare -a DATASETS=("bert_second_pass_pl" "bert_second_pass_json" )
 
 export HUGGING_FACE_TOKEN=
 export WANDB_KEY=
