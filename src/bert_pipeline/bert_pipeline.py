@@ -6,11 +6,6 @@ from io import StringIO
 from huggingface_hub import snapshot_download
 from transformers import pipeline, AutoModelForTokenClassification, AutoTokenizer, AutoConfig
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.abspath(os.path.join(CURRENT_PATH, "../../")))
-
-from src.llama_dataset_generation.input_parser import prepare_input_data
-
 
 NER_ENTITY_GROUP = "entity_group"
 NER_TEXT = "word"
@@ -38,7 +33,7 @@ def download_model(model_name: str, cache_dir: str) -> str:
     return snapshot_download(repo_id=model_name, token=hf_token, cache_dir=cache_dir)
 
 
-def perform_ner(model_path: str, text: str | List[str]) -> List[Dict[str, any]] | List[List[Dict[str, any]]]:
+def perform_ner(model_path: str, text: str) -> List[Dict[str, any]]:
     """Uses a model to perform Named Entity Recognition (NER) on the input text using the BIO2 scheme."""
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     config = AutoConfig.from_pretrained(model_path)
@@ -110,16 +105,13 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    input_csv_str = sys.stdin.read()
-    input_data = prepare_input_data(StringIO(input_csv_str))
-    input_list = list(input_data.values())
+    input_data = sys.stdin.read()
     
     cs_path = download_model(args.cs_model, args.cache_dir)
     fe_path = download_model(args.fe_model, args.cache_dir)
 
-    cs_results = perform_ner(cs_path, input_list)
-    flat_cs_results = [item for sublist in cs_results for item in sublist]
-    coupons = [res[NER_TEXT] for res in flat_cs_results]
+    cs_results = perform_ner(cs_path, input_data)
+    coupons = [res[NER_TEXT] for res in cs_results]
 
     fe_results = perform_ner(fe_path, coupons)
     json_coupons = [coupon_to_json(coupon, args.strategy) for coupon in fe_results]
