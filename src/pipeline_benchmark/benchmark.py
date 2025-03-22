@@ -95,15 +95,13 @@ def get_coupons(json_str: str, is_simple: bool) -> List[Union[Coupon, CouponSimp
         logging.warning(f"String {json_str} does not contain a list of dictionaries.")
         return []
 
-    for idx, item in enumerate(data):
-        if not isinstance(item, dict):
-            logging.warning(f"Item at index {idx} in string {json_str} is not a dictionary.")
-            return []
-
     coupons = []
-
     for item in data:
         if is_simple:
+            if not isinstance(item, dict):
+                logging.warning(f"Item {item} is not a dictionary.")
+                continue
+
             if OUT_COL_SIMP_PRODUCT not in item or item[OUT_COL_SIMP_PRODUCT] is None:
                 logging.warning(f"Item {item} does not contain the product name.")
                 continue
@@ -134,6 +132,7 @@ def get_coupons(json_str: str, is_simple: bool) -> List[Union[Coupon, CouponSimp
                 coupon.activation_text = ''
 
             coupons.append(coupon)
+
         else:
             new_price = item.get(OUT_COL_EXT_NEW_PRICE, None)
             old_price = item.get(OUT_COL_EXT_OLD_PRICE, None)
@@ -387,11 +386,11 @@ def parse_args() -> argparse.Namespace:
                         required=True,
                         help='Command to run the pipeline (e.g., python llama_pipeline.py)'
     )
-    parser.add_argument('-s',
-                        '--simple',
+    parser.add_argument('-e',
+                        '--extended',
                         action='store_true',
                         default=False,
-                        help='Use the simple format'
+                        help='Use the extended format'
     )
     parser.add_argument('-c',
                         '--cache_dir',
@@ -399,7 +398,7 @@ def parse_args() -> argparse.Namespace:
                         default='datasets',
                         help='Directory to cache the datasets'
     )
-    parser.add_argument('-sp',
+    parser.add_argument('-s',
                         '--split',
                         type=str,
                         default='Edeka+Penny',
@@ -414,7 +413,7 @@ if __name__ == '__main__':
 
     args = parse_args()
     pipeline = args.pipeline
-    is_simple = args.simple
+    is_extended = args.extended
     dataset_name = args.dataset_name
     cache_dir = args.cache_dir
     split = args.split
@@ -427,13 +426,13 @@ if __name__ == '__main__':
         input = entry[INPUT]
         expected = entry[OUTPUT]
 
-        expected_coupons = get_coupons(expected, is_simple)
+        expected_coupons = get_coupons(expected, not is_extended)
 
-        generated_coupons = run_pipeline(pipeline, input, is_simple)
+        generated_coupons = run_pipeline(pipeline, input, not is_extended)
 
         similarity, lonely_coupons = judge_pipeline(expected_coupons,
                                                     generated_coupons,
-                                                    is_simple)
+                                                    not is_extended)
 
         percent_similarity = round(similarity * 100, 3)
         score = max(percent_similarity, 0)
