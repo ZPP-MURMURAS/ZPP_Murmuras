@@ -1,9 +1,10 @@
-from datasets import Dataset
+from datasets import Dataset, DatasetDict
 from transformers import AutoTokenizer, DataCollatorForTokenClassification, TrainingArguments, Trainer
 import numpy as np
 import evaluate
 from functools import partial
 import wandb
+from src.bert_finetuning.curriculer import Curriculer
 
 
 __MODEL_CHECKPOINT = ""
@@ -69,7 +70,7 @@ def create_custom_tags(tokens: list) -> list:
     return custom_tokens
 
 
-def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> list:
+def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> list[int]:
     """
     Function that is responsible for aligning the labels with the tokens.
     This is necessary because the tokenizer splits the tokens into subtokens, and we need to align the labels with them.
@@ -93,11 +94,13 @@ def __align_labels_with_tokens(labels: list, word_ids: list, bi_split: bool) -> 
         elif word_id is None:
             # Special token
             new_labels.append(-100)
-        else:
-            # Same word as previous token
+        else: # Same word as previous token
             label = labels[word_id]
             if not bi_split:
                 label = 2*label
+            else: # Adjust so that one word has only one B-X token.
+                if label%2 == 1: # I-X are even; Unknown is even also. B-X is odd.
+                    label += 1 # from (2*label)-1 to 2*label
             new_labels.append(label)
 
     return new_labels
@@ -128,7 +131,7 @@ def __tokenize_and_align_labels(input_column: str, labels_column: str, bi_split:
     return tokenized_inputs
 
 
-def tokenize_and_align_labels(dataset: Dataset, input_column: str, labels_column: str, bi_split: bool =True) -> Dataset:
+def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_column: str, bi_split: bool =True) -> DatasetDict:
     """
     Function that is responsible for tokenizing the inputs and aligning the labels with the tokens.
     Under the hood, it wraps __tokenize_and_align_labels function in something more user-friendly.
@@ -169,28 +172,47 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
     ]
     # https://stackoverflow.com/questions/43162506/undefinedmetricwarning-f-score-is-ill-defined-and-being-set-to-0-0-in-labels-wi
     all_metrics = __METRIC.compute(predictions=true_predictions, references=true_labels, zero_division=0)
-    return {
+
+    per_class = {}
+    for label in custom_labels:
+        per_class[label] = [0, 0]
+    for i in range (len(true_labels)):
+        for j in range(len(true_labels[i])):
+            if true_labels[i][j] == true_predictions[i][j]:
+                per_class[true_labels[i][j]][0] += 1
+            per_class[true_labels[i][j]][1] += 1
+
+    result = {
         "precision": all_metrics["overall_precision"],
         "recall": all_metrics["overall_recall"],
         "f1": all_metrics["overall_f1"],
-        "accuracy": all_metrics["overall_accuracy"],
+        "overall_accuracy": all_metrics["overall_accuracy"],
     }
 
+    for label in per_class:
+        result[label + "_recall"] = per_class[label][0] / per_class[label][1]
 
-def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False):
+    return result
+
+
+def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False, curriculum_learning: bool=False, splits: int=10):
     """
     Function that is responsible for training the model. It assumes that the dataset
     is already tokenized and aligned with the labels. It should contain
     train, validation and test splits. Otherwise, an exception will be thrown.
 
-    :param model: The model that will be trained (assumed BERT architexture)
+    :param model: The model that will be trained (assumed BERT architecture)
     :param dataset: The dataset that contains the train, validation and test splits
     :param labels: The labels that will be used to compute the metrics
     :param run_name: The name of the run
     :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
     :param wandb_log: Whether the model should be logged to wandb. Default is False
+    :param curriculum_learning: Whether the model should use curriculum learning. Default is False
+    :param splits: The number of splits that will be used in curriculum learning. Default is 10
     """
     __assert_init()
+
+    tokenized_dataset = tokenize_and_align_labels(dataset, "texts", "labels")
 
     if wandb_log:
         wandb.init(
@@ -206,7 +228,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
 
     args = TrainingArguments(
         "zpp-murmuras/bert",
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=2e-5,
         num_train_epochs=3,
@@ -220,20 +242,37 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     trainer = Trainer(
         model=model,
         args=args,
-        train_dataset=dataset["train"],
-        eval_dataset=dataset["validation"],
+        train_dataset=tokenized_dataset["train"],
+        eval_dataset=tokenized_dataset["validation"],
         data_collator=__DATA_COLLATOR,
         compute_metrics=partial(__compute_metrics, labels),
-        tokenizer=__TOKENIZER,
+        processing_class=__TOKENIZER,
     )
 
-    trainer.train()
-    eval_results = trainer.evaluate(dataset["test"])
-
-    if wandb_log:
-        wandb.log(eval_results)  # Log final evaluation metrics
-        wandb.finish()
-
-    # Left for historic purposes
-    if push_to_hub:
-        trainer.push_to_hub("Training completed")
+    if not curriculum_learning:
+        trainer.train()
+        # Left for historic purposes
+        if push_to_hub:
+            trainer.push_to_hub("Training completed")
+        test_res = trainer.evaluate(tokenized_dataset["test"])
+        if wandb_log:
+            wandb.log(test_res)
+    else:
+        # Curriculum learning
+        curriculer = Curriculer(dataset, splits)
+        curr_dataset = curriculer.create_init_dataset()
+        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
+        trainer.train_dataset = curr_dataset["train"]
+        trainer.eval_dataset = curr_dataset["validation"]
+        trainer.train()
+        for i in range(splits):
+            eval_results = trainer.evaluate(curr_dataset["test"])
+            if wandb_log:
+                wandb.log(eval_results)
+            curr_dataset = curriculer.yield_dataset()
+            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
+            trainer.train_dataset = curr_dataset["train"]
+            trainer.eval_dataset = curr_dataset["validation"]
+            trainer.train()
+        if push_to_hub:
+            trainer.push_to_hub("Training completed")

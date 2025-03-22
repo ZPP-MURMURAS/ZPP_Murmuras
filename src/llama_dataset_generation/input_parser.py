@@ -1,6 +1,7 @@
 import string
 
 import pandas as pd
+from json import dumps
 
 __X_COLUMN = 'text'
 
@@ -74,16 +75,16 @@ def create_training_df(input_dict: dict, gtd_dict: dict) -> pd.DataFrame:
                 res = {'input': value, 'output': item}
                 concatenated_dfs.append(res)
         else:
-            res = {'input': value, 'output': '{}'}
+            res = {'input': value, 'output': {}}
             concatenated_dfs.append(res)
 
     # Parsing to make the dict compatible with pandas
     parse_dict = {'Context': [], 'Response': []}
     for data in concatenated_dfs:
         parse_dict['Context'].append(data['input'])
-        parse_dict['Response'].append(data['output'])
+        parse_dict['Response'].append(dumps(data['output']))
     training_df = pd.DataFrame.from_dict(parse_dict)
-    training_df = training_df.astype({'Context': str, 'Response': str})
+    training_df = training_df.astype({'Context': str})
 
     # If two columns have the same Context and empty/the same response, we don't need them
     training_df.drop_duplicates(subset=['Context', 'Response'], keep=False, inplace=True)
