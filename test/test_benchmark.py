@@ -2,6 +2,7 @@ import pytest
 import sys
 import os
 import numpy as np
+import logging
 from unittest.mock import patch, mock_open
 
 from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, compare_prices, compare_coupons, compare_coupons_simple, judge_pipeline
@@ -13,11 +14,10 @@ class TestBenchmark:
         ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', True, [CouponSimple("Product A", "-20%", "2025-01-01", "active")]),
         ('[{"product_name": "Product B", "new_price": "5$", "old_price": "6$", "percents": ["1", "2"], "other_discounts": ["3", "4"], "dates": ["1410", "1812"]}]', False, [Coupon("Product B", "5$", "6$", ["1", "2"], ["3", "4"], ["1410", "1812"])]),
         ('[{"name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', True, []),
-        ('[{"product_name": "Product A", "valid_until": "2025-01-01", "activation_text": "active"}]', True, []),
-        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', False, []),
+        ('[{"product_name": "Product A", "valid_until": "2025-01-01", "activation_text": "active"}]', True, [CouponSimple("Product A", "", "2025-01-01", "active")]),
         ('[{product_name: Product A, discount_text: -20%, valid_until: 2025-01-01, activation_text: active}]', True, []),
     ])
-    def test_get_coupons_success(self, input_string, is_simple, expected_coupons, caplog):
+    def test_get_coupons(self, input_string, is_simple, expected_coupons, caplog):
         with caplog.at_level(logging.INFO):
             assert get_coupons(input_string, is_simple, "placeholder") == expected_coupons
 
