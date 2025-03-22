@@ -55,7 +55,7 @@ The dataset contains a list of pairs of text sequences and labels:
 * TAG_I_ACTIVATION: inside activation text
 The inside labels are not used in this dataset and are expected to be used after tokenization for the model.
 ## Supported dataset formats
-The script uses only the coupons csvs. Due to vast differences in the formats of those files we will probably need to create a separate function for dataset generation for each csv that we will use. Currently supported datasets:
-* format 2: 'coupon big/DM'
+The script uses only the coupons csvs. Due to some differences in the formats of those files we will probably need to create separate functions for dataset generation for different csvs. Currently supported formats:
+* format 2: 'coupons big/*'
 ## Augmentations
 Due to the repetitious nature of the data, I've decided to use some basic augmentations. That is, sections (e.g., product info section and discount info section) are sometimes shuffled or dropped.
