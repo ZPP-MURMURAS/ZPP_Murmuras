@@ -4,7 +4,7 @@ on:
   [push]
 
 jobs:
-  build_hld_latex:
+  build_latex:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Git repository
@@ -16,8 +16,10 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          working_directory: docs
-          root_file: HLD.tex
+          root_file: docs/HLD.tex
+      - name : Move PDF to docs
+        run: |
+          mv HLD.pdf docs/
       - name: Commit and Push PDF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -30,35 +32,6 @@ jobs:
           else
             echo "Changes detected. Committing..."
             git add docs/HLD.pdf
-            git commit -m "Add compiled PDF for ${GITHUB_SHA}"
-            git push origin HEAD:${{ github.ref_name }}
-          fi
-  build_bachelor_latex:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up Git repository
-        uses: actions/checkout@v4
-      - name: List files in docs/
-        run: ls -l docs/
-      - name: List files/
-        run: ls -l
-      - name: Compile LaTeX document
-        uses: xu-cheng/latex-action@v3
-        with:
-          working_directory: docs
-          root_file: licencjat.tex
-      - name: Commit and Push PDF
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git fetch --quiet
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet origin/main -- docs/licencjat.tex; then
-            echo "No changes detected. Skipping commit."
-          else
-            echo "Changes detected. Committing..."
-            git add docs/licencjat.pdf
             git commit -m "Add compiled PDF for ${GITHUB_SHA}"
             git push origin HEAD:${{ github.ref_name }}
           fi

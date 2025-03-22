@@ -38,5 +38,13 @@ Currently available datasets:
 * `ads_1`: views from youtube, tiktok and instagram provided as sample of data with adverts
 * `coupons_0`: example coupon data, copied from coupon_extraction_demo
 * `coupons_1`: new dataset on coupons, mostly video, various apps
-
+# Target Coupon Format
+As of 16.02.2025, the target coupon format is as follows:
+```json
+{
+  "discount_text": "text",
+  "product_name": "name",
+  "valid_unitl": "validity"
+}
+```
 # More to come

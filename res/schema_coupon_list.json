@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Product List Schema",
+  "description": "A schema for validating JSON files that contain product names.",
+  "type": "object",
+  "properties": {
+    "products": {
+      "type": "array",
+      "description": "An array of product objects.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_name": {
+            "type": "string",
+            "description": "The name of the product."
+          },
+          "valid_until": {
+            "type": "string",
+            "description": "The validity of the coupon."
+          },
+          "discount_text": {
+            "type": "string",
+            "description": "The details of the discount."
+          }
+        },
+        "required": ["valid_until", "discount_text ", "product_name"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["products"],
+  "additionalProperties": false
+}
