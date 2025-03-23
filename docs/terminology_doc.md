@@ -152,5 +152,10 @@ The output of the Llama models is:
 ```
 
 ___
-## Architecture
+## Architecture overview
 
+### BERT pipeline
+
+```mermaid
+info
+```
