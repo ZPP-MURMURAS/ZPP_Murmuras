@@ -170,14 +170,14 @@ graph TD;
 graph TD
     A[Input Text: The cat sits on the mat.] --> B[Tokenization]
     B --> C{Tokens}
-    C --> C1[[ "[CLS]" ]]
+    C --> C1[[ CLS ]]
     C --> C2[[ the ]]
     C --> C3[[ cat ]]
     C --> C4[[ sits ]]
     C --> C5[[ on ]]
     C --> C6[[ the ]]
     C --> C7[[ mat ]]
-    C --> C8[[ "[SEP]" ]]
+    C --> C8[[ SEP ]]
 
     C --> D[Embedding Layer]
     D --> E1[Token Embedding]
@@ -189,6 +189,6 @@ graph TD
     F --> G2[Feed-Forward Network]
 
     F --> H[Output Layer]
-    H --> I1[[ "[CLS]" Output for Classification ]]
+    H --> I1[[ CLS Output for Classification ]]
     H --> I2[[ Token Outputs for Token-Level Tasks ]]
 ``` 
