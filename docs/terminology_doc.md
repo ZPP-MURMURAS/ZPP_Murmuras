@@ -189,6 +189,6 @@ graph TD
     F --> G2[Feed-Forward Network]
 
     F --> H[Output Layer]
-    H --> I1[[ [CLS] Output for Classification ]]
+    H --> I1[[ <CLS> Output for Classification ]]
     H --> I2[[ Token Outputs for Token-Level Tasks ]]
 ``` 
