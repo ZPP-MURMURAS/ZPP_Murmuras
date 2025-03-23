@@ -1,8 +1,8 @@
-## Terminology used in our project
+# Terminology used in our project
 This document provides a list of terms used in our project and their definitions. 
 
 ___ 
-### Model naming conventions
+## Model naming conventions
 Our project uses a specific naming convention for models. The naming convention is as follows:
 
     bert-{selection / extraction}-{data set: json / plain}-{fine tune type}
@@ -11,7 +11,7 @@ Our project uses a specific naming convention for models. The naming convention 
 
 Selection refers to coupon selection, ie. identifying and selecting the coupons from the text. Extraction refers to field extraction, ie. extracting the fields from the coupons such as product name, discount, etc.
 
-### Data set naming conventions
+## Data set naming conventions
 #### Llama data sets
 
 We have four types of data sets for llama models:
@@ -40,6 +40,15 @@ BERT data sets are named as follows:
     **bert-{selection / extraction}-ds.{json / pl}**
 
 ___
+## CSV file formats
+We have two types of CSV file formats:
+
+    format=1: values in "content_full" column are in the form of a list of strings without quotation marks separated by ", " (commas followed by a space)
+
+    format=2: values in "content_full" column are in the form of a list of strings surrounded by single quotation marks and separated by "," (commas without spaces after them)
+
+___
+## Formats
 ### Coupon formats
 We have two coupon formats representing the data associated with a signle coupon. We have two levels of complexity for coupons: simple and normal/extended.
 
@@ -95,23 +104,54 @@ Each pipeline receives as input a .csv file containing the following headers: "v
 It will output the identified coupons in a .csv file that is of the same format as the ground truth file described above.
 
 #### BERT models
-Honestly, I'm not sure
+Currently the BERT model accepts two formats:
+1. Raw, concatenated texts from the `test` field in the .csv content_generic file.
+2. An XML tree taken from the content_generic .csv file, encoded in a JSON as shown below:
 
-#### Llama models
-The Llama models receive a dictionary as input containing timestamps as keys, and concatenated text values corresponding to the timestamps as values. For example:
-
-```python
+```json
 {
-    '2024-03-07T17:00:50.338': 'coupon text 1',
-    '2024-04-08T17:10:14.445': 'coupon text 2',
-    ...
+    "text": "text field content",
+    "children": {
+        "child1_view_id": ...,
+        "child2_view_id": ...
+        ...
+    }
 }
 ```
 
-The function responsible for processing the input data from the .csv file is called `prepare_input_data` found in the `input_parser.py` file. 
-
-The output of the Llama model is a dictionary
-```json
-{"text": texts }
+The output of the model is a list of labels that say whether or not a given part of the text is part of a coupon or not. The labels are as follows:
+```txt
+UNK: not a coupon
+B-COUPON: beginning of a coupon
+I-COUPON: the rest of the coupon
 ```
-where `texts` is a list of strings in the format `{context} {response}` each string corresponding to a coupon extracted from the input data.
+
+#### Llama models
+The input for the Llama models has the following format:
+```python
+{
+    "text": "{prompt for the llama model}
+            ### Input: 
+            {input strings separated by newlines}
+            ### Output:
+            {corresponding output strings separated by newlines}"
+    " 
+}
+```
+
+The output of the Llama models is:
+```json
+[
+  {
+    "activation_text": "...",
+    "product_name": "...",
+    "discount_text": "...",
+    "valid_until": "..."
+  },
+  ...
+]
+```
+
+___
+## Architecture
+
