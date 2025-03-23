@@ -1,0 +1,1 @@
+AGGREGATION_COLUMN = 'aggregation'

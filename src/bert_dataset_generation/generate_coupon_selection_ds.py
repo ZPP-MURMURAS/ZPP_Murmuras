@@ -6,10 +6,13 @@ import re
 import json
 import datasets
 import pandas as pd
+from pandas import isna
 from datasets import DatasetDict, Dataset
 from huggingface_hub import login
 from huggingface_hub import HfApi
 from sklearn.model_selection import train_test_split
+
+from src.constants import *
 
 # Constants
 TAG_B_COUPON = 'B-COUPON'  # begin coupon tag
@@ -18,7 +21,6 @@ TAG_UNKNOWN = 'O'  # not-a-coupon tag
 
 COL_TEXT_FULL = 'content_full'  # column from coupons frame with full coupon text
 COL_CONTENT_TEXT = 'text'  # column from content_generic file containing text
-COL_GROUPBY = 'id'  # column from both coupons and content_generic to group by values
 COL_VIEW_ID = 'view_id'  # column for view id in content_generic frame
 COL_DEPTH = 'view_depth'  # column with view depth from content_generic frame
 
@@ -78,7 +80,7 @@ def __construct_prefix_tree_for_coupon_frame(coupons_frame: pd.DataFrame, ds_for
     """
     coupons_list = coupons_frame[COL_TEXT_FULL].dropna().tolist()
     if ds_format == 2:
-        ptree = build_ptree([[t[1:-1] for t in s[1:-1].split(',')] for s in coupons_list])
+        ptree = build_ptree([eval(s) for s in coupons_list])
     elif ds_format == 1:
         ptree = build_ptree([s[1:-1].split(', ') for s in coupons_list])
     else:
@@ -86,11 +88,81 @@ def __construct_prefix_tree_for_coupon_frame(coupons_frame: pd.DataFrame, ds_for
     return ptree
 
 
-def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_ptree: PTreeNode) -> pd.DataFrame:
+def toposort_by_prefixes(strings: List[str]) -> List[int]:
+    """
+    assumes no duplicates among strings
+    """
+    n = len(strings)
+    pfix_counts = [0] * n
+    for i1, s in enumerate(strings):
+        for i, s2 in enumerate(strings):
+            if i1 == i:
+                continue
+            if s.startswith(s2):
+                pfix_counts[i] += 1
+    res = []
+    not_prefixes = []
+    for i in range(n):
+        if pfix_counts[i] == 0:
+            not_prefixes.append(i)
+    while not_prefixes:
+        ix = not_prefixes.pop()
+        res.append(ix)
+        for i, s in enumerate(strings):
+            if strings[ix].startswith(s):
+                pfix_counts[i] -= 1
+                if not pfix_counts[i]:
+                    not_prefixes.append(i)
+    return res
+
+
+def annotate_frame_by_matches_format_1(content_frame: pd.DataFrame, coupons_list: List[str]) -> pd.DataFrame:
+    content_frame.reset_index(drop=True, inplace=True)
+    labels_list = [LBL_UNK for _ in range(len(content_frame))]
+    texts_combined = ', '.join(content_frame[COL_CONTENT_TEXT].dropna().tolist())
+    char_to_row_no = []
+    for i, row in content_frame.iterrows():
+        text = row[COL_CONTENT_TEXT]
+        if isna(text):
+            continue
+        if char_to_row_no:
+            char_to_row_no.extend([-1, -1])
+        char_to_row_no.extend([i] * len(text))
+
+    coupons_counts = {}
+    for c in coupons_list:
+        if c not in coupons_counts:
+            coupons_counts[c] = 0
+        coupons_counts[c] += 1
+    coupons_unique = list(coupons_counts.keys())
+    for coupon_text_ix in toposort_by_prefixes(coupons_unique):
+        coupon_text = coupons_unique[coupon_text_ix]
+        while coupons_counts[coupon_text] > 0:
+            ix = texts_combined.find(coupon_text)
+            if ix == -1:
+                break
+            first = True
+            for row_index in sorted(set(char_to_row_no[ix:ix + len(coupon_text)])):
+                if row_index == -1:
+                    continue
+                if first:
+                    first = False
+                    labels_list[row_index] = LBL_BC
+                else:
+                    labels_list[row_index] = LBL_IC
+            # i hope that no \0 is in coupon strings
+            texts_combined = texts_combined[:ix] + '\0' * len(coupon_text) + texts_combined[ix + len(coupon_text):]
+            coupons_counts[coupon_text] -= 1
+    content_frame = content_frame.copy(deep=True)
+    content_frame[__COL_IS_COUPON] = labels_list
+    return content_frame
+
+
+def annotate_frame_by_matches_format_2(content_frame: pd.DataFrame, coupons_ptree: PTreeNode) -> pd.DataFrame:
     """
     Adds column to dataframe with tokenization labels.
     This function is created to deal with coupon frames with no beginning indices provided and should be
-    executed on input for single value of COL_GROUPBY.
+    executed on input for single value of AGGREGATION_COLUMN.
     """
     is_coupon_array = []
     ptree_iters: List[List] = []
@@ -232,10 +304,15 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
     Takes content frame with multiple timestamps and converts each of them to JSON representation.
     """
     res = []
-    for i, (t, subframe) in enumerate(frame.groupby(COL_GROUPBY)):
-        ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[COL_GROUPBY] == t], fmt)
+    for i, (t, subframe) in enumerate(frame.groupby(AGGREGATION_COLUMN, sort=False)):
+        ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[AGGREGATION_COLUMN] == t], fmt)
         subframe.reset_index(inplace=True, drop=True)
-        subframe = annotate_frame_by_matches(subframe, ptree)
+        if fmt == 2:
+            subframe = annotate_frame_by_matches_format_2(subframe, ptree)
+        elif fmt == 1:
+            subframe = annotate_frame_by_matches_format_1(subframe, [x[1:-1] for x in coupons_frame[coupons_frame[AGGREGATION_COLUMN] == t]])
+        else:
+            raise ValueError("unknown format: {}. Supported formats: 1, 2".format(fmt))
         tree = batch_to_json(subframe)
         tree = collapse_tree(tree)[0]
         if tree is not None:
@@ -318,10 +395,27 @@ def json_to_labeled_tokens(data: List[TreeNode], indent: Optional[int] = None) -
     return res
 
 
+def drop_duplicates(samples: List[Tuple[List[str], List[int]]]) -> List[Tuple[List[str], List[int]]]:
+    """
+    Goes through a list of training samples and drops duplicate samples.
+    """
+    samples_filtered = []
+    samples_set = set()
+    for sample in samples:
+        key = (" ".join(sample[0]), " ".join([str(x) for x in sample[1]]))
+        if key not in samples_set:
+            samples_set.add(key)
+            samples_filtered.append(sample)
+    return samples_filtered
+
+
 def publish_to_hub(samples: List[List[Tuple[List[str], List[int]]]], save_name: str, apikey: str, new_repo: bool, custom_splits: Optional[List[str]]) -> None:
     """
     Creates dataset out of list of lists (one for each pair of frames) of pairs of words and labels and pushes it to HF Hub.
     """
+
+    samples = [drop_duplicates(batch) for batch in samples]
+
     features = datasets.Features({
         "texts": datasets.Sequence(datasets.Value("string")),
         "labels": datasets.Sequence(LABELS)
@@ -357,7 +451,7 @@ def publish_to_hub(samples: List[List[Tuple[List[str], List[int]]]], save_name: 
             grouped[name][0].extend(texts)
             grouped[name][1].extend(labels)
         for k, v in grouped.items():
-            grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]})
+            grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]}, features=features)
         dataset_dict = DatasetDict(grouped)
         dataset_dict = dataset_dict.shuffle(seed=time.time_ns())
 
@@ -380,10 +474,16 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
         return json_to_labeled_tokens(as_json)
     else:
         samples = []
-        for val, subframe in content_frame.groupby(COL_GROUPBY):
-            ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[COL_GROUPBY] == val], fmt)
+        for val, subframe in content_frame.groupby(AGGREGATION_COLUMN, sort=False):
+            ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[AGGREGATION_COLUMN] == val], fmt)
             subframe = __clear_content_frame(subframe)
-            subframe = annotate_frame_by_matches(subframe, ptree)
+            if fmt == 2:
+                subframe = annotate_frame_by_matches_format_2(subframe, ptree)
+            elif fmt == 1:
+                coupons_strings = [string[1:-1] for string in coupons_frame[coupons_frame[AGGREGATION_COLUMN] == val][COL_TEXT_FULL].tolist()]
+                subframe = annotate_frame_by_matches_format_1(subframe, coupons_strings)
+            else:
+                raise ValueError("unknown format: {}. Supported formats: 1, 2".format(fmt))
             labels = []
             words = []
             for i, row in subframe.iterrows():
@@ -402,7 +502,8 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
                     else:
                         labels.append(LBL_IC)
                     labels.extend([LBL_IC] * (len(text.split()) - 1))
-            samples.append((words, labels))
+            if words:
+                samples.append((words, labels))
         return samples
 
 

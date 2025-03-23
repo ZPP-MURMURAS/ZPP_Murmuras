@@ -4,8 +4,8 @@ import modal
 
 app = modal.App("example-fine-tuning")
 
-SAVE_AS_GGUF = True
-SAVE_AS_UNSLOTH = True
+SAVE_AS_GGUF = False
+SAVE_AS_UNSLOTH = False
 
 HF_ORG = 'zpp-murmuras/'
 
@@ -43,9 +43,9 @@ def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
 
     model = FastLanguageModel.get_peft_model(
         model,
-        r=16,
+        r=2,
         lora_alpha=16,
-        lora_dropout=0,
+        lora_dropout=0.6,
         target_modules=["q_proj", "k_proj", "v_proj", "up_proj", "down_proj", "o_proj", "gate_proj"],
         use_rslora=True,
         use_gradient_checkpointing="unsloth",
@@ -110,7 +110,7 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, max_seq_le
 
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no):
-    run_name = "llama-3.2-1b-dm"
+    run_name = "r=2, dropout=0.6"
     from datasets import load_dataset
 
     max_seq_length = 4096

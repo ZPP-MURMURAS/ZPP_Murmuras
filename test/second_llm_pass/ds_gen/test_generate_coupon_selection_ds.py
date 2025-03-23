@@ -302,14 +302,14 @@ class TestGenerateCouponSelectionDs:
         (lf('frame3'), lf('frame3_annotated'), lf('ptree4')),
     ])
     def test_annotate_frame_by_matches(self, frame_in: pd.DataFrame, frame_out: pd.DataFrame, ptree: PTreeNode):
-        annotated = annotate_frame_by_matches(frame_in, ptree)
+        annotated = annotate_frame_by_matches_format_2(frame_in, ptree)
         assert annotated.equals(frame_out)
 
     def test_annotate_frame_by_matches_coupon_separation(self, ptree2):
         frame = pd.DataFrame({COL_GROUPBY: [1, 1], COL_CONTENT_TEXT: ['uwu', 'uwu']})
         target_frame = frame.copy(deep=True)
         target_frame[_ds_gen__COL_IS_COUPON] = [LBL_BC, LBL_BC]
-        assert annotate_frame_by_matches(frame, ptree2).equals(target_frame)
+        assert annotate_frame_by_matches_format_2(frame, ptree2).equals(target_frame)
 
     @pytest.mark.parametrize("tree_in,tree_out,text_out", [
         (lf('json_tree1'), lf('collapsed_json_tree1'), "a"),
