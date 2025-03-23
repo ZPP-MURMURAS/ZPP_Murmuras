@@ -161,5 +161,5 @@ graph TD;
     A[Input CSV representing the user's view]-->B;
     B[Prepare input data - filter out unnecessary data and adjust data format]-->C;
     C[Select coupons from input data by performing NER using BERT]-->D;
-    D[Extract coupon fields from the selected coupons]-->E[Output the extracted coupons];
+    D[Extract coupon fields from the selected coupons by performing NER using BERT]-->E[Output the extracted coupons];
 ```
