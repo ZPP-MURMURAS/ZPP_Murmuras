@@ -168,7 +168,7 @@ graph TD;
 
 ```mermaid
 graph TD
-    A[Input Text: "The cat sits on the mat."] --> B[Tokenization]
+    A[Input Text: The cat sits on the mat.] --> B[Tokenization]
     B --> C{Tokens}
     C --> C1[[ [CLS] ]]
     C --> C2[[ the ]]
