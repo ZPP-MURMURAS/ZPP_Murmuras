@@ -1,4 +1,4 @@
 pandas
 huggingface-hub
 datasets
-jupyter
+scikit-learn
