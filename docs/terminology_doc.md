@@ -161,14 +161,13 @@ graph TD;
     A[Input CSV representing the user's view]-->B;
     B[Prepare input data - filter out unnecessary data and adjust data format]-->C;
     C[Select coupons from input data by performing NER using BERT]-->D;
-    D[Extract coupon fields from the selected coupons]-->E;
-    E[Output the extracted coupons]-->F;
+    D[Extract coupon fields from the selected coupons]-->E[Output the extracted coupons];
 ```
 
 ### BERT Model Architecture
 
 ```mermaid
-<!-- graph TD
+graph TD
     A[Input Text: "The cat sits on the mat."] --> B[Tokenization]
     B --> C{Tokens}
     C --> C1[[ [CLS] ]]
@@ -192,4 +191,4 @@ graph TD;
     F --> H[Output Layer]
     H --> I1[[ [CLS] Output for Classification ]]
     H --> I2[[ Token Outputs for Token-Level Tasks ]]
-``` -->
+``` 
