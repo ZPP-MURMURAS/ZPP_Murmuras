@@ -134,8 +134,7 @@ The input for the Llama models has the following format:
             ### Input: 
             {input strings separated by newlines}
             ### Output:
-            {corresponding output strings separated by newlines}"
-    " 
+            {corresponding output strings separated by newlines}" 
 }
 ```
 
