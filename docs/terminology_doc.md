@@ -158,7 +158,7 @@ ___
 
 ```mermaid
 graph TD;
-    A-->B;
+    A[Input CSV representing the user's view]-->B;
     A-->C;
     B-->D;
     C-->D;
