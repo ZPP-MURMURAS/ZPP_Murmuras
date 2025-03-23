@@ -157,14 +157,9 @@ ___
 ### BERT pipeline
 
 ```mermaid
-graph TD
-    A[Input CSV] --> B[prepare_input_data()]
-    B --> C[download_model(cs_model)]
-    C --> D[perform_ner(cs_model)]
-    D --> E[Extracted Coupons]
-    E --> F[download_model(fe_model)]
-    F --> G[perform_ner(fe_model)]
-    G --> H[Extracted Entities]
-    H --> I[coupon_to_json()]
-    I --> J[JSON Output]
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
 ```
