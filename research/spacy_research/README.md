@@ -33,6 +33,9 @@ The provided link has all the relevant information.
 ### spacy-llm
 [spacy-llm](https://spacy.io/usage/large-language-models#example-2) - a package that provides support for models from HF. You can integrate LLMs into spaCy NLP pipelines. 
 
+### Formats
+[Here](https://docling-project.github.io/docling/usage/supported_formats/) it is written that .csv files are accepted, and since that is the format of our raw data (xml trees), we can use this tool.
+
 ### Conclusions
 First of all, spaCy's documentation is well-written and comprehensive, making it easier to work with. Furthermore, spaCy is highly customizable as it enables the integration of custom models and pipelines as well as fine-tuning existing ones to some extent; it is [optimized](https://www.seaflux.tech/blogs/NLP-libraries-spaCy-NLTK-differences) for performance, seen as it is implemented in cython, so it is appropriate for processing large quantities of data. 
 
