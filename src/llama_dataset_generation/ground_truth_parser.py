@@ -239,7 +239,8 @@ def prepare_ground_truth_data_no_ai(coupons: pd.DataFrame) -> dict:
             coupon_repr = {
                 "discount_text": row['discount_text'] if not isna(row['discount_text']) else None,
                 "product_name": row['product_text'] if not isna(row['product_text']) else None,
-                "valid_until": row['validity_text'] if not isna(row['validity_text']) else None
+                "valid_until": row['validity_text'] if not isna(row['validity_text']) else None,
+                "activation_text": row['activation_text'] if not isna(row['activation_text']) else None,
             }
             result[t].append(coupon_repr)
     return result
