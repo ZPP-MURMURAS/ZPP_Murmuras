@@ -80,7 +80,14 @@ def __construct_prefix_tree_for_coupon_frame(coupons_frame: pd.DataFrame, ds_for
     """
     coupons_list = coupons_frame[COL_TEXT_FULL].dropna().tolist()
     if ds_format == 2:
-        ptree = build_ptree([eval(s) for s in coupons_list])
+        coupons_list_converted = []
+        for s in coupons_list:
+            try:
+                l = eval(s)
+            except Exception:
+                l = [t[1:-1] for t in s[1:-1].split(',')]
+            coupons_list_converted.append(l)
+        ptree = build_ptree(coupons_list_converted)
     elif ds_format == 1:
         ptree = build_ptree([s[1:-1].split(', ') for s in coupons_list])
     else:
@@ -305,9 +312,9 @@ def frame_to_json(frame: pd.DataFrame, coupons_frame: pd.DataFrame, fmt: int = 1
     """
     res = []
     for i, (t, subframe) in enumerate(frame.groupby(AGGREGATION_COLUMN, sort=False)):
-        ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[AGGREGATION_COLUMN] == t], fmt)
         subframe.reset_index(inplace=True, drop=True)
         if fmt == 2:
+            ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[AGGREGATION_COLUMN] == t], fmt)
             subframe = annotate_frame_by_matches_format_2(subframe, ptree)
         elif fmt == 1:
             subframe = annotate_frame_by_matches_format_1(subframe, [x[1:-1] for x in coupons_frame[coupons_frame[AGGREGATION_COLUMN] == t]])
@@ -475,9 +482,9 @@ def __samples_from_entry(fmt: int, content_frame: pd.DataFrame, coupons_frame: p
     else:
         samples = []
         for val, subframe in content_frame.groupby(AGGREGATION_COLUMN, sort=False):
-            ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[AGGREGATION_COLUMN] == val], fmt)
             subframe = __clear_content_frame(subframe)
             if fmt == 2:
+                ptree = __construct_prefix_tree_for_coupon_frame(coupons_frame[coupons_frame[AGGREGATION_COLUMN] == val], fmt)
                 subframe = annotate_frame_by_matches_format_2(subframe, ptree)
             elif fmt == 1:
                 coupons_strings = [string[1:-1] for string in coupons_frame[coupons_frame[AGGREGATION_COLUMN] == val][COL_TEXT_FULL].tolist()]

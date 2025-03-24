@@ -157,7 +157,7 @@ def __ground_truth_to_dict(ground_truth_data: list) -> dict:
     """
     gtd_dict = {}
     for item in ground_truth_data:
-        key = item[__AGGREGATION_COLUMN]
+        key = item[AGGREGATION_COLUMN]
         if key not in gtd_dict:
             gtd_dict[key] = []
         tmp = {'product_name': item['product_name'], 'valid_until': item['valid_until'], 'discount': item['discount'],

@@ -98,9 +98,6 @@ if __name__ == "__main__":
     ds_id = argv[1]
     service = init_service()
     children, parent, folder_names = create_fs_tree(service)
-    print(folder_names)
-    print(children)
-    print(parent)
     root_folder_id = None
     for folder_id in folder_names.keys():
         if folder_id not in parent:
