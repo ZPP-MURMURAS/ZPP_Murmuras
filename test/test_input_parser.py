@@ -6,6 +6,7 @@ import os
 import pytest
 
 from src.llama_dataset_generation.input_parser import prepare_input_data, create_training_df
+from src.constants import *
 
 class TestInputParser:
     csv_path = 'test_data/test_input_parser.csv'  # Fixed path issue
@@ -17,7 +18,7 @@ class TestInputParser:
     @pytest.fixture(autouse=True)
     def setup_method(self):
         data = {
-            'seen_timestamp': [1, 1, 1, 1, 0, 2, 2, 0, 0, 3, 0, 3],
+            AGGREGATION_COLUMN: [1, 1, 1, 1, 0, 2, 2, 0, 0, 3, 0, 3],
             'is_visible': [False, True, False, True, True, True, False, False, True, True, True, True],
             'text': ['1t', '2t', '3t', '4t', '5t', '6t', '7t', '8t', 'nan', '10t', '11t', 'nan'],
             'time': ['1-1', '2-2', '3-3', '4-4', '5-5', '6-6', '7-7', '8-8', '9-9', '10-10', '11-11', '12-12']

@@ -7,6 +7,7 @@ from src.bert_dataset_generation.generate_coupon_selection_ds import (
 )
 from src.bert_dataset_generation.generate_coupon_selection_ds import *
 from src.bert_dataset_generation.generate_coupon_selection_ds import __COL_IS_COUPON as _ds_gen__COL_IS_COUPON
+from src.constants import *
 
 import pandas as pd
 from math import nan
@@ -36,7 +37,7 @@ def ptree4():
 @pytest.fixture
 def frame1():
     return pd.DataFrame({
-        COL_GROUPBY: [1] * 10,
+        AGGREGATION_COLUMN: [1] * 10,
         COL_CONTENT_TEXT: ['abc', nan, 'y', 'yyy', 'uwu', nan, nan, 'uwuw', nan, 'uwu'],
         COL_DEPTH: [0, 1, 2, 1, 1, 1, 2, 3, 2, 2],
         COL_VIEW_ID: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
@@ -53,7 +54,7 @@ def frame1_annotated(frame1):
 
 @pytest.fixture
 def frame2():
-    return pd.DataFrame({COL_GROUPBY: [], COL_CONTENT_TEXT: []})
+    return pd.DataFrame({AGGREGATION_COLUMN: [], COL_CONTENT_TEXT: []})
 
 @pytest.fixture
 def frame2_annotated(frame2):
@@ -64,7 +65,7 @@ def frame2_annotated(frame2):
 @pytest.fixture
 def frame3():
     return pd.DataFrame({
-        COL_GROUPBY: [2] * 6,
+        AGGREGATION_COLUMN: [2] * 6,
         COL_CONTENT_TEXT: ['dummy', 'wine', 'whiskey', 'vodka', 'Tequila', nan],
         COL_DEPTH: [0, 1, 2, 3, 1, 2],
         COL_VIEW_ID: ['x', 'a', 'b', 'c', 'd', 'e']
@@ -73,7 +74,7 @@ def frame3():
 @pytest.fixture
 def frame4():
     return pd.DataFrame({
-        COL_GROUPBY: [3],
+        AGGREGATION_COLUMN: [3],
         COL_CONTENT_TEXT: [nan],
         COL_DEPTH: [0],
         COL_VIEW_ID: ['a']}
@@ -96,7 +97,7 @@ def frame_coupons(fmt):
     else:
         col_text = [str(x).replace(' ', '') for x in col_text]
     return pd.DataFrame({
-        COL_GROUPBY: [1, 2, 2, 2],
+        AGGREGATION_COLUMN: [1, 2, 2, 2],
         COL_TEXT_FULL: col_text
     })
 
@@ -271,9 +272,7 @@ def plain_words_labels_joint():
     labels2 = [LBL_IC] * len(words2)
     labels2[1] = LBL_BC
     labels2[0] = LBL_UNK
-    words3 = []
-    labels3 = []
-    return [(words1, labels1), (words2, labels2), (words3, labels3)]
+    return [(words1, labels1), (words2, labels2)]
 
 @pytest.fixture
 def json_joint_collapsed(collapsed_json_tree1, collapsed_json_tree3):
@@ -306,7 +305,7 @@ class TestGenerateCouponSelectionDs:
         assert annotated.equals(frame_out)
 
     def test_annotate_frame_by_matches_coupon_separation(self, ptree2):
-        frame = pd.DataFrame({COL_GROUPBY: [1, 1], COL_CONTENT_TEXT: ['uwu', 'uwu']})
+        frame = pd.DataFrame({AGGREGATION_COLUMN: [1, 1], COL_CONTENT_TEXT: ['uwu', 'uwu']})
         target_frame = frame.copy(deep=True)
         target_frame[_ds_gen__COL_IS_COUPON] = [LBL_BC, LBL_BC]
         assert annotate_frame_by_matches_format_2(frame, ptree2).equals(target_frame)
@@ -385,4 +384,4 @@ class TestGenerateCouponSelectionDs:
     ])
     def test_ds_gen__construct_prefix_tree_for_coupon_frame(self, id_val, tgt_tree):
         fc = frame_coupons(fmt=1)
-        assert _ds_gen__construct_prefix_tree_for_coupon_frame(fc[fc[COL_GROUPBY] == id_val], 1) == tgt_tree
+        assert _ds_gen__construct_prefix_tree_for_coupon_frame(fc[fc[AGGREGATION_COLUMN] == id_val], 1) == tgt_tree
