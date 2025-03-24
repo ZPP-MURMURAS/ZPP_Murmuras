@@ -225,9 +225,9 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
 def prepare_ground_truth_data_no_ai(coupons: pd.DataFrame) -> dict:
     """
     Given a coupons dataframe, this function constructs the coupon jsons
-    aggregated by __AGGREGATION_COLUMN. It will skip rows with empty content_full
+    aggregated by AGGREGATION_COLUMN. It will skip rows with empty content_full
     :param coupons: The coupons dataframe.
-    :return result: mapping from __AGGREGATION_COLUMN values to lists of coupons jsons.
+    :return result: mapping from AGGREGATION_COLUMN values to lists of coupons jsons.
     """
     result = {}
     for t, subframe in coupons.groupby(AGGREGATION_COLUMN):
