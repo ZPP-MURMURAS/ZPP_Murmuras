@@ -45,7 +45,7 @@ def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
         model,
         r=16,
         lora_alpha=16,
-        lora_dropout=0.0,
+        lora_dropout=0,
         target_modules=["q_proj", "k_proj", "v_proj", "up_proj", "down_proj", "o_proj", "gate_proj"],
         use_rslora=True,
         use_gradient_checkpointing="unsloth",
