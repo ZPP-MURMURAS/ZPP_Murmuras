@@ -5,7 +5,7 @@ ___
 ## Model naming conventions
 Our project uses a specific naming convention for models. The naming convention is as follows:
 
-    bert-{selection / extraction}-{data set: json / plain}-{fine tune type}
+    bert-{selection / extraction}-{data set: json / pl}-{fine tune type}
 
     llama-{fine tune type}
 
@@ -22,7 +22,8 @@ We have four types of data sets for llama models:
     4. one_input_multiple_outputs_wthrequest
 
 We are using the last two dataset types in our project.
-In the naming convention, the following abbreviations are used:
+llama-ds-w - dataset with one_input_multiple_outputs_wrequest
+llama-ds-wth - dataset with one_input_multiple_outputs_wthrequest
 
     w - meaning with requests to llama
     wth - meaning without requests to llama
@@ -50,7 +51,7 @@ We have two types of CSV file formats:
 ___
 ## Formats
 ### Coupon formats
-We have two coupon formats representing the data associated with a signle coupon. We have two levels of complexity for coupons: simple and normal/extended.
+We have two coupon formats representing the data associated with a single coupon. We have two levels of complexity for coupons: simple and normal/extended.
 
 ```python
 @dataclass()
