@@ -5,7 +5,7 @@ ___
 ## Model naming conventions
 Our project uses a specific naming convention for models. The naming convention is as follows:
 
-    bert-{selection / extraction}-{data set: json / plain}-{fine tune type}
+    bert-{selection / extraction}-{data set: json / pl}-{fine tune type}
 
     llama-{fine tune type}
 
