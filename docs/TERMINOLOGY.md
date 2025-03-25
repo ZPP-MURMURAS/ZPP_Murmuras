@@ -4,7 +4,7 @@ This document provides a list of terms used in our project and their definitions
 ## Model naming conventions
 Our project uses a specific naming convention for models. The naming convention is as follows:
 
-    bert-{selection / extraction}-{data set: json / pl}-{fine tune type}
+    bert-{selection / extraction}-{dataset: json / pl}-{fine tune type}
 
     llama-{fine tune type}
 
@@ -12,10 +12,10 @@ Fine tune types refer to the format of the saved model such as `gguf`, `unsloth`
 
 Selection refers to coupon selection, ie. identifying and selecting the coupons from the text. Extraction refers to field extraction, ie. extracting the fields from the coupons such as product name, discount, etc.
 
-## Data set naming conventions
-#### Llama data sets
+## Dataset naming conventions
+#### Llama datasets
 
-We have four types of data sets for llama models:
+We have four types of datasets for llama models:
 
     1. one_input_one_output_wrequest
     2. one_input_one_output_wthrequest
@@ -31,13 +31,13 @@ llama-ds-wth - dataset with one_input_multiple_outputs_wthrequest
 
 Henceforth, **llama-ds-w** refers solely to one_input_multiple_outputs_wrequest, while **llama-ds-wth** refers solely to one_input_multiple_outputs_wthrequest.
 
-#### BERT data sets
-We are using two types of data sets for bert models:
+#### BERT datasets
+We are using two types of datasets for bert models:
 
     1. json 
     2. plain text 
 
-BERT data sets are named as follows:
+BERT datasets are named as follows:
 
     **bert-{selection / extraction}-ds.{json / pl}**
 
