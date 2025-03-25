@@ -1,7 +1,6 @@
 # Terminology used in our project
 This document provides a list of terms used in our project and their definitions. 
 
-___ 
 ## Model naming conventions
 Our project uses a specific naming convention for models. The naming convention is as follows:
 
@@ -33,14 +32,13 @@ Henceforth, **llama-ds-w** refers solely to one_input_multiple_outputs_wrequest,
 #### BERT data sets
 We are using two types of data sets for bert models:
 
-    1. json (.json)
-    2. plain text (.pl)
+    1. json 
+    2. plain text 
 
 BERT data sets are named as follows:
 
     **bert-{selection / extraction}-ds.{json / pl}**
 
-___
 ## CSV file formats
 We have two types of CSV file formats:
 
@@ -48,10 +46,9 @@ We have two types of CSV file formats:
 
     format=2: values in "content_full" column are in the form of a list of strings surrounded by single quotation marks and separated by "," (commas without spaces after them)
 
-___
 ## Formats
 ### Coupon formats
-We have two coupon formats representing the data associated with a single coupon. We have two levels of complexity for coupons: simple and normal/extended.
+We have two coupon formats representing the data associated with a single coupon. We have two levels of complexity for coupons: simple and normal/extended. The CouponSimple format is most commonly used.
 
 ```python
 @dataclass()
@@ -77,10 +74,8 @@ class CouponSimple:
     validity_text: str
     activation_text: str
 ``` 
-___
-### Input and output formats
 
-#### Benchmark
+## Benchmark Formats
 
 The input data is found in the `*_content_generic_*` files, while the ground truth is found in the `*_coupons_*` files. Both are in the .csv format.
 
@@ -98,13 +93,12 @@ or the following headers if it will process extended coupons
 
 The benchmark outputs both the similarity scores and identifies any isolated/"lonely" coupons, coupons that are not associated with any other coupons in the dataset.
 
-#### Pipelines
-
+## Pipeline input and output formats
 Each pipeline receives as input a .csv file containing the following headers: "view_depth", "text", "description", "seen_timestamp", and "is_visible". 
 
 It will output the identified coupons in a .csv file that is of the same format as the ground truth file described above.
 
-#### BERT models
+## BERT models
 Currently the BERT model accepts two formats:
 1. Raw, concatenated texts from the `test` field in the .csv content_generic file.
 2. An XML tree taken from the content_generic .csv file, encoded in a JSON as shown below:
@@ -127,7 +121,16 @@ B-COUPON: beginning of a coupon
 I-COUPON: the rest of the coupon
 ```
 
-#### Llama models
+### BERT pipeline
+```mermaid
+graph TD;
+    A[Input CSV representing the user's view]-->B;
+    B[Prepare input data - filter out unnecessary data and adjust data format]-->C;
+    C[Select coupons from input data by performing NER using BERT]-->D;
+    D[Extract coupon fields from the selected coupons by performing NER using BERT]-->E[Output the extracted coupons];
+```
+___
+## Llama models
 The input for the Llama models has the following format:
 ```python
 {
@@ -150,17 +153,4 @@ The output of the Llama models is:
   },
   ...
 ]
-```
-
-___
-## Architecture overview
-
-### BERT pipeline
-
-```mermaid
-graph TD;
-    A[Input CSV representing the user's view]-->B;
-    B[Prepare input data - filter out unnecessary data and adjust data format]-->C;
-    C[Select coupons from input data by performing NER using BERT]-->D;
-    D[Extract coupon fields from the selected coupons by performing NER using BERT]-->E[Output the extracted coupons];
 ```
