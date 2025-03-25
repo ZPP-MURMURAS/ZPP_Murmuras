@@ -22,7 +22,8 @@ We have four types of data sets for llama models:
     4. one_input_multiple_outputs_wthrequest
 
 We are using the last two dataset types in our project.
-In the naming convention, the following abbreviations are used:
+llama-ds-w - dataset with one_input_multiple_outputs_wrequest
+llama-ds-wth - dataset with one_input_multiple_outputs_wthrequest
 
     w - meaning with requests to llama
     wth - meaning without requests to llama
