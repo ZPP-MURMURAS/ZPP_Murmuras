@@ -50,7 +50,7 @@ We have two types of CSV file formats:
 ___
 ## Formats
 ### Coupon formats
-We have two coupon formats representing the data associated with a signle coupon. We have two levels of complexity for coupons: simple and normal/extended.
+We have two coupon formats representing the data associated with a single coupon. We have two levels of complexity for coupons: simple and normal/extended.
 
 ```python
 @dataclass()
