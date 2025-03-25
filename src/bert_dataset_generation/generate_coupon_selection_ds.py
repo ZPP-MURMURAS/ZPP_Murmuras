@@ -32,32 +32,6 @@ LBL_UNK = LABELS.str2int(TAG_UNKNOWN)
 LBL_BC = LABELS.str2int(TAG_B_COUPON)
 LBL_IC = LABELS.str2int(TAG_I_COUPON)
 
-# prefix tree utils
-# implemented prefix tree operates on words as atomic parts of sequences
-
-PTreeNode = Tuple[Dict[str, 'PTreeNode'], bool]  # children: dict, is_valid_coupon: bool
-
-
-def ptree_insert(root: PTreeNode, path: List[str]):
-    """
-    inserts new node to tree with given root under path provided
-    """
-    if not path:
-        return
-    if path[0] not in root[0]:
-        root[0][path[0]] = ({}, len(path) == 1)
-    ptree_insert(root[0][path[0]], path[1:])
-
-
-def build_ptree(strings: List[List[str]]) -> PTreeNode:
-    """
-    constructs tree from list of sequences
-    """
-    root = ({}, False)
-    for s in strings:
-        ptree_insert(root, s)
-    return root
-
 
 def __clear_content_frame(content_frame: pd.DataFrame) -> pd.DataFrame:
     """
@@ -68,31 +42,6 @@ def __clear_content_frame(content_frame: pd.DataFrame) -> pd.DataFrame:
     content_frame = content_frame.dropna(subset=[COL_CONTENT_TEXT])
     content_frame.reset_index(drop=True, inplace=True)
     return content_frame
-
-
-def __construct_prefix_tree_for_coupon_frame(coupons_frame: pd.DataFrame, ds_format: int) -> PTreeNode:
-    """
-    Constructs a prefix tree containing coupons from the given frame. Each node in this prefix tree
-    is content of COL_TEXT column for some row.
-    ds_format is int specifying format of COL_TEXT_FULL in coupons_frame:
-    - 1: format from "coupons_1" dataset
-    - 2: format from "coupons big" dataset
-    """
-    coupons_list = coupons_frame[COL_TEXT_FULL].dropna().tolist()
-    if ds_format == 2:
-        coupons_list_converted = []
-        for s in coupons_list:
-            try:
-                l = eval(s)
-            except Exception:
-                l = [t[1:-1] for t in s[1:-1].split(',')]
-            coupons_list_converted.append(l)
-        ptree = build_ptree(coupons_list_converted)
-    elif ds_format == 1:
-        ptree = build_ptree([s[1:-1].split(', ') for s in coupons_list])
-    else:
-        raise ValueError('content_full_format must be 1 or 2')
-    return ptree
 
 
 def toposort_by_prefixes(strings: List[str]) -> List[int]:
@@ -190,69 +139,6 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_list: List[st
     content_frame = content_frame.copy(deep=True)
     content_frame[__COL_IS_COUPON] = labels_list
     return content_frame
-
-
-def annotate_frame_by_matches_format_2(content_frame: pd.DataFrame, coupons_ptree: PTreeNode) -> pd.DataFrame:
-    """
-    Adds column to dataframe with tokenization labels.
-    This function is created to deal with coupon frames with no beginning indices provided and should be
-    executed on input for single value of AGGREGATION_COLUMN.
-    """
-    is_coupon_array = []
-    ptree_iters: List[List] = []
-    ix = 0
-    text_col = content_frame[COL_CONTENT_TEXT]
-    while ix < len(text_col):
-        text = text_col[ix]
-        if pd.isna(text):
-            ix += 1
-            continue
-        else:
-            text = str(text)
-        ended_iters = []
-        for itr in ptree_iters:
-            if text not in itr[0][0]:
-                if itr[2] != -1:
-                    ended_iters.append(itr)
-            else:
-                itr[0] = itr[0][0][text]
-                if itr[0][1]:
-                    itr[2] = ix
-        if ended_iters:
-            chosen = None
-            chosen_len = 0
-            for itr in ended_iters:
-                if itr[2] - itr[1] + 1 > chosen_len:
-                    chosen = itr
-                    chosen_len = itr[2] - itr[1] + 1
-            is_coupon_array += [LBL_UNK] * (chosen[1] - len(is_coupon_array))
-            is_coupon_array.append(LBL_BC)
-            is_coupon_array += [LBL_IC] * (chosen_len - 1)
-            ptree_iters.clear()
-            ix = chosen[2] + 1
-            continue
-        if text in coupons_ptree[0]:
-            ptree_iters.append([coupons_ptree[0][text], ix, -1 if not coupons_ptree[0][text][1] else ix])
-        ix += 1
-    # searching for possible coupons in running iterators
-    candidates = []
-    for itr in ptree_iters:
-        if itr[2] != -1:
-            candidates.append(itr)
-    if candidates:
-        chosen = None
-        chosen_len = 0
-        for itr in candidates:
-            if itr[2] - itr[1] + 1 > chosen_len:
-                chosen = itr
-                chosen_len = itr[2] - itr[1] + 1
-        is_coupon_array += [LBL_UNK] * (chosen[1] - len(is_coupon_array))
-        is_coupon_array.append(LBL_BC)
-        is_coupon_array += [LBL_IC] * (chosen_len - 1)
-    is_coupon_array += [LBL_UNK] * (len(content_frame) - len(is_coupon_array))
-    new_content_frame = content_frame.copy()
-    new_content_frame[__COL_IS_COUPON] = is_coupon_array
-    return new_content_frame
 
 
 class TreeNode(TypedDict):
