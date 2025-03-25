@@ -8,6 +8,8 @@ Our project uses a specific naming convention for models. The naming convention 
 
     llama-{fine tune type}
 
+Fine tune types refer to the format of the saved model such as `gguf`, `unsloth`, etc.
+
 Selection refers to coupon selection, ie. identifying and selecting the coupons from the text. Extraction refers to field extraction, ie. extracting the fields from the coupons such as product name, discount, etc.
 
 ## Data set naming conventions
