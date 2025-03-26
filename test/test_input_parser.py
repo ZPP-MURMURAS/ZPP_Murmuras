@@ -20,14 +20,14 @@ class TestInputParser:
         data = {
             AGGREGATION_COLUMN: [1, 1, 1, 1, 0, 2, 2, 0, 0, 3, 0, 3],
             'is_visible': [False, True, False, True, True, True, False, False, True, True, True, True],
-            'text': ['1t', '2t', '3t', '4t', '5t', '6t', '7t', '8t', 'nan', '10t', '11t', 'nan'],
+            'text': ['1t', '2t', '3t', '4t', None, '6t', None, None, None, '10t', None, None],
             'time': ['1-1', '2-2', '3-3', '4-4', '5-5', '6-6', '7-7', '8-8', '9-9', '10-10', '11-11', '12-12']
         }
         csv_df = pd.DataFrame(data)
         os.makedirs('test_data', exist_ok=True)
         csv_df.to_csv(self.csv_path, index=False)
         self.csv_dict = {
-            1: '2t 4t',
+            1: '1t 2t 3t 4t',
             2: '6t',
             3: '10t'
         }
