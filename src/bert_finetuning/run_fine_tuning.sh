@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a DATASETS=("zpp-murmuras/coupon_select_big_plain_rev2")
+declare -a DATASETS=("bert-extraction-ds-rev2")
 
 export HUGGING_FACE_TOKEN=
 export WANDB_KEY=
