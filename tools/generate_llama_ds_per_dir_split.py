@@ -61,7 +61,7 @@ def traverse_files(data_dir: str):
             dts_list.extend(dts)
             dts_names_list.extend(dts_names)
         else:
-            if "content_generic" in file and file.endswith(".csv"):
+            if "content" in file and file.endswith(".csv"):
                 content_path = os.path.join(data_dir, file)
             elif "coupons" in file and file.endswith(".csv"):
                 coupons_path = os.path.join(data_dir, file)
