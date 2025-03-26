@@ -44,9 +44,10 @@ def __clear_content_frame(content_frame: pd.DataFrame) -> pd.DataFrame:
     return content_frame
 
 
-def toposort_by_prefixes(strings: List[str]) -> List[int]:
+def __toposort_by_prefixes(strings: List[str]) -> List[int]:
     """
-    assumes no duplicates among strings
+    Performs topological sorting on given string list and ordering provided by "is prefix of" relation.
+    Returns the list of indexes from the input list.
     """
     n = len(strings)
     pfix_counts = [0] * n
@@ -76,6 +77,7 @@ def __find_given_starts_ends(string1: str, string2: str, starts: List[int], ends
     """
     Finds the first occurrence of string2 in string2
     given lists of valid indexes for the first and the last char of string2 in string1
+    string2 should be nonempty
     """
     beg = 0
     while beg < len(string1):
@@ -121,7 +123,7 @@ def annotate_frame_by_matches(content_frame: pd.DataFrame, coupons_list: List[st
             coupons_counts[c] = 0
         coupons_counts[c] += 1
     coupons_unique = list(coupons_counts.keys())
-    for coupon_text_ix in toposort_by_prefixes(coupons_unique):
+    for coupon_text_ix in __toposort_by_prefixes(coupons_unique):
         coupon_text = coupons_unique[coupon_text_ix]
         while (ix := __find_given_starts_ends(texts_combined, coupon_text, fields_starts, fields_ends)) != -1:
             first = True

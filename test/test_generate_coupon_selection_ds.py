@@ -2,7 +2,9 @@ from src.bert_dataset_generation.generate_coupon_selection_ds import (
     __insert_to_json_tree as _ds_gen__insert_to_json_tree,
     __encode_json_tree_into_tokens_rec as _ds_gen__encode_json_tree_into_tokens_rec,
     __encode_json_tree_node_with_children_into_tokens as _ds_gen__encode_json_tree_node_with_children_into_tokens,
-    __samples_from_entry as _ds_gen__samples_from_entry
+    __samples_from_entry as _ds_gen__samples_from_entry,
+    __toposort_by_prefixes as _ds_gen__toposort_by_prefixes,
+    __find_given_starts_ends as _ds_gen__find_given_starts_ends
 )
 from src.bert_dataset_generation.generate_coupon_selection_ds import *
 from src.bert_dataset_generation.generate_coupon_selection_ds import __COL_IS_COUPON as _ds_gen__COL_IS_COUPON
@@ -372,3 +374,26 @@ class TestGenerateCouponSelectionDs:
     @pytest.mark.parametrize("fmt,as_json,tgt", [(1, True, lf('json_words_labels_joint')), (2, False, lf('plain_words_labels_joint'))])
     def test_ds_gen__samples_from_entry(self, fmt, frame_joint, as_json, tgt):
         assert _ds_gen__samples_from_entry(fmt, frame_joint, frame_coupons(fmt), as_json) == tgt
+
+    @pytest.mark.parametrize("input_list", [
+        ['a', 'b', 'v'],
+        [],
+        ['a', 'ab', 'abc'],
+        ['a', 'def', 'ab', 'd', 'abc', 'de']
+    ])
+    def test_ds_gen__toposort_by_prefixes(self, input_list: List[str]):
+        sorted_list = _ds_gen__toposort_by_prefixes(input_list)
+        assert set(sorted_list) == set(range(len(input_list)))
+
+        for ix, i1 in enumerate(sorted_list):
+            for i2 in sorted_list[ix+1:]:
+                assert not input_list[i2].startswith(input_list[i1])
+
+    @pytest.mark.parametrize('string1,string2,starts,ends,res', [
+        ('abcdef', 'bc', [0, 1, 5], [2, 4], 1),
+        ('abcdef', 'bc', [0, 1, 5], [4, 3], -1),
+        ('xyz', 'ds', [0, 1, 2], [0, 1, 2], -1),
+        ('abc', 'abc', [0], [2], 0)
+    ])
+    def test_ds_gen__find_given_start_end(self, string1: str, string2: str, starts: List[int], ends: List[int], res: int):
+        assert _ds_gen__find_given_starts_ends(string1, string2, starts, ends) == res
