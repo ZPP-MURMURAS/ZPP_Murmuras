@@ -4,7 +4,10 @@ import subprocess
 import difflib as diff
 import json
 import sys
-
+import os
+import logging
+from datasets import load_dataset, load_from_disk
+from datasets.dataset_dict import DatasetDict
 from dataclasses import dataclass, field
 from typing import Optional, List, Union
 
@@ -64,62 +67,74 @@ OUT_COL_EXT_PERCENTS = 'percents'
 OUT_COL_EXT_OTHER_DISCOUNTS = 'other_discounts'
 OUT_COL_EXT_DATES = 'dates'
 
-# File to store the output of the pipeline
+# Files to store the input and output of the pipeline
+INPUT_FILE = "pipeline_input.json"
 OUTPUT_FILE = "pipeline_output.json"
 
+# Columns of the dataset
+INPUT = 'Context'
+OUTPUT = 'Response'
 
-def get_coupons(file: str,
-                is_simple: bool) -> List[Union[Coupon, CouponSimple]]:
+
+def get_coupons(json_str: str, is_simple: bool, source_name: str) -> List[Union[Coupon, CouponSimple]]:
     """
-    This function will parse a json file that contains coupons. 
+    This function will parse a json string that contains coupons. 
     
-    :param file: The path to the json file
+    :param json_str: A json string that contains the coupons
     :param is_simple: A boolean flag to indicate if the simple format is used
+    :param source_name: The name of the source of the coupons (needed for logging)
     :return: A list of Coupon or CouponSimple objects read from the file
-
-    :raises ValueError: If the file format is invalid
     """
+    source_info = f"{source_name} - "
 
-    required_keys = {
-        OUT_COL_EXT_PRODUCT, OUT_COL_EXT_NEW_PRICE, OUT_COL_EXT_OLD_PRICE, OUT_COL_EXT_PERCENTS,
-        OUT_COL_EXT_OTHER_DISCOUNTS, OUT_COL_EXT_DATES
-    }
-
-    if is_simple:
-        required_keys = {OUT_COL_SIMP_PRODUCT, OUT_COL_SIMP_DISCOUNT, OUT_COL_SIMP_VALIDITY, OUT_COL_SIMP_ACTIVATION}
-
-    with open(file, 'r') as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            raise ValueError(
-                f"The file {file} is not a valid JSON file or contains invalid data."
-            )
+    try:
+        data = json.loads(json_str)
+    except json.JSONDecodeError:
+        logging.warning(source_info + f"String {json_str} is not a valid JSON.")
+        return []
 
     if not isinstance(data, list):
-        raise ValueError(
-            f"The file {file} must contain a list of dictionaries.")
-
-    for idx, item in enumerate(data):
-        if not isinstance(item, dict):
-            raise ValueError(
-                f"Entry at index {idx} in {file} must be a dictionary.")
-
-        if not required_keys.issubset(item.keys()):
-            missing_keys = required_keys - item.keys()
-            raise ValueError(
-                f"Entry at index {idx} in {file} is missing keys: {missing_keys}"
-            )
+        logging.warning(source_info + f"String {json_str} does not contain a list of dictionaries.")
+        return []
 
     coupons = []
-
     for item in data:
         if is_simple:
+            if not isinstance(item, dict):
+                logging.warning(source_info + f"Item {item} is not a dictionary.")
+                continue
+
+            if OUT_COL_SIMP_PRODUCT not in item or item[OUT_COL_SIMP_PRODUCT] is None:
+                logging.warning(source_info + f"Item {item} does not contain the product name.")
+                continue
+
             coupon = CouponSimple(product_name=item[OUT_COL_SIMP_PRODUCT],
-                                  discount_text=item[OUT_COL_SIMP_DISCOUNT],
-                                  validity_text=item[OUT_COL_SIMP_VALIDITY],
-                                  activation_text=item[OUT_COL_SIMP_ACTIVATION])
+                                  discount_text=item.get(OUT_COL_SIMP_DISCOUNT, ''),
+                                  validity_text=item.get(OUT_COL_SIMP_VALIDITY, ''),
+                                  activation_text=item.get(OUT_COL_SIMP_ACTIVATION, ''))
+
+            coupon.discount_text = coupon.discount_text if coupon.discount_text is not None else ''
+            coupon.validity_text = coupon.validity_text if coupon.validity_text is not None else ''
+            coupon.activation_text = coupon.activation_text if coupon.activation_text is not None else ''
+
+            if type(coupon.product_name) is not str:
+                logging.warning(source_info + f"Product name is not a string in item {item}.")
+                coupon.product_name = ''
+
+            if type(coupon.discount_text) is not str:
+                logging.warning(source_info + f"Discount text is not a string or null in item {item}.")
+                coupon.discount_text = ''
+
+            if type(coupon.validity_text) is not str:
+                logging.warning(source_info + f"Validity text is not a string or null in item {item}.")
+                coupon.validity_text = ''
+
+            if type(coupon.activation_text) is not str:
+                logging.warning(source_info + f"Activation text is not a string or null in item {item}.")
+                coupon.activation_text = ''
+
             coupons.append(coupon)
+
         else:
             new_price = item.get(OUT_COL_EXT_NEW_PRICE, None)
             old_price = item.get(OUT_COL_EXT_OLD_PRICE, None)
@@ -334,14 +349,20 @@ def run_pipeline(pipeline_command: str,
     :param input: The path to the file with the input data
     :param is_simple: A boolean value that indicates if the coupons are in the simple format
     :return: A list of Coupon or CouponSimple objects generated by the pipeline
-
-    :raises ValueError: If the output file is not in the expected format
-    :raises subprocess.CalledProcessError: If the pipeline fails to run
     """
+    with open(INPUT_FILE, "w") as file:
+        file.write(input)
 
-    pipeline_command = pipeline_command + " < \"" + input + "\" > " + OUTPUT_FILE
-    subprocess.run(pipeline_command, shell=True, check=True)
-    coupons = get_coupons(OUTPUT_FILE, is_simple)
+    pipeline_command = pipeline_command + " < " + INPUT_FILE + " > " + OUTPUT_FILE
+
+    try:
+        subprocess.run(pipeline_command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error running the pipeline with command {pipeline_command}.")
+        return []
+
+    with open(OUTPUT_FILE, 'r') as file:
+        coupons = get_coupons(file.read(), is_simple, "Generated output")
 
     return coupons
 
@@ -355,57 +376,77 @@ def parse_args() -> argparse.Namespace:
 
     # Parse the input arguments
     parser = argparse.ArgumentParser(description='Benchmarking script')
-    parser.add_argument('-i',
-                        '--input',
+    parser.add_argument('-d',
+                        '--dataset_name',
                         type=str,
                         required=True,
-                        help='Path to the file with the input data')
-    parser.add_argument('-e',
-                        '--expected',
-                        type=str,
-                        required=True,
-                        help='Path to the file with the expected coupons')
+                        help='Name of the dataset to download'
+    )
     parser.add_argument('-p',
                         '--pipeline',
                         type=str,
                         required=True,
                         help='Command to run the pipeline (e.g., python llama_pipeline.py)'
     )
-    parser.add_argument('-s',
-                        '--simple',
+    parser.add_argument('-e',
+                        '--extended',
                         action='store_true',
                         default=False,
-                        help='Use the simple format')
+                        help='Use the extended format'
+    )
+    parser.add_argument('-c',
+                        '--cache_dir',
+                        type=str,
+                        default='datasets',
+                        help='Directory to cache the datasets'
+    )
+    parser.add_argument('-s',
+                        '--split',
+                        type=str,
+                        default='Edeka+Penny',
+                        help='Dataset split to use'
+    )
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename="benchmark.log", level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
     args = parse_args()
-    expected = args.expected
-    input = args.input
     pipeline = args.pipeline
-    is_simple = args.simple
+    is_extended = args.extended
+    dataset_name = args.dataset_name
+    cache_dir = args.cache_dir
+    split = args.split
 
-    try:
-        expected_coupons = get_coupons(expected, is_simple)
-    except ValueError as e:
-        print(f'Error getting expected coupons: {e}')
-        sys.exit(1)
+    dataset = load_dataset(dataset_name, split=split, cache_dir=cache_dir)
 
-    try:
-        generated_coupons = run_pipeline(pipeline, input, is_simple)
-    except subprocess.CalledProcessError as e:
-        print(f'Error running the pipeline: {e}')
-        sys.exit(1)
-    except ValueError as e:
-        print(f'Error getting generated coupons: {e}')
+    lonely_coupons_list = []
+    score_list = []
+    for idx, entry in enumerate(dataset):
+        input = entry[INPUT]
+        expected = entry[OUTPUT]
 
-    similarity, lonely_coupons = judge_pipeline(expected_coupons,
-                                                generated_coupons,
-                                                is_simple)
+        expected_coupons = get_coupons(expected, not is_extended, "Expected output")
 
-    percent_similarity = round(similarity * 100, 3)
-    print(f"Number of lonely coupons: {lonely_coupons}")
-    score = max(percent_similarity, 0)
-    print(f"Score: {score}%")
+        generated_coupons = run_pipeline(pipeline, input, not is_extended)
+
+        similarity, lonely_coupons = judge_pipeline(expected_coupons,
+                                                    generated_coupons,
+                                                    not is_extended)
+
+        percent_similarity = round(similarity * 100, 3)
+        score = max(percent_similarity, 0)
+        score_list.append(score)
+        lonely_coupons_list.append(lonely_coupons)
+        logging.info(f"Entry {idx + 1} - Score: {score}% - Lonely coupons: {lonely_coupons}")
+
+    score = np.mean(score_list)
+    total_lonely_coupons = np.sum(lonely_coupons_list)
+
+    logging.info(f"Average score: {score}%")
+    logging.info(f"Total number of lonely coupons: {total_lonely_coupons}")
+
+    print(f"Average score: {score}%")
+    print(f"Total number of lonely coupons: {total_lonely_coupons}")
