@@ -260,7 +260,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             name= wandb_log + "-" + run_name,
             config={
                 "learning_rate": 2e-5,
-                "epochs": 3,
+                "epochs": 15,
                 "weight_decay": 0.01,
                 "model_name": "bert_multiling_cased",
             }
@@ -268,11 +268,11 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
 
     lr_container = LrContainer(__LEARNING_RATE)
     args = TrainingArguments(
-        "zpp-murmuras/bert",
+        "zpp-murmuras/",
         eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=lr_container.lr,
-        num_train_epochs=30 if not curriculum_learning else 3,
+        num_train_epochs=15 if not curriculum_learning else 3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
         logging_dir="./logs",  # Directory for logs
@@ -309,7 +309,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     else:
         # Curriculum learning
         print_vibe_check(model, dataset)
-        curriculer = Curriculer(dataset, splits)
+        curriculer = Curriculer(dataset['train'], splits)
         curr_dataset = curriculer.create_init_dataset()
         curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
         trainer.train_dataset = curr_dataset["train"]
@@ -328,7 +328,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
                 data_collator=__DATA_COLLATOR,
                 compute_metrics=partial(__compute_metrics, labels),
                 processing_class=__TOKENIZER,
-                callbacks=[StopCallback(lr_container)]
+                #callbacks=[StopCallback(lr_container)]
             )
             trainer.train()
             print_vibe_check(model, dataset)

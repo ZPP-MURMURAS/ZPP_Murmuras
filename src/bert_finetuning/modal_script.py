@@ -34,6 +34,7 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
         if ds_name not in __IGNORED_DS_SOURCES:
             extracted_dts.append(cs[ds_name])
     train_test_dataset = concatenate_datasets(extracted_dts)
+    train_test_dataset = train_test_dataset.train_test_split(test_size=0.2)
     labels = train_test_dataset['train'].features['labels'].feature.names
     ft.init_finetuner(MODEL_CHECKPOINT)
 
@@ -48,14 +49,12 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
     )
 
     model_name = 'bert-selection-'
-    if dataset_name == 'coupon_select_big_plain':
-        model_name += 'plain'
-    else:
-        model_name += 'json'
-    model_name += '-no_curr'
-    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_ft', run_name=model_name, curriculum_learning=False)
+    model_name += 'json'
+    model_name += '-curr-nolr'
+    model_name += '-rev2'
+    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_ft', run_name=model_name, curriculum_learning=True, splits=5)
     if push_to_hub:
-        model_repo = 'zpp-murmuras/__' + model_name
+        model_repo = 'zpp-murmuras/' + model_name
         model.push_to_hub(model_repo, token=hf_token)
         tokenizer = AutoTokenizer.from_pretrained(MODEL_CHECKPOINT)
         tokenizer.push_to_hub(model_repo, token=hf_token)
@@ -66,4 +65,4 @@ def main():
     hf_token = os.getenv('HUGGING_FACE_TOKEN')
     wandb_key = os.getenv('WANDB_KEY')
     dataset_name = os.getenv('DATASET_NAME')
-    run_fine_tuning.remote(hf_token, wandb_key, dataset_name, False)
+    run_fine_tuning.remote(hf_token, wandb_key, dataset_name, True)
