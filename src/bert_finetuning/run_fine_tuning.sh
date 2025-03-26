@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a DATASETS=("bert_second_pass_pl" "bert_second_pass_json" )
+declare -a DATASETS=("bert-extraction-ds-rev2")
 
 export HUGGING_FACE_TOKEN=
 export WANDB_KEY=
