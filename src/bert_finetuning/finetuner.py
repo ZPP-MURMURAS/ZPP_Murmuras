@@ -141,7 +141,7 @@ def __tokenize_and_align_labels(input_column: str, labels_column: str, bi_split:
     return tokenized_inputs
 
 
-def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_column: str, bi_split: bool =True) -> DatasetDict:
+def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_column: str, tt_split: bool = True,  bi_split: bool = True) -> DatasetDict:
     """
     Function that is responsible for tokenizing the inputs and aligning the labels with the tokens.
     Under the hood, it wraps __tokenize_and_align_labels function in something more user-friendly.
@@ -149,6 +149,7 @@ def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_co
     :param dataset: The dataset that will be tokenized
     :param input_column: The column that contains the inputs to tokenize
     :param labels_column: The column that contains the labels to align
+    :param tt_split: Whether the dataset contains train-test splits. Default is True
     :param bi_split: Whether the labels are in B-X and I-X format. Default is True
     :return: The tokenized dataset with aligned labels
     """
@@ -156,7 +157,7 @@ def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_co
     tokenized_dataset = dataset.map(
         partial(__tokenize_and_align_labels, input_column, labels_column, bi_split),
         batched=True,
-        remove_columns=dataset["train"].column_names,
+        remove_columns=dataset["train"].column_names if tt_split else dataset.column_names,
     )
     return tokenized_dataset
 
@@ -311,19 +312,19 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         print_vibe_check(model, dataset)
         curriculer = Curriculer(dataset['train'], splits)
         curr_dataset = curriculer.create_init_dataset()
-        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
-        trainer.train_dataset = curr_dataset["train"]
+        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels", False)
+        trainer.train_dataset = curr_dataset
         trainer.eval_dataset = tokenized_dataset["test"]
         trainer.train()
         print_vibe_check(model, dataset)
         for i in range(splits):
             args.learning_rate = lr_container.lr
             curr_dataset = curriculer.yield_dataset()
-            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
+            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels", False)
             trainer = Trainer(
                 model=model,
                 args=args,
-                train_dataset=curr_dataset["train"],
+                train_dataset=curr_dataset,
                 eval_dataset=tokenized_dataset["test"],
                 data_collator=__DATA_COLLATOR,
                 compute_metrics=partial(__compute_metrics, labels),

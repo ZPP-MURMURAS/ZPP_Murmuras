@@ -48,11 +48,11 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
         label2id=label2id,
     )
 
-    model_name = 'bert-selection-'
-    model_name += 'json'
-    model_name += '-curr-nolr'
+    model_name = 'bert-extraction'
+    #model_name += '-plain'
+    #model_name += '-curr-nolr'
     model_name += '-rev2'
-    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_ft', run_name=model_name, curriculum_learning=True, splits=5)
+    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_extraction_ft', run_name=model_name, curriculum_learning=False, splits=5)
     if push_to_hub:
         model_repo = 'zpp-murmuras/' + model_name
         model.push_to_hub(model_repo, token=hf_token)
