@@ -43,11 +43,11 @@ class TestGenerateCouponLabelingDS:
         assert labeled == expected
 
 
-    @pytest.mark.parametrize('fmt,coupons,seed, expected', [
-        (2, lf('coupons_fmt2_1'), 69, lf('expected_fmt2_1_seed69')),
+    @pytest.mark.parametrize('coupons,seed, expected', [
+        (lf('coupons_fmt2_1'), 69, lf('expected_fmt2_1_seed69')),
     ])
-    def test_samples_from_entry(self, fmt, coupons, expected, seed):
-        labeled = _ds_gen__samples_from_entry(fmt, coupons, seed)
+    def test_samples_from_entry(self, coupons, expected, seed):
+        labeled = _ds_gen__samples_from_entry(coupons, seed)
         print(labeled)
         assert labeled == expected
 
