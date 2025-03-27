@@ -29,7 +29,7 @@ llama-ds-wth - dataset with one_input_multiple_outputs_wthrequest
     w - meaning with requests to llama
     wth - meaning without requests to llama
 
-Henceforth, **llama-ds-w** refers solely to one_input_multiple_outputs_wrequest, while **llama-ds-wth** refers solely to one_input_multiple_outputs_wthrequest.
+Henceforth, **llama-ds-w** refers solely to one_input_multiple_outputs_wrequest, while **llama-ds-wth** refers solely to one_input_multiple_outputs_wthrequest. The difference between these two is described below in the section on BERT.
 
 #### BERT datasets
 We are using two types of datasets for bert models:
@@ -50,22 +50,9 @@ We have two types of CSV file formats:
 
 ## Formats
 ### Coupon formats
-We have two coupon formats representing the data associated with a single coupon. We have two levels of complexity for coupons: simple and normal/extended. The CouponSimple format is most commonly used.
+This is the coupon format that we are using:
 
 ```python
-@dataclass()
-class Coupon:
-    """
-    Class representing data associated with a single coupon.
-    """
-    product_name: str
-    new_price: Optional[str] = None
-    old_price: Optional[str] = None
-    percents: List[str] = field(default_factory=list)
-    other_discounts: List[str] = field(default_factory=list)
-    dates: Optional[str] = None
-
-
 @dataclass()
 class CouponSimple:
     """
@@ -138,9 +125,9 @@ The input for the Llama models has the following format:
 {
     "text": "{prompt for the llama model}
             ### Input: 
-            {input strings separated by newlines}
+            {input strings}
             ### Output:
-            {corresponding output strings separated by newlines}" 
+            {corresponding output strings}" 
 }
 ```
 
