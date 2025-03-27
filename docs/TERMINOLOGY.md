@@ -8,7 +8,7 @@ Our project uses a specific naming convention for models. The naming convention 
 
     llama-{fine tune type}
 
-Fine tune types refer to the format of the saved model such as `gguf`, `unsloth`, etc.
+Fine tune types refer to the format of the saved model such as `gguf`, `safe-tensor`, etc.
 
 Selection refers to coupon selection, ie. identifying and selecting the coupons from the text. Extraction refers to field extraction, ie. extracting the fields from the coupons such as product name, discount, etc.
 
@@ -85,7 +85,15 @@ The benchmark outputs both the similarity scores and identifies any isolated/"lo
 ## Pipeline input and output formats
 Each pipeline receives as input a .csv file containing the following headers: "view_depth", "text", "description", "seen_timestamp", and "is_visible". 
 
-It will output the identified coupons in a .csv file that is of the same format as the ground truth file described above.
+The selection pass will output the identified coupons in a .csv file that is of the same format as the ground truth file described above. 
+
+The extraction pass takes in the output of the selection pass and outputs a list of coupons in the following format:
+```
+  coupon = {"product_name": "...", 
+              "discount_text": "...", 
+              "valid_until": "...", 
+              "activation_text": "..."}
+```
 
 ## BERT models
 Currently the BERT model accepts two formats:
