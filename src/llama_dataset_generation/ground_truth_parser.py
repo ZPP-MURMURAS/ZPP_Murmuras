@@ -5,6 +5,8 @@ import pandas as pd
 from pandas import isna
 from openai import AsyncOpenAI
 
+from src.constants import *
+
 __COUPON_COLUMN = 'discount_text'
 
 
@@ -155,7 +157,7 @@ def __ground_truth_to_dict(ground_truth_data: list) -> dict:
     """
     gtd_dict = {}
     for item in ground_truth_data:
-        key = item['seen_timestamp']
+        key = item[AGGREGATION_COLUMN]
         if key not in gtd_dict:
             gtd_dict[key] = []
         tmp = {'product_name': item['product_name'], 'valid_until': item['valid_until'], 'discount': item['discount'],
@@ -195,7 +197,7 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
     print(len(coupons))
     for i in range(len(ground_truth_json)):
         try:
-            res = {'seen_timestamp': coupons['seen_timestamp'][coupons_itr], 'product_name': coupons['product_text'][coupons_itr],
+            res = {AGGREGATION_COLUMN: coupons[AGGREGATION_COLUMN][coupons_itr], 'product_name': coupons['product_text'][coupons_itr],
                    'valid_until': coupons['validity_text'][coupons_itr], 'discount': ground_truth_json[i]['discount']}
             prices = ground_truth_json[i]['prices']
             if prices == 'None' or len(prices) == 0:
@@ -223,12 +225,12 @@ def prepare_ground_truth_data(ground_truth_json: list, coupons: pd.DataFrame) ->
 def prepare_ground_truth_data_no_ai(coupons: pd.DataFrame) -> dict:
     """
     Given a coupons dataframe, this function constructs the coupon jsons
-    aggregated by time of occurrence. It will skip rows with empty content_full
+    aggregated by AGGREGATION_COLUMN. It will skip rows with empty content_full
     :param coupons: The coupons dataframe.
-    :return result: mapping from time values to lists of coupons jsons.
+    :return result: mapping from AGGREGATION_COLUMN values to lists of coupons jsons.
     """
     result = {}
-    for t, subframe in coupons.groupby('seen_timestamp'):
+    for t, subframe in coupons.groupby(AGGREGATION_COLUMN):
         result[t] = []
         for _, row in subframe.iterrows():
             content_full = row['content_full']

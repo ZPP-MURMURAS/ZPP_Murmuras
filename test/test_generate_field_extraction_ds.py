@@ -1,6 +1,5 @@
 from src.bert_dataset_generation.generate_field_extraction_ds import (
-    __samples_from_entry as _ds_gen__samples_from_entry,
-    __samples_from_entry_2 as _ds_gen__samples_from_entry_2
+    __samples_from_entry as _ds_gen__samples_from_entry
 )
 
 import pandas as pd
@@ -39,16 +38,16 @@ class TestGenerateCouponLabelingDS:
         (lf('coupons_fmt2_1'), 42, lf('expected_fmt2_1_seed42')),
     ])
     def test_samples_from_entry_2(self, coupons, expected, seed):
-        labeled = _ds_gen__samples_from_entry_2(coupons, seed)
+        labeled = _ds_gen__samples_from_entry(coupons, seed)
         print(labeled)
         assert labeled == expected
 
 
-    @pytest.mark.parametrize('fmt,coupons,seed, expected', [
-        (2, lf('coupons_fmt2_1'), 69, lf('expected_fmt2_1_seed69')),
+    @pytest.mark.parametrize('coupons,seed, expected', [
+        (lf('coupons_fmt2_1'), 69, lf('expected_fmt2_1_seed69')),
     ])
-    def test_samples_from_entry(self, fmt, coupons, expected, seed):
-        labeled = _ds_gen__samples_from_entry(fmt, coupons, seed)
+    def test_samples_from_entry(self, coupons, expected, seed):
+        labeled = _ds_gen__samples_from_entry(coupons, seed)
         print(labeled)
         assert labeled == expected
 

@@ -30,7 +30,6 @@ def create_fs_tree(service: Resource) ->(
     :return: tuple containing:
     map from folder to subfolders,
     map from subfolder to parent,
-    set of top level folder ids,
     map from folder ids to folder names
     """
     children = defaultdict(list)
@@ -39,7 +38,7 @@ def create_fs_tree(service: Resource) ->(
 
     folders = (
         service.files()
-        .list(pageSize=20, fields="nextPageToken, files(id, name, parents)", q=
+        .list(pageSize=40, fields="nextPageToken, files(id, name, parents)", q=
         "mimeType = 'application/vnd.google-apps.folder'")
         .execute()
     )

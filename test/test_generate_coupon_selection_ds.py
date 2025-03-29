@@ -3,10 +3,12 @@ from src.bert_dataset_generation.generate_coupon_selection_ds import (
     __encode_json_tree_into_tokens_rec as _ds_gen__encode_json_tree_into_tokens_rec,
     __encode_json_tree_node_with_children_into_tokens as _ds_gen__encode_json_tree_node_with_children_into_tokens,
     __samples_from_entry as _ds_gen__samples_from_entry,
-    __construct_prefix_tree_for_coupon_frame as _ds_gen__construct_prefix_tree_for_coupon_frame
+    __toposort_by_prefixes as _ds_gen__toposort_by_prefixes,
+    __find_given_starts_ends as _ds_gen__find_given_starts_ends
 )
 from src.bert_dataset_generation.generate_coupon_selection_ds import *
 from src.bert_dataset_generation.generate_coupon_selection_ds import __COL_IS_COUPON as _ds_gen__COL_IS_COUPON
+from src.constants import *
 
 import pandas as pd
 from math import nan
@@ -36,7 +38,7 @@ def ptree4():
 @pytest.fixture
 def frame1():
     return pd.DataFrame({
-        COL_GROUPBY: [1] * 10,
+        AGGREGATION_COLUMN: [1] * 10,
         COL_CONTENT_TEXT: ['abc', nan, 'y', 'yyy', 'uwu', nan, nan, 'uwuw', nan, 'uwu'],
         COL_DEPTH: [0, 1, 2, 1, 1, 1, 2, 3, 2, 2],
         COL_VIEW_ID: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
@@ -53,7 +55,7 @@ def frame1_annotated(frame1):
 
 @pytest.fixture
 def frame2():
-    return pd.DataFrame({COL_GROUPBY: [], COL_CONTENT_TEXT: []})
+    return pd.DataFrame({AGGREGATION_COLUMN: [], COL_CONTENT_TEXT: []})
 
 @pytest.fixture
 def frame2_annotated(frame2):
@@ -64,7 +66,7 @@ def frame2_annotated(frame2):
 @pytest.fixture
 def frame3():
     return pd.DataFrame({
-        COL_GROUPBY: [2] * 6,
+        AGGREGATION_COLUMN: [2] * 6,
         COL_CONTENT_TEXT: ['dummy', 'wine', 'whiskey', 'vodka', 'Tequila', nan],
         COL_DEPTH: [0, 1, 2, 3, 1, 2],
         COL_VIEW_ID: ['x', 'a', 'b', 'c', 'd', 'e']
@@ -73,11 +75,17 @@ def frame3():
 @pytest.fixture
 def frame4():
     return pd.DataFrame({
-        COL_GROUPBY: [3],
-        COL_CONTENT_TEXT: [nan],
+        AGGREGATION_COLUMN: [3],
+        COL_CONTENT_TEXT: [None],
         COL_DEPTH: [0],
         COL_VIEW_ID: ['a']}
     )
+
+@pytest.fixture
+def frame4_annotated(frame4):
+    f4 = frame4.copy(deep=True)
+    f4[_ds_gen__COL_IS_COUPON] = [LBL_UNK] * len(f4)
+    return f4
 
 @pytest.fixture
 def frame_joint(frame1, frame3, frame4):
@@ -96,9 +104,14 @@ def frame_coupons(fmt):
     else:
         col_text = [str(x).replace(' ', '') for x in col_text]
     return pd.DataFrame({
-        COL_GROUPBY: [1, 2, 2, 2],
+        AGGREGATION_COLUMN: [1, 2, 2, 2],
         COL_TEXT_FULL: col_text
     })
+
+def coupons_list(fmt, agg):
+    df = frame_coupons(fmt)
+    df = df[df[AGGREGATION_COLUMN] == agg]
+    return [x[1:-1] for x in df[COL_TEXT_FULL].tolist()]
 
 @pytest.fixture
 def json_tree1():
@@ -271,45 +284,29 @@ def plain_words_labels_joint():
     labels2 = [LBL_IC] * len(words2)
     labels2[1] = LBL_BC
     labels2[0] = LBL_UNK
-    words3 = []
-    labels3 = []
-    return [(words1, labels1), (words2, labels2), (words3, labels3)]
+    return [(words1, labels1), (words2, labels2)]
 
 @pytest.fixture
 def json_joint_collapsed(collapsed_json_tree1, collapsed_json_tree3):
     return [collapsed_json_tree1, collapsed_json_tree3, TreeNode(text=None, is_coupon=LBL_UNK, children={})]
 
 class TestGenerateCouponSelectionDs:
-    @pytest.mark.parametrize("tree1,tree2,path", [
-        (lf('ptree1'), lf('ptree2'), ["uwu"]),
-        (lf('ptree3'), lf('ptree4'), ["wine", "whiskey", "vodka", "Tequila"]),
-    ])
-    def test_ptree_insert(self, tree1: PTreeNode, tree2: PTreeNode, path: List[str]):
-        ptree_insert(tree1, path)
-        assert tree1 == tree2
 
-    @pytest.mark.parametrize("tree,sequences", [
-        (lf('ptree1'), []),
-        (lf('ptree2'), [["uwu"]]),
-        (lf('ptree4'), [["beer"], ["wine", "whiskey"], ["wine", "whiskey", "vodka", "Tequila"]]),
+    @pytest.mark.parametrize("agg,frame_out,fmt", [
+        (1, lf('frame1_annotated'), 1),
+        (2, lf('frame3_annotated'), 1),
+        (3, lf('frame4_annotated'), 2),
     ])
-    def test_build_ptree(self, tree: PTreeNode, sequences: List[List[str]]):
-        assert build_ptree(sequences) == tree
-
-    @pytest.mark.parametrize("frame_in,frame_out,ptree", [
-        (lf('frame1'), lf('frame1_annotated'), lf('ptree2')),
-        (lf('frame2'), lf('frame2_annotated'), lf('ptree2')),
-        (lf('frame3'), lf('frame3_annotated'), lf('ptree4')),
-    ])
-    def test_annotate_frame_by_matches(self, frame_in: pd.DataFrame, frame_out: pd.DataFrame, ptree: PTreeNode):
-        annotated = annotate_frame_by_matches(frame_in, ptree)
+    def test_annotate_frame_by_matches(self, frame_joint: pd.DataFrame, agg: int, frame_out: pd.DataFrame, fmt: int):
+        cpn_list = coupons_list(fmt, agg)
+        annotated = annotate_frame_by_matches(frame_joint[frame_joint[AGGREGATION_COLUMN] == agg], cpn_list, fmt)
         assert annotated.equals(frame_out)
 
-    def test_annotate_frame_by_matches_coupon_separation(self, ptree2):
-        frame = pd.DataFrame({COL_GROUPBY: [1, 1], COL_CONTENT_TEXT: ['uwu', 'uwu']})
+    def test_annotate_frame_by_matches_coupon_separation(self):
+        frame = pd.DataFrame({AGGREGATION_COLUMN: [1, 1], COL_CONTENT_TEXT: ['uwu', 'uwu']})
         target_frame = frame.copy(deep=True)
         target_frame[_ds_gen__COL_IS_COUPON] = [LBL_BC, LBL_BC]
-        assert annotate_frame_by_matches(frame, ptree2).equals(target_frame)
+        assert annotate_frame_by_matches(frame, coupons_list(1, 1), 1).equals(target_frame)
 
     @pytest.mark.parametrize("tree_in,tree_out,text_out", [
         (lf('json_tree1'), lf('collapsed_json_tree1'), "a"),
@@ -378,11 +375,25 @@ class TestGenerateCouponSelectionDs:
     def test_ds_gen__samples_from_entry(self, fmt, frame_joint, as_json, tgt):
         assert _ds_gen__samples_from_entry(fmt, frame_joint, frame_coupons(fmt), as_json) == tgt
 
-    @pytest.mark.parametrize("id_val,tgt_tree", [
-        (1, lf('ptree2')),
-        (2, lf('ptree4')),
-        (3, ({}, False)),
+    @pytest.mark.parametrize("input_list", [
+        ['a', 'b', 'v'],
+        [],
+        ['a', 'ab', 'abc'],
+        ['a', 'def', 'ab', 'd', 'abc', 'de']
     ])
-    def test_ds_gen__construct_prefix_tree_for_coupon_frame(self, id_val, tgt_tree):
-        fc = frame_coupons(fmt=1)
-        assert _ds_gen__construct_prefix_tree_for_coupon_frame(fc[fc[COL_GROUPBY] == id_val], 1) == tgt_tree
+    def test_ds_gen__toposort_by_prefixes(self, input_list: List[str]):
+        sorted_list = _ds_gen__toposort_by_prefixes(input_list)
+        assert set(sorted_list) == set(range(len(input_list)))
+
+        for ix, i1 in enumerate(sorted_list):
+            for i2 in sorted_list[ix+1:]:
+                assert not input_list[i2].startswith(input_list[i1])
+
+    @pytest.mark.parametrize('string1,string2,starts,ends,res', [
+        ('abcdef', 'bc', [0, 1, 5], [2, 4], 1),
+        ('abcdef', 'bc', [0, 1, 5], [4, 3], -1),
+        ('xyz', 'ds', [0, 1, 2], [0, 1, 2], -1),
+        ('abc', 'abc', [0], [2], 0)
+    ])
+    def test_ds_gen__find_given_start_end(self, string1: str, string2: str, starts: List[int], ends: List[int], res: int):
+        assert _ds_gen__find_given_starts_ends(string1, string2, starts, ends) == res

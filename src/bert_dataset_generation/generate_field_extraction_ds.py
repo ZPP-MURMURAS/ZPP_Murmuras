@@ -78,7 +78,7 @@ def publish_to_hub(samples: List[List[Tuple[List[str], List[int]]]], save_name: 
             grouped[name][0].extend(texts)
             grouped[name][1].extend(labels)
         for k, v in grouped.items():
-            grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]})
+            grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]}, features=features)
         dataset_dict = DatasetDict(grouped)
 
     login(token=apikey)
@@ -89,7 +89,7 @@ def publish_to_hub(samples: List[List[Tuple[List[str], List[int]]]], save_name: 
     dataset_dict.push_to_hub(save_name, private=True)
 
 
-def __samples_from_entry_2(coupons_frame: pd.DataFrame, seed: int) -> List[Tuple[List[str], List[int]]]:
+def __samples_from_entry(coupons_frame: pd.DataFrame, seed: int) -> List[Tuple[List[str], List[int]]]:
     """
     Extracts samples from a single entry in the config file. This strategy is based on DM dataset from coupons big.
 
@@ -146,22 +146,6 @@ def __samples_from_entry_2(coupons_frame: pd.DataFrame, seed: int) -> List[Tuple
     return samples
 
 
-def __samples_from_entry(fmt: int, coupons_frame: pd.DataFrame, seed: int) -> List[Tuple[List[str], List[int]]]:
-    """
-    Extracts samples from a single entry in the config file.
-
-    :param fmt: format of the coupons frame
-    :param coupons_frame: pandas DataFrame with coupons
-    :param seed: random seed
-    :return: list of samples
-    """
-    if fmt == 2:
-        return __samples_from_entry_2(coupons_frame, seed)
-    else:
-        print(f"Unsupported format: {fmt}")
-        return []
-
-
 if __name__ == '__main__':
     HF_HUB_KEY = getenv('HF_HUB_KEY')
     assert len(sys.argv) == 5, f"usage: {sys.argv[0]} <config_path> <ds_name> <create_repo: y/n> <custom_split: y/n>"
@@ -189,6 +173,6 @@ if __name__ == '__main__':
     examples = []
     for fmt, coupon_path in zip(formats, coupon_paths, strict=True):
         coupons_frame = pd.read_csv(coupon_path)
-        examples.append(__samples_from_entry(fmt, coupons_frame, seed=42))
+        examples.append(__samples_from_entry(coupons_frame, seed=42))
 
     publish_to_hub(examples, f"zpp-murmuras/{ds_name}", HF_HUB_KEY, create_repo == 'y', splits)
