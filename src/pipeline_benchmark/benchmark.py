@@ -445,6 +445,12 @@ def parse_args() -> argparse.Namespace:
                         default='Edeka+Penny',
                         help='Dataset split to use'
     )
+    parser.add_argument('-t',
+                        '--threshold',
+                        type=float,
+                        default=0.5,
+                        help='Threshold to match coupons'
+    )
     args = parser.parse_args()
     return args
 
@@ -458,6 +464,7 @@ if __name__ == '__main__':
     dataset_name = args.dataset_name
     cache_dir = args.cache_dir
     split = args.split
+    threshold = args.threshold
 
     dataset = load_dataset(dataset_name, split=split, cache_dir=cache_dir)
 
@@ -473,6 +480,7 @@ if __name__ == '__main__':
 
         similarity, lonely_coupons = judge_pipeline(expected_coupons,
                                                     generated_coupons,
+                                                    threshold,
                                                     not is_extended)
 
         percent_similarity = round(similarity * 100, 3)
