@@ -1,38 +1,38 @@
 {
   "frames": [
     {
-      "content": "datasets/coupons_big_cleared/edeka/edeka_content.csv",
-      "coupons": "datasets/coupons_big_cleared/edeka/edeka_coupons.csv",
+      "content": "datasets/coupons_big_rev2/edeka/edeka_content.csv",
+      "coupons": "datasets/coupons_big_rev2/edeka/edeka_coupons.csv",
       "format": 1,
       "split": "edeka"
     },
     {
-      "content": "datasets/coupons_big_cleared/dm/dm_content.csv",
-      "coupons": "datasets/coupons_big_cleared/dm/dm_coupons.csv",
+      "content": "datasets/coupons_big_rev2/dm/dm_content.csv",
+      "coupons": "datasets/coupons_big_rev2/dm/dm_coupons.csv",
       "format": 2,
       "split": "dm"
     },
     {
-      "content": "datasets/coupons_big_cleared/lidl/lidl_content.csv",
-      "coupons": "datasets/coupons_big_cleared/lidl/lidl_coupons.csv",
+      "content": "datasets/coupons_big_rev2/lidl/lidl_content.csv",
+      "coupons": "datasets/coupons_big_rev2/lidl/lidl_coupons.csv",
       "format": 1,
       "split": "lidl"
     },
     {
-      "content": "datasets/coupons_big_cleared/penny/penny_content.csv",
-      "coupons": "datasets/coupons_big_cleared/penny/penny_coupons.csv",
+      "content": "datasets/coupons_big_rev2/penny/penny_content.csv",
+      "coupons": "datasets/coupons_big_rev2/penny/penny_coupons.csv",
       "format": 1,
       "split": "penny"
     },
     {
-      "content": "datasets/coupons_big_cleared/rewe/rewe_content.csv",
-      "coupons": "datasets/coupons_big_cleared/rewe/rewe_coupons.csv",
+      "content": "datasets/coupons_big_rev2/rewe/rewe_content.csv",
+      "coupons": "datasets/coupons_big_rev2/rewe/rewe_coupons.csv",
       "format": 1,
       "split": "rewe"
     },
     {
-      "content": "datasets/coupons_big_cleared/rossmann/rossmann_content.csv",
-      "coupons": "datasets/coupons_big_cleared/rossmann/rossmann_coupons.csv",
+      "content": "datasets/coupons_big_rev2/rossmann/rossmann_content.csv",
+      "coupons": "datasets/coupons_big_rev2/rossmann/rossmann_coupons.csv",
       "format": 1,
       "split": "rossmann"
     }
