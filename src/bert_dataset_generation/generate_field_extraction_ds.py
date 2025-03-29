@@ -78,7 +78,7 @@ def publish_to_hub(samples: List[List[Tuple[List[str], List[int]]]], save_name: 
             grouped[name][0].extend(texts)
             grouped[name][1].extend(labels)
         for k, v in grouped.items():
-            grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]})
+            grouped[k] = Dataset.from_dict({"texts": v[0], "labels": v[1]}, features=features)
         dataset_dict = DatasetDict(grouped)
 
     login(token=apikey)
