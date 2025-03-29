@@ -287,9 +287,9 @@ def compare_coupons(coupon_1: Optional[Coupon],
                                                                VALIDITY_WEIGHT)
 
 
-def similarity_matrix(expected_coupons: List[Union[Coupon, CouponSimple]],
-                              generated_coupons: List[Union[Coupon, CouponSimple]],
-                              compare_function: Callable) -> np.ndarray:
+def compute_similarity_matrix(expected_coupons: List[Union[Coupon, CouponSimple]],
+                      generated_coupons: List[Union[Coupon, CouponSimple]],
+                      compare_function: Callable) -> np.ndarray:
     """
     This function will compute the similarity matrix between the expected and generated
     coupons using the compare_function to compare the coupons. The similarity matrix
@@ -333,17 +333,23 @@ def greedy_matching(similarity_matrix: np.ndarray, threshold: float) -> tuple[Li
     generated_matched = [False] * similarity_matrix.shape[1]
 
     rows, cols = np.indices(similarity_matrix.shape)
-    compressed = np.column_stack((similarity_matrix.ravel(), rows.ravel(), cols.ravel()))
-    sorted_desc_compressed = compressed[np.argsort(-compressed[:, 0])]
+    compressed_vals = similarity_matrix.ravel()
+    compressed_coords = np.column_stack((rows.ravel(), cols.ravel()))
+    argsort_inds = np.argsort(-compressed_vals)
 
-    for element in sorted_desc_compressed:
-        if element[0] < threshold:
+    sort_desc_vals = compressed_vals[argsort_inds]
+    sort_desc_coords = compressed_coords[argsort_inds]
+
+    for val, coords in zip(sort_desc_vals, sort_desc_coords, strict=True):
+        if val < threshold:
             break
-            
-        if not expected_matched[element[1]] and not generated_matched[element[2]]:
-            expected_matched[element[1]] = True
-            generated_matched[element[2]] = True
-            matched_coupons.append(float(element[0]))
+
+        x = coords[0]
+        y = coords[1]
+        if not expected_matched[x] and not generated_matched[y]:
+            expected_matched[x] = True
+            generated_matched[y] = True
+            matched_coupons.append(val)
 
     return matched_coupons, expected_matched.count(False), generated_matched.count(False)
 
@@ -368,13 +374,13 @@ def judge_pipeline(expected_coupons: List[Union[Coupon, CouponSimple]],
     else:
         compare_function = compare_coupons
 
-    similarity_matrix_ = similarity_matrix(expected_coupons, generated_coupons, compare_function)
-    matched_coupons, missed, halucinated = greedy_matching(similarity_matrix_, threshold)
+    similarity_matrix = compute_similarity_matrix(expected_coupons, generated_coupons, compare_function)
+    matched_coupons, missed, halucinated = greedy_matching(similarity_matrix, threshold)
 
     if len(matched_coupons) + missed == 0:
         return 1.0, halucinated
     else:
-        return np.sum(matched_coupons) / len(matched_coupons) + missed, halucinated
+        return np.sum(matched_coupons) / (len(matched_coupons) + missed), halucinated
 
 
 def run_pipeline(pipeline_command: str,
@@ -451,13 +457,17 @@ def parse_args() -> argparse.Namespace:
                         default=0.5,
                         help='Threshold to match coupons'
     )
+    parser.add_argument('-l',
+                        '--log_file',
+                        type=str,
+                        default='benchmark.log',
+                        help='Log file'
+    )
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename="benchmark.log", level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
     args = parse_args()
     pipeline = args.pipeline
     is_extended = args.extended
@@ -465,6 +475,9 @@ if __name__ == '__main__':
     cache_dir = args.cache_dir
     split = args.split
     threshold = args.threshold
+    log_file = args.log_file
+
+    logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     dataset = load_dataset(dataset_name, split=split, cache_dir=cache_dir)
 
