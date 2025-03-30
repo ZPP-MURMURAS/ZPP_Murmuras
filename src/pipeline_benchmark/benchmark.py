@@ -322,10 +322,7 @@ def compute_similarity_matrix(expected_coupons: List[Union[Coupon, CouponSimple]
 def greedy_matching(similarity_matrix: np.ndarray, threshold: float) -> tuple[List[float], int, int]:
     """
     This function will perform a greedy matching between the expected and generated
-    coupons using the similarity matrix. The function will return a list of similarities of the 
-    matched coupons, the number of unmatched coupons in the expected list, 
-    and the number of unmatched coupons in the generated list. The function
-    will use a threshold to decide if a coupon can be matched with another coupon.
+    coupons using the similarity matrix. For more details on the algorithm, see the README.md file.
 
     :param similarity_matrix: A numpy array that represents the similarity matrix between the coupons
     :param threshold: A float value that represents the minimum similarity to match two coupons
@@ -365,8 +362,8 @@ def compute_similarities(expected_coupons: List[Union[Coupon, CouponSimple]],
                          threshold: float,
                          is_simple: bool) -> tuple[List[float], int, int]:
     """
-    This function will judge the pipeline by comparing the expected coupons with the
-    generated ones.
+    This function will compute similarities between the expected and generated coupons.
+    For more details on the algorithm, see the README.md file.
     
     :param expected_coupons: A list of Coupon objects that represent the expected coupons
     :param generated_coupons: A list of Coupon objects that represent the generated coupons
