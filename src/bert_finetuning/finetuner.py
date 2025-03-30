@@ -258,10 +258,10 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     if wandb_log != '':
         wandb.init(
             project=wandb_log,
-            name= wandb_log + "-" + run_name,
+            name= run_name,
             config={
                 "learning_rate": 2e-5,
-                "epochs": 15,
+                "epochs": 10,
                 "weight_decay": 0.01,
                 "model_name": "bert_multiling_cased",
             }
@@ -273,7 +273,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=lr_container.lr,
-        num_train_epochs=15 if not curriculum_learning else 3,
+        num_train_epochs=10 if not curriculum_learning else 3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
         logging_dir="./logs",  # Directory for logs
@@ -335,3 +335,4 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             print_vibe_check(model, dataset)
         if push_to_hub:
             trainer.push_to_hub("Training completed")
+    wandb.finish()
