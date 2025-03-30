@@ -5,7 +5,7 @@ import numpy as np
 import logging
 from unittest.mock import patch, mock_open
 
-from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, compare_prices, compare_coupons, compare_coupons_simple, compute_similarity_matrix, greedy_matching, judge_pipeline
+from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, compare_prices, compare_coupons, compare_coupons_simple, compute_similarity_matrix, greedy_matching, compute_similarities
 
 
 class TestBenchmark:
@@ -107,19 +107,19 @@ class TestBenchmark:
         assert np.allclose(compute_similarity_matrix(expected_coupons, generated_coupons, compare_function), expected_matrix, atol=0.1)
 
 
-    @pytest.mark.parametrize("similarity_matrix, threshold, expected_similarities, expected_n_missed, expected_n_halucinated", [
+    @pytest.mark.parametrize("similarity_matrix, threshold, expected_similarities, expected_missed, expected_halucinated", [
         (np.array([[1.0, 0.8], [0.8, 1.0]]), 0.5, [1.0, 1.0], 0, 0),
         (np.array([[0.4], [0.2]]), 0.5, [], 2, 1),
         (np.array([[0.4, 0.6, 0.8], [0.2, 0.5, 0.9]]), 0.5, [0.9, 0.6], 0, 1),
     ])
-    def test_greedy_matching(self, similarity_matrix, threshold, expected_similarities, expected_n_missed, expected_n_halucinated):
-        similarities, n_missed, n_halucinated = greedy_matching(similarity_matrix, threshold)
+    def test_greedy_matching(self, similarity_matrix, threshold, expected_similarities, expected_missed, expected_halucinated):
+        similarities, missed, halucinated = greedy_matching(similarity_matrix, threshold)
         assert similarities == expected_similarities
-        assert n_missed == expected_n_missed
-        assert n_halucinated == expected_n_halucinated
+        assert missed == expected_missed
+        assert halucinated == expected_halucinated
 
 
-    def test_judge_pipeline(self):
+    def test_compute_similarities(self):
         expected_coupons = [
             CouponSimple("Product A", "10.0", "2025-01-01", "active"),
             CouponSimple("Product B", "15.0", "2025-02-01", "active")
@@ -128,6 +128,7 @@ class TestBenchmark:
             CouponSimple("Product B", "15.0", "2025-02-01", "active"),
             CouponSimple("Dziekan", "całka", "piwo", "sesja")
         ]
-        similarity, n_halucinated = judge_pipeline(expected_coupons, generated_coupons, 0.5, True)
-        assert np.isclose(similarity, 0.5, atol=0.1)
-        assert n_halucinated == 1
+        similarities, missed, halucinated = compute_similarities(expected_coupons, generated_coupons, 0.5, True)
+        assert np.allclose(similarities, [1.0], atol=0.1)
+        assert halucinated == 1
+        assert missed == 1
