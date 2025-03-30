@@ -29,7 +29,7 @@ llama-ds-wth - dataset with one_input_multiple_outputs_wthrequest
     w - meaning with requests to llama
     wth - meaning without requests to llama
 
-Henceforth, **llama-ds-w** refers solely to one_input_multiple_outputs_wrequest, while **llama-ds-wth** refers solely to one_input_multiple_outputs_wthrequest. The difference between these two is described below in the section on BERT.
+Henceforth, **llama-ds-w** refers solely to one_input_multiple_outputs_wrequest, while **llama-ds-wth** refers solely to one_input_multiple_outputs_wthrequest. 
 
 #### BERT datasets
 We are using two types of datasets for bert models:
@@ -40,6 +40,8 @@ We are using two types of datasets for bert models:
 BERT datasets are named as follows:
 
     **bert-{selection / extraction}-ds.{json / pl}**
+
+The difference between these two is described below in the section on BERT.
 
 ## CSV file formats
 We have two types of CSV file formats:
@@ -87,7 +89,28 @@ Each pipeline receives as input a .csv file containing the following headers: "v
 
 The selection pass will output the identified coupons in a .csv file that is of the same format as the ground truth file described above. 
 
-The extraction pass takes in the output of the selection pass and outputs a list of coupons in the following format:
+The extraction pass takes in the output of the selection pass and outputs a list of tags and the text corresponding to each tag. The tags are as follows:
+```txt
+PRODUCT-NAME
+DISCOUNT-TEXT
+VALIDITY-TEXT
+ACTIVATION-TEXT
+```
+
+
+The output looks like this:
+```python
+[
+    {"ACTIVATION-TEXT": "..."}, 
+    {"DISCOUNT-TEXT": "..."},
+    {"PRODUCT-NAME": "..."},
+    {"VALIDITY-TEXT": "..."}
+    ...
+]
+```
+Note that the order of the tags is can differ. 
+
+The pipeline outputs a list of coupons in the following format:
 ```
   coupon = {"product_name": "...", 
               "discount_text": "...", 
@@ -97,7 +120,7 @@ The extraction pass takes in the output of the selection pass and outputs a list
 
 ## BERT models
 Currently the BERT model accepts two formats:
-1. Raw, concatenated texts from the `test` field in the .csv content_generic file.
+1. Raw, concatenated texts from the `test` field in the .csv content_generic file. This is the `plain` format.
 2. An XML tree taken from the content_generic .csv file, encoded in a JSON as shown below:
 
 ```json
@@ -131,11 +154,9 @@ ___
 The input for the Llama models has the following format:
 ```python
 {
-    "text": "{prompt for the llama model}
-            ### Input: 
-            {input strings}
-            ### Output:
-            {corresponding output strings}" 
+    'coupon text extracted for one timestamp (see function prepare_input_data)'
+    +
+    '## Response:\n' 
 }
 ```
 
