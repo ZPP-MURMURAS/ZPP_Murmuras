@@ -26,7 +26,7 @@ finetune_image = (
 )
 
 
-def push_model_to_hub(model, model_name: str, hf_token: str) -> None:
+def push_model_to_hub(model: callable, model_name: str, hf_token: str) -> None:
     model_repo = 'zpp-murmuras/' + model_name
     model.push_to_hub(model_repo, token=hf_token)
     tokenizer = AutoTokenizer.from_pretrained(MODEL_CHECKPOINT)
@@ -42,7 +42,7 @@ def define_name(base: str, dataset_name: str) -> str:
     return model_name + '-' + dataset_name
 
 
-def load_model(labels):
+def load_model(labels: list):
     id2label, label2id = ft.two_way_id2label(labels)
     model = AutoModelForTokenClassification.from_pretrained(
         MODEL_CHECKPOINT,
