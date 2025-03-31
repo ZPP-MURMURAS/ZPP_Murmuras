@@ -261,7 +261,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
             name= run_name,
             config={
                 "learning_rate": 2e-5,
-                "epochs": 10,
+                "epochs": 30,
                 "weight_decay": 0.01,
                 "model_name": "bert_multiling_cased",
             }
@@ -273,7 +273,7 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=lr_container.lr,
-        num_train_epochs=10 if not curriculum_learning else 3,
+        num_train_epochs=30 if not curriculum_learning else 3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
         logging_dir="./logs",  # Directory for logs

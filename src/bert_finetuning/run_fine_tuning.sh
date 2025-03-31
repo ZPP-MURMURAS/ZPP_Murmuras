@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a DATASETS=("coupon_select_big_json_rev2" "coupon_select_big_plain_rev2")
+declare -a DATASETS=("bert-extraction-ds")
 
 export HUGGING_FACE_TOKEN=
 export WANDB_KEY=

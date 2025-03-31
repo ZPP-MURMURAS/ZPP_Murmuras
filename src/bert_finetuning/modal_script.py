@@ -68,12 +68,13 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
 
     model = load_model(labels)
 
-    model_name = 'bert-selection'
-    model_name += '-json'
-    model_name += '-curr-nolr'
+    #model_name = 'bert-selection'
+    #model_name += '-json'
+    #model_name += '-curr-nolr'
     #model_name += '-no-curr'
-    model_name += '-rev2'
-    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_selection_ft_2', run_name=model_name, curriculum_learning=True, splits=10)
+    #model_name += '-rev2'
+    model_name = 'bert_extraction_general'
+    ft.train_model(model, train_test_dataset, labels, wandb_log='bert_extraction_ft_2', run_name=model_name, curriculum_learning=False, splits=10)
     if push_to_hub:
         push_model_to_hub(model, model_name, hf_token)
 
@@ -100,8 +101,9 @@ def run_fine_tuning_per_app(hf_token, wandb_key, dataset_name, push_to_hub=False
 
             model = load_model(labels)
 
-            model_name = define_name('bert-selection', ds_name)
-            ft.train_model(model, train_test_dataset, labels, wandb_log='bert_selection_single_app_ft', run_name=model_name, curriculum_learning=False, splits=10)
+            #model_name = define_name('bert-selection', ds_name)
+            model_name = 'bert_extraction_single_app' + '-' + ds_name
+            ft.train_model(model, train_test_dataset, labels, wandb_log='bert_extraction_single_app_ft', run_name=model_name, curriculum_learning=False, splits=10)
             if push_to_hub:
                 push_model_to_hub(model, model_name, hf_token)
 
@@ -128,8 +130,9 @@ def run_fine_tuning_add_solo(hf_token, wandb_key, dataset_name, push_to_hub=Fals
                 'test': Dataset.from_dict({'texts': test_texts, 'labels': test_labels}, features=ds.features)
             })
 
-            model_name = define_name('bert-selection-add-solo', ds_name)
-            ft.train_model(model, train_test_dataset, labels, wandb_log='bert_selection_add_solo_ft', run_name=model_name, curriculum_learning=False, splits=10)
+            #model_name = define_name('bert-selection-add-solo', ds_name)
+            model_name = 'bert_extraction_add_solo' + '-' + ds_name
+            ft.train_model(model, train_test_dataset, labels, wandb_log='bert_extraction_add_solo_ft', run_name=model_name, curriculum_learning=False, splits=10)
             if push_to_hub:
                 push_model_to_hub(model, model_name, hf_token)
 
@@ -161,8 +164,9 @@ def run_fine_tuning_add_grow(hf_token, wandb_key, dataset_name, push_to_hub=Fals
             total_dataset['test'] = total_dataset['test'].shuffle(seed=42)
 
 
-            model_name = define_name('bert-selection-add-grow', ds_name)
-            ft.train_model(model, total_dataset, labels, wandb_log='bert_selection_add_grow_ft', run_name=model_name, curriculum_learning=False, splits=10)
+            #model_name = define_name('bert-selection-add-grow', ds_name)
+            model_name = 'bert_extraction_add_grow' + '-' + ds_name
+            ft.train_model(model, total_dataset, labels, wandb_log='bert_extraction_add_grow_ft', run_name=model_name, curriculum_learning=False, splits=10)
             if push_to_hub:
                 push_model_to_hub(model, model_name, hf_token)
 
@@ -172,7 +176,7 @@ def main():
     hf_token = os.getenv('HUGGING_FACE_TOKEN')
     wandb_key = os.getenv('WANDB_KEY')
     dataset_name = os.getenv('DATASET_NAME')
-    #run_fine_tuning.remote(hf_token, wandb_key, dataset_name, True)
-    #run_fine_tuning_per_app.remote(hf_token, wandb_key, dataset_name, True)
-    #run_fine_tuning_add_solo.remote(hf_token, wandb_key, dataset_name, True)
+    run_fine_tuning.remote(hf_token, wandb_key, dataset_name, True)
+    run_fine_tuning_per_app.remote(hf_token, wandb_key, dataset_name, True)
+    run_fine_tuning_add_solo.remote(hf_token, wandb_key, dataset_name, True)
     run_fine_tuning_add_grow.remote(hf_token, wandb_key, dataset_name, True)
