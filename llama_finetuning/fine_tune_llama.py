@@ -1,6 +1,7 @@
 import os
 
 import modal
+from datasets import concatenate_datasets
 
 app = modal.App("example-fine-tuning")
 
@@ -33,7 +34,7 @@ finetune_image = (
     .pip_install("trl")
     .pip_install("transformers")
     .pip_install("datasets")
-    .pip_install("unsloth")
+    .pip_install("unsloth==2025.2.9")
     .pip_install("torch")
     .pip_install("numpy")
     .pip_install("pandas")
@@ -45,7 +46,8 @@ finetune_image = (
 )
 
 def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
-    from unsloth import FastLanguageModel
+    from unsloth import FastLanguageModel, major_version, minor_version
+    print(major_version, minor_version)
     import wandb
 
     wandb.login(key=wandb_key)
@@ -130,9 +132,10 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, aux_eval_d
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no, mode):
     assert mode in ["total", "appwise", "progressive_ft_total", "progressive_ft_separate"]
-    run_name = "llama-3.2-1b-big-appwise"
+    run_name = "llama-3.2-1b-big-prog-sep-w"
     from datasets import load_dataset, concatenate_datasets
     import wandb
+    from random import sample
 
     dataset = load_dataset(HF_ORG + dataset_name, token=hf_token)
     test_data = concatenate_datasets([dataset[split] for split in TEST_SPLITS])
@@ -170,29 +173,29 @@ def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no,
                 run_name_loc = f"{run_name}-prog-{inc_size}-{app}"
                 wandb.login(key=wandb_key)
                 wandb.init(project=wandb_proj, name=run_name_loc)
-                new_train = dataset[f"{app}_train"]
-                ds_train = concatenate_datasets([ds_train, new_train.skip(max(0, len(new_train) - inc_size))])
+                l = len(dataset[f"{app}_train"])
+                ds_train = concatenate_datasets([ds_train, dataset[f"{app}_train"].select(sample(range(l), min(l, inc_size)))])
                 ds_eval = concatenate_datasets([ds_eval, dataset[f"{app}_test"]])
                 train_model(model, tokenizer, run_name_loc, ds_train, ds_eval, test_data, max_seq_length, epoch_no)
                 wandb.finish()
     elif mode == "progressive_ft_separate":
-        app = APP_SPLITS['train'][0]
-        ds_train = dataset[f"{app}_train"]
-        ds_eval = dataset[f"{app}_test"]
         for inc_size in [10, 50, 100]:
+            app = APP_SPLITS['train'][0]
+            ds_train = dataset[f"{app}_train"]
+            ds_eval = dataset[f"{app}_test"]
             run_name_loc = f"{run_name}-prog-sep-{inc_size}-{app[0]}"
             model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name_loc, wandb_proj)
             train_model(model, tokenizer, run_name_loc, ds_train, ds_eval, ds_eval, max_seq_length, epoch_no)
             wandb.finish()
-            for app in APP_SPLITS['train'][1:]:
+            for i, app in enumerate(APP_SPLITS['train'][1:]):
                 run_name_loc = f"{run_name}-prog-sep-{inc_size}-{app}"
                 wandb.login(key=wandb_key)
                 wandb.init(project=wandb_proj, name=run_name_loc)
-                new_train = dataset[f"{app}_train"]
-                ds_train = new_train.skip(max(0, len(new_train) - inc_size))
+                l = len(dataset[f"{app}_train"])
+                ds_train = dataset[f"{app}_train"].select(sample(range(l), min(l, inc_size)))
                 ds_eval_new = dataset[f"{app}_test"]
                 train_model(model, tokenizer, run_name_loc, ds_train, ds_eval_new, ds_eval, max_seq_length, epoch_no)
-                ds_eval = concatenate_datasets([ds_eval, ds_eval_new])
+                ds_eval = concatenate_datasets([dataset[f"{a}_test"] for a in APP_SPLITS['train'][:i + 2]])
                 wandb.finish()
 
 
