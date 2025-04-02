@@ -5,12 +5,12 @@ from datasets import concatenate_datasets
 
 app = modal.App("example-fine-tuning")
 
-SAVE_AS_GGUF = False
-SAVE_AS_UNSLOTH = False
+SAVE_AS_GGUF = True
+SAVE_AS_UNSLOTH = True
 
 HF_ORG = 'zpp-murmuras/'
 
-FT_MODE = 'progressive_ft_separate'
+FT_MODE = 'progressive_ft_total'
 
 # list of quantization options to use and push to repo
 # for all possible quantization options see https://docs.unsloth.ai/basics/running-and-saving-models/saving-to-gguf
@@ -74,7 +74,7 @@ def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
 
     return model, tokenizer
 
-def train_model(model, tokenizer, run_name, training_data, eval_data, aux_eval_data, max_seq_length, epoch_no):
+def train_model(model, tokenizer, run_name, training_data, eval_data: dict, max_seq_length, epoch_no):
     from trl import SFTTrainer
     from transformers import TrainingArguments
     from unsloth import is_bfloat16_supported
@@ -99,10 +99,7 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, aux_eval_d
         model=model,
         tokenizer=tokenizer,
         train_dataset=training_data,
-        eval_dataset={
-            "eval": eval_data,
-            "test": aux_eval_data,
-        },
+        eval_dataset=eval_data,
         dataset_text_field="text",
         #data_collator=collator,
         max_seq_length=max_seq_length,
@@ -132,10 +129,13 @@ def train_model(model, tokenizer, run_name, training_data, eval_data, aux_eval_d
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no, mode):
     assert mode in ["total", "appwise", "progressive_ft_total", "progressive_ft_separate"]
-    run_name = "llama-3.2-1b-big-prog-sep-w"
+    run_name = "llama-w-prog"
     from datasets import load_dataset, concatenate_datasets
     import wandb
-    from random import sample
+    from random import sample, seed
+    from time import time_ns
+
+    seed(time_ns())
 
     dataset = load_dataset(HF_ORG + dataset_name, token=hf_token)
     test_data = concatenate_datasets([dataset[split] for split in TEST_SPLITS])
@@ -144,31 +144,26 @@ def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no,
         model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name, wandb_proj)
         training_data = concatenate_datasets([dataset[split] for split in TRAIN_SPLITS])
         eval_data = concatenate_datasets([dataset[split] for split in EVAL_SPLITS])
-        train_model(model, tokenizer, run_name, training_data, eval_data, test_data, max_seq_length, epoch_no)
-
-        if SAVE_AS_UNSLOTH:
-            model.push_to_hub(HF_ORG + run_name.replace(' ', '-'), token=hf_token, tokenizer=tokenizer, private=True)
-
-        if SAVE_AS_GGUF:
-            for q in TARGET_QUANTIZATION_OPTIONS:
-                model.push_to_hub_gguf(HF_ORG + run_name.replace(' ', '-') + "-gguf", token=hf_token, quantization_method=q, tokenizer=tokenizer, private=True)
+        train_model(model, tokenizer, run_name, training_data, {'eval': eval_data, 'test': test_data}, max_seq_length, epoch_no)
     elif mode == "appwise":
         for app in APP_SPLITS['train']:
             model, tokenizer = load_model(model_name, max_seq_length, wandb_key, f"{run_name}-{app}", wandb_proj)
             ds_train = dataset[f"{app}_train"]
             ds_eval = dataset[f"{app}_test"]
-            train_model(model, tokenizer, f"{run_name}-{app}", ds_train, ds_eval, test_data, max_seq_length, epoch_no)
+            train_model(model, tokenizer, f"{run_name}-{app}", ds_train, {'eval': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
             wandb.finish()
+        return # do not save the model
     elif mode == "progressive_ft_total":
         apps_used = [APP_SPLITS['train'][0]]
         ds_train = dataset[f"{apps_used[0]}_train"]
         ds_eval = dataset[f"{apps_used[0]}_test"]
-        for inc_size in [10, 50, 100]:
+        for inc_size in [15, 50, 100]:
             run_name_loc = f"{run_name}-prog-{inc_size}-{apps_used[0]}"
             model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name_loc, wandb_proj)
-            train_model(model, tokenizer, run_name_loc, ds_train, ds_eval, test_data, max_seq_length, epoch_no)
+            train_model(model, tokenizer, run_name_loc, ds_train, {'eval': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
             wandb.finish()
-            ds_train = ds_train.skip(max(0, len(ds_train) -  inc_size))
+            l = len(ds_train)
+            ds_train = ds_train.select(sample(range(l), min(l, inc_size)))
             for app in APP_SPLITS['train'][1:]:
                 run_name_loc = f"{run_name}-prog-{inc_size}-{app}"
                 wandb.login(key=wandb_key)
@@ -176,27 +171,36 @@ def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no,
                 l = len(dataset[f"{app}_train"])
                 ds_train = concatenate_datasets([ds_train, dataset[f"{app}_train"].select(sample(range(l), min(l, inc_size)))])
                 ds_eval = concatenate_datasets([ds_eval, dataset[f"{app}_test"]])
-                train_model(model, tokenizer, run_name_loc, ds_train, ds_eval, test_data, max_seq_length, epoch_no)
+                train_model(model, tokenizer, run_name_loc, ds_train, {'eval': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
                 wandb.finish()
     elif mode == "progressive_ft_separate":
-        for inc_size in [10, 50, 100]:
+        for inc_size in [15, 50, 100]:
             app = APP_SPLITS['train'][0]
             ds_train = dataset[f"{app}_train"]
             ds_eval = dataset[f"{app}_test"]
             run_name_loc = f"{run_name}-prog-sep-{inc_size}-{app[0]}"
             model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name_loc, wandb_proj)
-            train_model(model, tokenizer, run_name_loc, ds_train, ds_eval, ds_eval, max_seq_length, epoch_no)
+            train_model(model, tokenizer, run_name_loc, ds_train, {'eval_curr': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
             wandb.finish()
-            for i, app in enumerate(APP_SPLITS['train'][1:]):
+            for i in range(len(APP_SPLITS['train']) - 1):
+                app = APP_SPLITS['train'][i + 1]
                 run_name_loc = f"{run_name}-prog-sep-{inc_size}-{app}"
                 wandb.login(key=wandb_key)
                 wandb.init(project=wandb_proj, name=run_name_loc)
                 l = len(dataset[f"{app}_train"])
-                ds_train = dataset[f"{app}_train"].select(sample(range(l), min(l, inc_size)))
+                ds_train = dataset[f"{app}_train"].select(sample(range(l), min(l, inc_size)),)
                 ds_eval_new = dataset[f"{app}_test"]
-                train_model(model, tokenizer, run_name_loc, ds_train, ds_eval_new, ds_eval, max_seq_length, epoch_no)
+                print(ds_train, ds_eval_new, ds_eval)
+                train_model(model, tokenizer, run_name_loc, ds_train, {'eval_curr': ds_eval_new, 'eval_old': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
                 ds_eval = concatenate_datasets([dataset[f"{a}_test"] for a in APP_SPLITS['train'][:i + 2]])
                 wandb.finish()
+
+    if SAVE_AS_UNSLOTH:
+        model.push_to_hub(HF_ORG + run_name.replace(' ', '-'), token=hf_token, tokenizer=tokenizer, private=True)
+
+    if SAVE_AS_GGUF:
+        for q in TARGET_QUANTIZATION_OPTIONS:
+            model.push_to_hub_gguf(HF_ORG + run_name.replace(' ', '-') + "-gguf", token=hf_token, quantization_method=q, tokenizer=tokenizer, private=True)
 
 
 @app.local_entrypoint()
