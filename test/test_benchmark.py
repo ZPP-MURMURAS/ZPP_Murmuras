@@ -5,7 +5,7 @@ import numpy as np
 import logging
 from unittest.mock import patch, mock_open
 
-from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, compare_prices, compare_coupons, compare_coupons_simple, judge_pipeline
+from src.pipeline_benchmark.benchmark import Coupon, CouponSimple, get_coupons, compare_prices, compare_coupons, compare_coupons_simple, compute_similarity_matrix, greedy_matching, compute_similarities
 
 
 class TestBenchmark:
@@ -89,15 +89,46 @@ class TestBenchmark:
                           expected_score,
                           atol=0.1)
 
-    def test_judge_pipeline(self):
+    @pytest.mark.parametrize("expected_coupons, generated_coupons, compare_function, expected_matrix", [
+        ([CouponSimple("Product A", "10.0", "2025-01-01", "active"),
+          CouponSimple("Product B", "15.0", "2025-02-01", "active")],
+         [CouponSimple("Product A", "10.0", "2025-01-01", "active"),
+          CouponSimple("Product B", "15.0", "2025-02-01", "active")],
+         compare_coupons_simple,
+         [[1.0, 0.8], [0.8, 1.0]]),
+        ([CouponSimple("Product A", "10.0", "2025-01-01", "active"),
+          CouponSimple("Product B", "15.0", "2025-02-01", "active")],
+         [CouponSimple("Dziekan", "całka", "piwo", "sesja")],
+         compare_coupons_simple,
+         [[0.0], 
+          [0.0]]),
+    ])
+    def test_similarity_matrix(self, expected_coupons, generated_coupons, compare_function, expected_matrix):
+        assert np.allclose(compute_similarity_matrix(expected_coupons, generated_coupons, compare_function), expected_matrix, atol=0.1)
+
+
+    @pytest.mark.parametrize("similarity_matrix, threshold, expected_similarities, expected_missed, expected_halucinated", [
+        (np.array([[1.0, 0.8], [0.8, 1.0]]), 0.5, [1.0, 1.0], 0, 0),
+        (np.array([[0.4], [0.2]]), 0.5, [], 2, 1),
+        (np.array([[0.4, 0.6, 0.8], [0.2, 0.5, 0.9]]), 0.5, [0.9, 0.6], 0, 1),
+    ])
+    def test_greedy_matching(self, similarity_matrix, threshold, expected_similarities, expected_missed, expected_halucinated):
+        similarities, missed, halucinated = greedy_matching(similarity_matrix, threshold)
+        assert similarities == expected_similarities
+        assert missed == expected_missed
+        assert halucinated == expected_halucinated
+
+
+    def test_compute_similarities(self):
         expected_coupons = [
-            Coupon("Product A", "10.0", "20.0", [10], [5], ["2025-01-01"]),
-            Coupon("Product B", "15.0", "25.0", [15], [10], ["2025-02-01"])
+            CouponSimple("Product A", "10.0", "2025-01-01", "active"),
+            CouponSimple("Product B", "15.0", "2025-02-01", "active")
         ]
         generated_coupons = [
-            Coupon("Product A", "10.0", "20.0", [10], [5], ["2025-01-01"])
+            CouponSimple("Product B", "15.0", "2025-02-01", "active"),
+            CouponSimple("Dziekan", "całka", "piwo", "sesja")
         ]
-        similarity, lonely = judge_pipeline(expected_coupons,
-                                            generated_coupons, False)
-        assert np.isclose(similarity, 0.5, atol=0.1)
-        assert lonely == 1
+        similarities, missed, halucinated = compute_similarities(expected_coupons, generated_coupons, 0.5, True)
+        assert np.allclose(similarities, [1.0], atol=0.1)
+        assert halucinated == 1
+        assert missed == 1

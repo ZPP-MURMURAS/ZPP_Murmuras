@@ -6,10 +6,11 @@ import json
 import sys
 import os
 import logging
+from tqdm import tqdm
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
 from dataclasses import dataclass, field
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Callable
 
 
 @dataclass()
@@ -100,6 +101,8 @@ def get_coupons(json_str: str, is_simple: bool, source_name: str) -> List[Union[
     coupons = []
     for item in data:
         if is_simple:
+            expected_keys = [OUT_COL_SIMP_PRODUCT, OUT_COL_SIMP_DISCOUNT, OUT_COL_SIMP_VALIDITY, OUT_COL_SIMP_ACTIVATION]
+
             if not isinstance(item, dict):
                 logging.warning(source_info + f"Item {item} is not a dictionary.")
                 continue
@@ -107,6 +110,9 @@ def get_coupons(json_str: str, is_simple: bool, source_name: str) -> List[Union[
             if OUT_COL_SIMP_PRODUCT not in item or item[OUT_COL_SIMP_PRODUCT] is None:
                 logging.warning(source_info + f"Item {item} does not contain the product name.")
                 continue
+
+            if set(item.keys()) - set(expected_keys):
+                logging.warning(source_info + f"Item {item} contains unexpected keys.")
 
             coupon = CouponSimple(product_name=item[OUT_COL_SIMP_PRODUCT],
                                   discount_text=item.get(OUT_COL_SIMP_DISCOUNT, ''),
@@ -287,55 +293,95 @@ def compare_coupons(coupon_1: Optional[Coupon],
                                                                VALIDITY_WEIGHT)
 
 
-def judge_pipeline(expected_coupons: List[Coupon],
-                   generated_coupons: List[Coupon],
-                   is_simple: bool) -> tuple[float, int]:
+def compute_similarity_matrix(expected_coupons: List[Union[Coupon, CouponSimple]],
+                      generated_coupons: List[Union[Coupon, CouponSimple]],
+                      compare_function: Callable) -> np.ndarray:
     """
-    This function will judge the pipeline by comparing the expected coupons with the
-    generated ones. The function will return a tuple with the average similarity
-    between the coupons and the number of lonely coupons. The average similarity is
-    calculated by comparing each expected coupon with the most similar generated
-    coupon. The number of lonely coupons is the number of expected coupons that
-    could not be matched with any generated coupon and vice versa. 
+    This function will compute the similarity matrix between the expected and generated
+    coupons using the compare_function to compare the coupons. The similarity matrix
+    will have the same number of rows as the expected coupons and the same number of
+    columns as the generated coupons. The value in the i-th row and j-th column of the
+    matrix will represent the similarity between the i-th expected coupon and the j-th
+    generated coupon.
+
+    :param expected_coupons: A list of Coupon or CouponSimple objects that represent the expected coupons
+    :param generated_coupons: A list of Coupon or CouponSimple objects that represent the generated coupons
+    :param compare_function: The function to use to compare the coupons
+    :return: A numpy array that represents the similarity matrix between the coupons
+    """
+
+    similarity_matrix = np.zeros((len(expected_coupons), len(generated_coupons)))
+    for i, expected_coupon in enumerate(expected_coupons):
+        for j, generated_coupon in enumerate(generated_coupons):
+            similarity_matrix[i, j] = compare_function(expected_coupon,
+                                                       generated_coupon)
+
+    return similarity_matrix
+
+
+def greedy_matching(similarity_matrix: np.ndarray, threshold: float) -> tuple[List[float], int, int]:
+    """
+    This function will perform a greedy matching between the expected and generated
+    coupons using the similarity matrix. For more details on the algorithm, see the README.md file.
+
+    :param similarity_matrix: A numpy array that represents the similarity matrix between the coupons
+    :param threshold: A float value that represents the minimum similarity to match two coupons
+    :return: A tuple with a list of similarities of the matched coupons, 
+    the number of unmatched coupons in the expected list, 
+    and the number of unmatched coupons in the generated list
+    """
+
+    similarities = []
+    expected_matched = [False] * similarity_matrix.shape[0]
+    generated_matched = [False] * similarity_matrix.shape[1]
+
+    rows, cols = np.indices(similarity_matrix.shape)
+    compressed_vals = similarity_matrix.ravel()
+    compressed_coords = np.column_stack((rows.ravel(), cols.ravel()))
+    argsort_inds = np.argsort(-compressed_vals)
+
+    sort_desc_vals = compressed_vals[argsort_inds]
+    sort_desc_coords = compressed_coords[argsort_inds]
+
+    for val, coords in zip(sort_desc_vals, sort_desc_coords, strict=True):
+        if val < threshold:
+            break
+
+        x = coords[0]
+        y = coords[1]
+        if not expected_matched[x] and not generated_matched[y]:
+            expected_matched[x] = True
+            generated_matched[y] = True
+            similarities.append(val)
+
+    return similarities, expected_matched.count(False), generated_matched.count(False)
+
+
+def compute_similarities(expected_coupons: List[Union[Coupon, CouponSimple]],
+                         generated_coupons: List[Union[Coupon, CouponSimple]],
+                         threshold: float,
+                         is_simple: bool) -> tuple[List[float], int, int]:
+    """
+    This function will compute similarities between the expected and generated coupons.
+    For more details on the algorithm, see the README.md file.
     
     :param expected_coupons: A list of Coupon objects that represent the expected coupons
     :param generated_coupons: A list of Coupon objects that represent the generated coupons
+    :param threshold: A float value that represents the minimum similarity to match two coupons
     :param is_simple: A boolean value that indicates if the coupons are in the simple format
-    :return: A tuple with the average similarity between the coupons and the number of lonely coupons
+    :return: A tuple with the list of similarities between the matched coupons,
+    the number of missed coupons, and the number of hallucinated coupons
     """
 
-    generated_coupons = dict(
-        (i, coupon) for i, coupon in enumerate(generated_coupons))
-    lonely_coupons: int = 0
-    similarities: List[float] = []
+    if is_simple:
+        compare_function = compare_coupons_simple
+    else:
+        compare_function = compare_coupons
 
-    for coupon in expected_coupons:
-        max_similarity = 0.0
-        max_coupon: int = -1
+    similarity_matrix = compute_similarity_matrix(expected_coupons, generated_coupons, compare_function)
+    similarities, missed, hallucinated = greedy_matching(similarity_matrix, threshold)
 
-        for i, generated_coupon in generated_coupons.items():
-            if is_simple:
-                similarity = compare_coupons_simple(coupon, generated_coupon)
-            else:
-                similarity = compare_coupons(coupon, generated_coupon)
-            if similarity > max_similarity:
-                max_similarity = similarity
-                max_coupon = i
-
-        if max_coupon == -1:
-            lonely_coupons += 1
-            continue
-
-        del generated_coupons[max_coupon]
-        similarities.append(max_similarity)
-
-    if len(generated_coupons) > 0:
-        lonely_coupons += len(generated_coupons)
-
-    similarities.extend([0.0] * lonely_coupons)
-
-    return (np.mean(similarities) if len(similarities) > 0 else 0.0,
-            lonely_coupons)
+    return similarities, missed, hallucinated
 
 
 def run_pipeline(pipeline_command: str,
@@ -350,7 +396,7 @@ def run_pipeline(pipeline_command: str,
     :param is_simple: A boolean value that indicates if the coupons are in the simple format
     :return: A list of Coupon or CouponSimple objects generated by the pipeline
     """
-    with open(INPUT_FILE, "w") as file:
+    with open(INPUT_FILE, "w", encoding="utf-8") as file:
         file.write(input)
 
     pipeline_command = pipeline_command + " < " + INPUT_FILE + " > " + OUTPUT_FILE
@@ -406,25 +452,42 @@ def parse_args() -> argparse.Namespace:
                         default='Edeka+Penny',
                         help='Dataset split to use'
     )
+    parser.add_argument('-t',
+                        '--threshold',
+                        type=float,
+                        default=0.5,
+                        help='Threshold to match coupons'
+    )
+    parser.add_argument('-l',
+                        '--log_file',
+                        type=str,
+                        default='benchmark.log',
+                        help='Log file'
+    )
     args = parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename="benchmark.log", level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
     args = parse_args()
     pipeline = args.pipeline
     is_extended = args.extended
     dataset_name = args.dataset_name
     cache_dir = args.cache_dir
     split = args.split
+    threshold = args.threshold
+    log_file = args.log_file
+
+    logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     dataset = load_dataset(dataset_name, split=split, cache_dir=cache_dir)
 
-    lonely_coupons_list = []
-    score_list = []
-    for idx, entry in enumerate(dataset):
+    similarity_list = []
+    total_expected = 0
+    total_generated = 0
+    total_missed = 0
+    total_hallucinated = 0
+    for idx, entry in tqdm(enumerate(dataset)):
         input = entry[INPUT]
         expected = entry[OUTPUT]
 
@@ -432,21 +495,34 @@ if __name__ == '__main__':
 
         generated_coupons = run_pipeline(pipeline, input, not is_extended)
 
-        similarity, lonely_coupons = judge_pipeline(expected_coupons,
-                                                    generated_coupons,
-                                                    not is_extended)
+        similarities, missed, hallucinated = compute_similarities(expected_coupons, 
+                                                                  generated_coupons,
+                                                                  threshold,
+                                                                  not is_extended)
 
-        percent_similarity = round(similarity * 100, 3)
-        score = max(percent_similarity, 0)
-        score_list.append(score)
-        lonely_coupons_list.append(lonely_coupons)
-        logging.info(f"Entry {idx + 1} - Score: {score}% - Lonely coupons: {lonely_coupons}")
+        similarity_list.extend(similarities)
+        total_expected += len(expected_coupons)
+        total_generated += len(generated_coupons)
+        total_missed += missed
+        total_hallucinated += hallucinated
 
-    score = np.mean(score_list)
-    total_lonely_coupons = np.sum(lonely_coupons_list)
+        entry_score = np.sum(similarities) / len(expected_coupons) if len(expected_coupons) > 0 else 1.0
+        logging.info(f"Entry {idx + 1} - Score: {entry_score}")
+        logging.info(f"Entry {idx + 1} - Expected: {len(expected_coupons)}")
+        logging.info(f"Entry {idx + 1} - Generated: {len(generated_coupons)}")
+        logging.info(f"Entry {idx + 1} - Missed: {missed}")
+        logging.info(f"Entry {idx + 1} - Hallucinated: {hallucinated}")
 
-    logging.info(f"Average score: {score}%")
-    logging.info(f"Total number of lonely coupons: {total_lonely_coupons}")
+    total_score = np.sum(similarity_list) / total_expected if total_expected > 0 else 1.0
 
-    print(f"Average score: {score}%")
-    print(f"Total number of lonely coupons: {total_lonely_coupons}")
+    logging.info(f"Total score: {total_score}")
+    logging.info(f"Total number of expected coupons: {total_expected}")
+    logging.info(f"Total number of generated coupons: {total_generated}")
+    logging.info(f"Total number of missed coupons: {total_missed}")
+    logging.info(f"Total number of hallucinated coupons: {total_hallucinated}")
+
+    print(f"Total score: {total_score}")
+    print(f"Total number of expected coupons: {total_expected}")
+    print(f"Total number of generated coupons: {total_generated}")
+    print(f"Total number of missed coupons: {total_missed}")
+    print(f"Total number of hallucinated coupons: {total_hallucinated}")
