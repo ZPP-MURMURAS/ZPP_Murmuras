@@ -48,12 +48,12 @@ class TestFinetuner:
         new_texts = []
         new_labels = []
         assert len(new_dataset) == len(self.init_test_data)
-        for i in range(len(new_dataset)):
-            new_texts.append(new_dataset[i]['texts'])
-            new_labels.append(new_dataset[i]['labels'])
-        for i in range(len(self.init_test_data)):
-            t = self.init_test_data[i]['texts']
-            l = self.init_test_data[i]['labels']
+        for item in new_dataset:
+            new_texts.append(item['texts'])
+            new_labels.append(item['labels'])
+        for item in self.init_test_data:
+            t = item['texts']
+            l = item['labels']
             assert t in new_texts
             assert l in new_labels
             new_texts.remove(t)
