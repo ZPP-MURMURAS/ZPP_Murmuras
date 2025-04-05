@@ -1,4 +1,3 @@
-import argparse
 import os
 import sys
 from typing import List, Dict
@@ -20,10 +19,8 @@ COUPON_DISCOUNT_TEXT = "discount_text"
 COUPON_VALID_UNTIL = "valid_until"
 COUPON_ACTIVATION_TEXT = "activation_text"
 
-HF_TOKEN = "HF_TOKEN"
 
-
-def download_model(model_name: str, cache_dir: str) -> str:
+def _download_model(model_name: str, cache_dir: str) -> str:
     """Downloads a model from Hugging Face Hub if not already cached."""
     hf_token = os.getenv(HF_TOKEN)
     if not hf_token:
@@ -33,7 +30,7 @@ def download_model(model_name: str, cache_dir: str) -> str:
     return snapshot_download(repo_id=model_name, token=hf_token, cache_dir=cache_dir)
 
 
-def perform_ner(model_path: str, text: str) -> List[Dict[str, any]]:
+def _perform_ner(model_path: str, text: str) -> List[Dict[str, any]]:
     """Uses a model to perform Named Entity Recognition (NER) on the input text using the BIO2 scheme."""
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     config = AutoConfig.from_pretrained(model_path)
@@ -43,7 +40,7 @@ def perform_ner(model_path: str, text: str) -> List[Dict[str, any]]:
     return nlp(text)
 
 
-def coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
+def _coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
     """Converts a coupon tagged by the model to a JSON object. Only the first entity of each type is considered."""
     coupon = {COUPON_PRODUCT_NAME: "", 
               COUPON_DISCOUNT_TEXT: "", 
@@ -63,7 +60,7 @@ def coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
     return coupon
 
 
-def coupon_to_json_concat(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
+def _coupon_to_json_concat(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
     """Converts a coupon tagged by the model to a JSON object. All entities of each type are concatenated."""
     coupon = {COUPON_PRODUCT_NAME: "", 
               COUPON_DISCOUNT_TEXT: "", 
@@ -86,34 +83,29 @@ def coupon_to_json_concat(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
     return coupon
 
 
-def coupon_to_json(model_coupon: List[Dict[str, any]], strategy: str) -> Dict[str, str]:
+def _coupon_to_json(model_coupon: List[Dict[str, any]], strategy: str) -> Dict[str, str]:
     """Converts a coupon tagged by the model to a JSON object."""
     if strategy == "first":
-        return coupon_to_json_first(model_coupon)
+        return _coupon_to_json_first(model_coupon)
     elif strategy == "concat":
-        return coupon_to_json_concat(model_coupon)
+        return _coupon_to_json_concat(model_coupon)
     else:
         raise ValueError(f"Invalid strategy: {strategy}")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Perform two NER passes to extract coupons from a CSV.")
-    parser.add_argument("cs_model", type=str, help="Name of the coupon selection Hugging Face model.")
-    parser.add_argument("fe_model", type=str, help="Name of the field extraction Hugging Face model.")
-    parser.add_argument("--strategy", type=str, default="first", help="Strategy to use for field extraction.")
-    parser.add_argument("--cache_dir", type=str, default="./models", help="Directory to store the downloaded model.")
-    
-    args = parser.parse_args()
+def run_bert_pipeline(input_data: List[str], 
+                      selection_model: str, 
+                      extraction_model: str, 
+                      strategy: str = "first", 
+                      cache_dir: str = "./models") -> List[Dict[str, str]]:
 
-    input_data = sys.stdin.read()
-    
-    cs_path = download_model(args.cs_model, args.cache_dir)
-    fe_path = download_model(args.fe_model, args.cache_dir)
+    cs_path = _download_model(selection_model, cache_dir)
+    fe_path = _download_model(extraction_model, cache_dir)
 
-    cs_results = perform_ner(cs_path, input_data)
+    cs_results = _perform_ner(cs_path, input_data)
     coupons = [res[NER_TEXT] for res in cs_results]
 
-    fe_results = perform_ner(fe_path, coupons)
-    json_coupons = [coupon_to_json(coupon, args.strategy) for coupon in fe_results]
+    fe_results = _perform_ner(fe_path, coupons)
+    json_coupons = [_coupon_to_json(coupon, args.strategy) for coupon in fe_results]
 
-    print(json_coupons)
+    return json_coupons

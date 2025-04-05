@@ -1,0 +1,14 @@
+[
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "unsloth.Q5_K_M.gguf"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "split": "edeka_test",
+        "cache_dir": "./datasets",
+        "threshold": 0.5
+    }
+]
