@@ -1,7 +1,6 @@
 import os
-import sys
+import json
 from typing import List, Dict
-from io import StringIO
 from huggingface_hub import snapshot_download
 from transformers import pipeline, AutoModelForTokenClassification, AutoTokenizer, AutoConfig
 
@@ -22,7 +21,7 @@ COUPON_ACTIVATION_TEXT = "activation_text"
 
 def _download_model(model_name: str, cache_dir: str) -> str:
     """Downloads a model from Hugging Face Hub if not already cached."""
-    hf_token = os.getenv(HF_TOKEN)
+    hf_token = os.getenv("HF_TOKEN")
     if not hf_token:
         raise ValueError("Hugging Face token not found. Please set the HF_TOKEN environment variable.")
     
@@ -30,14 +29,17 @@ def _download_model(model_name: str, cache_dir: str) -> str:
     return snapshot_download(repo_id=model_name, token=hf_token, cache_dir=cache_dir)
 
 
-def _perform_ner(model_path: str, text: str) -> List[Dict[str, any]]:
+def _perform_ner(model_path: str, texts: List[str]) -> List[List[Dict[str, any]]]:
     """Uses a model to perform Named Entity Recognition (NER) on the input text using the BIO2 scheme."""
+    if texts == []:
+        return []
+
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     config = AutoConfig.from_pretrained(model_path)
     model = AutoModelForTokenClassification.from_pretrained(model_path, config=config)
-    nlp = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="first")
+    nlp = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="first", device="cuda:0")
     
-    return nlp(text)
+    return nlp(texts)
 
 
 def _coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
@@ -97,15 +99,19 @@ def run_bert_pipeline(input_data: List[str],
                       selection_model: str, 
                       extraction_model: str, 
                       strategy: str = "first", 
-                      cache_dir: str = "./models") -> List[Dict[str, str]]:
+                      cache_dir: str = "./models") -> List[str]:
 
     cs_path = _download_model(selection_model, cache_dir)
     fe_path = _download_model(extraction_model, cache_dir)
 
-    cs_results = _perform_ner(cs_path, input_data)
-    coupons = [res[NER_TEXT] for res in cs_results]
+    cs_results_list = _perform_ner(cs_path, input_data)
 
-    fe_results = _perform_ner(fe_path, coupons)
-    json_coupons = [_coupon_to_json(coupon, args.strategy) for coupon in fe_results]
+    output = []
+    for cs_results in cs_results_list:
+        coupons = [res[NER_TEXT] for res in cs_results]
 
-    return json_coupons
+        fe_results = _perform_ner(fe_path, coupons)
+        json_coupons = [_coupon_to_json(coupon, strategy) for coupon in fe_results]
+        output.append(json.dumps(json_coupons))
+
+    return output
