@@ -270,6 +270,7 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str) -> Dict[str, any]:
 
     if len(expected) != len(generated):
         logger.warning(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
+        return {}
 
     similarity_list = []
     total_expected = 0

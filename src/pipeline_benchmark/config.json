@@ -5,9 +5,10 @@
         "function": "run_llama_pipeline", 
         "args": [], 
         "kwargs": {
-            "model_path": "unsloth.Q8_0.gguf"
+            "model_path": "unsloth.Q8_0.gguf",
+            "prompt_type": "wth"
         },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "dataset_name": "zpp-murmuras/llama-ds-w-rev3",
         "split": "penny_train+penny_test",
         "threshold": 0.5
     }
