@@ -25,23 +25,11 @@ class Coupon:
     activation_text: str
 
 
-# Weights for each attribute of the coupon
-NAME_WEIGHT = 0.3
-PRICE_WEIGHT = 0.2
-PERCENT_WEIGHT = 0.2
-OTHER_DISCOUNT_WEIGHT = 0.2
-VALIDITY_WEIGHT = 0.1
-
-# Weights for the simple coupons
-NAME_WEIGHT_SIMPLE = 0.4
-DISCOUNT_WEIGHT_SIMPLE = 0.3
-VALIDITY_WEIGHT_SIMPLE = 0.2
-ACTIVATION_WEIGHT_SIMPLE = 0.1
-
-# Weights for the prices
-NEW_PRICE_WEIGHT = 0.5
-OLD_PRICE_WEIGHT = 0.5
-LENGTH_PENALTY = 0.2
+# Weights for the coupons
+NAME_WEIGHT = 0.4
+DISCOUNT_WEIGHT = 0.3
+VALIDITY_WEIGHT = 0.2
+ACTIVATION_WEIGHT = 0.1
 
 # Column names for the output data
 OUT_COL_SIMP_PRODUCT = 'product_name'
@@ -158,8 +146,26 @@ def compare_coupons(coupon_1: Optional[Coupon],
     activation_ratio = diff.SequenceMatcher(a=coupon_1.activation_text,
                                             b=coupon_2.activation_text).ratio()
 
-    return (name_ratio * NAME_WEIGHT_SIMPLE) + (discount_ratio * DISCOUNT_WEIGHT_SIMPLE) + \
-        (validity_ratio * VALIDITY_WEIGHT_SIMPLE) + (activation_ratio * ACTIVATION_WEIGHT_SIMPLE)
+    dead_weight = 0.0
+
+    if coupon_1.discount_text == '' and coupon_2.discount_text == '':
+        discount_ratio = 0.0
+        dead_weight += DISCOUNT_WEIGHT
+
+    if coupon_1.validity_text == '' and coupon_2.validity_text == '':
+        validity_ratio = 0.0
+        dead_weight += VALIDITY_WEIGHT
+
+    if coupon_1.activation_text == '' and coupon_2.activation_text == '':
+        activation_ratio = 0.0
+        dead_weight += ACTIVATION_WEIGHT
+
+    base_sim = (name_ratio * NAME_WEIGHT) + (discount_ratio * DISCOUNT_WEIGHT) + \
+               (validity_ratio * VALIDITY_WEIGHT) + (activation_ratio * ACTIVATION_WEIGHT)
+
+    rescaled_sim = base_sim / (1.0 - dead_weight)
+    
+    return np.clip(rescaled_sim, 0.0, 1.0)
 
 
 def compute_similarity_matrix(expected_coupons: List[Coupon],
@@ -243,12 +249,18 @@ def compute_similarities(expected_coupons: List[Coupon],
     return similarities, missed, hallucinated
 
 
-def benchmark_pipeline(data: Dict[str, any]) -> Dict[str, any]:
+def init_logger(log_file: str) -> None:
+    logging.basicConfig(filename=log_file, level=logging.INFO, format=f"%(asctime)s - %(levelname)s - %(message)s")
+
+
+def benchmark_pipeline(data: Dict[str, any], cache_dir: str) -> Dict[str, any]:
+    exp_name = data['name']
     dataset_name = data['dataset_name']
     split = data['split']
-    cache_dir = data['cache_dir']
     threshold = data['threshold']
     func, args, kwargs = load_pipeline(data)
+
+    init_logger(exp_name + ".log")
 
     dataset = load_dataset(dataset_name, split=split, cache_dir=cache_dir)
 
@@ -257,20 +269,17 @@ def benchmark_pipeline(data: Dict[str, any]) -> Dict[str, any]:
     generated = func(input_data=input, *args, **kwargs)
 
     if len(expected) != len(generated):
-        raise ValueError(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
+        logger.warning(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
 
     similarity_list = []
     total_expected = 0
     total_generated = 0
     total_missed = 0
     total_hallucinated = 0
-    for idx, entry in tqdm(enumerate(zip(expected, generated, strict=True), desc="Processing entries")):
-        input = entry[INPUT]
-        expected = entry[OUTPUT]
+    for idx, (exp, gen) in tqdm(enumerate(zip(expected, generated, strict=True)), desc="Processing entries"):
+        expected_coupons = get_coupons(exp, "Expected output")
 
-        expected_coupons = get_coupons(expected, "Expected output")
-
-        generated_coupons = get_coupons(generated, "Generated output")
+        generated_coupons = get_coupons(gen, "Generated output")
 
         similarities, missed, hallucinated = compute_similarities(expected_coupons, 
                                                                   generated_coupons,
@@ -283,11 +292,12 @@ def benchmark_pipeline(data: Dict[str, any]) -> Dict[str, any]:
         total_hallucinated += hallucinated
 
         entry_score = np.sum(similarities) / len(expected_coupons) if len(expected_coupons) > 0 else 1.0
-        logging.info(f"Entry {idx + 1} - Score: {entry_score}")
-        logging.info(f"Entry {idx + 1} - Expected: {len(expected_coupons)}")
-        logging.info(f"Entry {idx + 1} - Generated: {len(generated_coupons)}")
-        logging.info(f"Entry {idx + 1} - Missed: {missed}")
-        logging.info(f"Entry {idx + 1} - Hallucinated: {hallucinated}")
+        entry_info = f"Entry {idx + 1} - "
+        logging.info(entry_info + f"Score: {entry_score}")
+        logging.info(entry_info + f"Expected: {len(expected_coupons)}")
+        logging.info(entry_info + f"Generated: {len(generated_coupons)}")
+        logging.info(entry_info + f"Missed: {missed}")
+        logging.info(entry_info + f"Hallucinated: {hallucinated}")
 
     total_score = np.sum(similarity_list) / total_expected if total_expected > 0 else 1.0
 
@@ -325,6 +335,12 @@ def parse_args() -> argparse.Namespace:
                         default='benchmark.log',
                         help='Path to the log file'
     )
+    parser.add_argument('-d',
+                        '--dataset_cache_dir',
+                        type=str,
+                        default='./datasets',
+                        help='Path to the dataset cache directory'
+    )
     args = parser.parse_args()
     return args
 
@@ -334,12 +350,7 @@ if __name__ == '__main__':
     config = json.load(open(args.config_path))
     output_file = args.output_file
     log_file = args.log_file
+    dataset_cache_dir = args.dataset_cache_dir
 
-    logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-    
-    for idx, data in tqdm(enumerate(config), desc="Processing experiments"):
-        try:
-            benchmark_pipeline(data)
-        except Exception as e:
-            logging.error(f"Error processing experiment {idx + 1}: {e}")
-            continue
+    for data in tqdm(config, desc="Processing experiments"):
+        benchmark_pipeline(data, dataset_cache_dir)
