@@ -3,10 +3,9 @@ import argparse
 import subprocess
 import difflib as diff
 import json
-import sys
-import os
 import logging
 import importlib
+import copy
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
@@ -249,8 +248,17 @@ def compute_similarities(expected_coupons: List[Coupon],
     return similarities, missed, hallucinated
 
 
-def init_logger(log_file: str) -> None:
-    logging.basicConfig(filename=log_file, level=logging.INFO, format=f"%(asctime)s - %(levelname)s - %(message)s")
+def init_new_logger(log_file: str) -> None:
+    logger = logging.getLogger()
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+
+    new_handler = logging.FileHandler(log_file)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    new_handler.setFormatter(formatter)
+
+    logger.addHandler(new_handler)
+    logger.setLevel(logging.INFO)
 
 
 def benchmark_pipeline(data: Dict[str, any], cache_dir: str) -> Dict[str, any]:
@@ -260,7 +268,7 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str) -> Dict[str, any]:
     threshold = data['threshold']
     func, args, kwargs = load_pipeline(data)
 
-    init_logger(exp_name + ".log")
+    init_new_logger(exp_name + ".log")
 
     dataset = load_dataset(dataset_name, split=split, cache_dir=cache_dir)
 
@@ -269,8 +277,7 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str) -> Dict[str, any]:
     generated = func(input_data=input, *args, **kwargs)
 
     if len(expected) != len(generated):
-        logger.warning(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
-        return {}
+        raise ValueError(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
 
     similarity_list = []
     total_expected = 0
@@ -308,7 +315,25 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str) -> Dict[str, any]:
     logging.info(f"Total number of missed coupons: {total_missed}")
     logging.info(f"Total number of hallucinated coupons: {total_hallucinated}")
 
-    return {}
+    res = copy.deepcopy(data)
+    res["score"] = total_score
+    res["expected"] = total_expected
+    res["generated"] = total_generated
+    res["missed"] = total_missed
+    res["hallucinated"] = total_hallucinated
+
+    return res
+
+
+def load_checkpoint(checkpoint_file: str) -> List[Dict[str, any]]:
+    try: 
+        with open(checkpoint_file, "r") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = [] 
+
+    return data
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -330,12 +355,6 @@ def parse_args() -> argparse.Namespace:
                         required=True,
                         help='Path to the output file'
     )
-    parser.add_argument('-l',
-                        '--log_file',
-                        type=str,
-                        default='benchmark.log',
-                        help='Path to the log file'
-    )
     parser.add_argument('-d',
                         '--dataset_cache_dir',
                         type=str,
@@ -350,8 +369,18 @@ if __name__ == '__main__':
     args = parse_args()
     config = json.load(open(args.config_path))
     output_file = args.output_file
-    log_file = args.log_file
     dataset_cache_dir = args.dataset_cache_dir
 
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+    results = load_checkpoint(output_file)
+
     for data in tqdm(config, desc="Processing experiments"):
-        benchmark_pipeline(data, dataset_cache_dir)
+        if any(r.get("name") == data["name"] for r in results):
+            continue
+
+        result = benchmark_pipeline(data, dataset_cache_dir)
+        results.append(result)
+
+        with open(output_file, "w") as f:
+            json.dump(results, f)
