@@ -141,7 +141,7 @@ def __tokenize_and_align_labels(input_column: str, labels_column: str, bi_split:
     return tokenized_inputs
 
 
-def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_column: str, bi_split: bool =True) -> DatasetDict:
+def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_column: str, tt_split: bool = True,  bi_split: bool = True) -> DatasetDict:
     """
     Function that is responsible for tokenizing the inputs and aligning the labels with the tokens.
     Under the hood, it wraps __tokenize_and_align_labels function in something more user-friendly.
@@ -149,6 +149,7 @@ def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_co
     :param dataset: The dataset that will be tokenized
     :param input_column: The column that contains the inputs to tokenize
     :param labels_column: The column that contains the labels to align
+    :param tt_split: Whether the dataset contains train-test splits. Default is True
     :param bi_split: Whether the labels are in B-X and I-X format. Default is True
     :return: The tokenized dataset with aligned labels
     """
@@ -156,7 +157,7 @@ def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_co
     tokenized_dataset = dataset.map(
         partial(__tokenize_and_align_labels, input_column, labels_column, bi_split),
         batched=True,
-        remove_columns=dataset["train"].column_names,
+        remove_columns=dataset["train"].column_names if tt_split else dataset.column_names,
     )
     return tokenized_dataset
 
@@ -257,10 +258,10 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     if wandb_log != '':
         wandb.init(
             project=wandb_log,
-            name= wandb_log + "-" + run_name,
+            name= run_name,
             config={
                 "learning_rate": 2e-5,
-                "epochs": 3,
+                "epochs": 10,
                 "weight_decay": 0.01,
                 "model_name": "bert_multiling_cased",
             }
@@ -268,11 +269,11 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
 
     lr_container = LrContainer(__LEARNING_RATE)
     args = TrainingArguments(
-        "zpp-murmuras/bert",
+        "zpp-murmuras/",
         eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=lr_container.lr,
-        num_train_epochs=3,
+        num_train_epochs=10 if not curriculum_learning else 3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
         logging_dir="./logs",  # Directory for logs
@@ -309,28 +310,29 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
     else:
         # Curriculum learning
         print_vibe_check(model, dataset)
-        curriculer = Curriculer(dataset, splits)
+        curriculer = Curriculer(dataset['train'], splits)
         curr_dataset = curriculer.create_init_dataset()
-        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
-        trainer.train_dataset = curr_dataset["train"]
+        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels", False)
+        trainer.train_dataset = curr_dataset
         trainer.eval_dataset = tokenized_dataset["test"]
         trainer.train()
         print_vibe_check(model, dataset)
         for i in range(splits):
             args.learning_rate = lr_container.lr
             curr_dataset = curriculer.yield_dataset()
-            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
+            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels", False)
             trainer = Trainer(
                 model=model,
                 args=args,
-                train_dataset=curr_dataset["train"],
+                train_dataset=curr_dataset,
                 eval_dataset=tokenized_dataset["test"],
                 data_collator=__DATA_COLLATOR,
                 compute_metrics=partial(__compute_metrics, labels),
                 processing_class=__TOKENIZER,
-                callbacks=[StopCallback(lr_container)]
+                #callbacks=[StopCallback(lr_container)]
             )
             trainer.train()
             print_vibe_check(model, dataset)
         if push_to_hub:
             trainer.push_to_hub("Training completed")
+    wandb.finish()
