@@ -1,15 +1,72 @@
 [
     {
-        "name": "llama-wth-penny",
+        "name": "bert-penny-first",
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "first"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "split": "penny_train+penny_test",
+        "threshold": 0.5
+    },
+    {
+        "name": "bert-penny-concat",
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "concat"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "split": "penny_train+penny_test",
+        "threshold": 0.5
+    },
+    {
+        "name": "bert-edeka-first",
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "first"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "split": "edeka_train+edeka_test",
+        "threshold": 0.5
+    },
+    {
+        "name": "bert-dm-first",
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "first"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "split": "dm_test",
+        "threshold": 0.5
+    },
+    {
+        "name": "llama-w-Q4_0-penny",
         "module": "pipelines.llama_pipeline", 
         "function": "run_llama_pipeline", 
         "args": [], 
         "kwargs": {
-            "model_path": "unsloth.Q8_0.gguf",
-            "prompt_type": "wth"
+            "hf_repo_id": "zpp-murmuras/llama-w-2-epochs-gguf",
+            "gguf_path": "unsloth.Q4_0.gguf",
+            "prompt_type": "w"
         },
-        "dataset_name": "zpp-murmuras/llama-ds-w-rev3",
-        "split": "penny_train+penny_test",
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "split": "penny_test+penny_train",
         "threshold": 0.5
     }
 ]
