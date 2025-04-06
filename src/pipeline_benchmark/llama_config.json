@@ -1,0 +1,18 @@
+[
+    {
+        "name": "llama-w-Q4_0-penny",
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "hf_repo_id": "zpp-murmuras/llama-w-2-epochs-gguf",
+            "gguf_path": "unsloth.Q4_0.gguf",
+            "prompt_type": "w"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test"
+        },
+        "threshold": 0.5
+    }
+]

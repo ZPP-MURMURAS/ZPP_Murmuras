@@ -1,6 +1,7 @@
 import os
 import json
 from typing import List, Dict
+from tqdm import tqdm
 from huggingface_hub import snapshot_download
 from transformers import pipeline, AutoModelForTokenClassification, AutoTokenizer, AutoConfig
 
@@ -107,7 +108,7 @@ def run_bert_pipeline(input_data: List[str],
     cs_results_list = _perform_ner(cs_path, input_data)
 
     output = []
-    for cs_results in cs_results_list:
+    for cs_results in tqdm(cs_results_list, desc="Field extraction"):
         coupons = [res[NER_TEXT] for res in cs_results]
 
         fe_results = _perform_ner(fe_path, coupons)

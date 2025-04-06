@@ -37,7 +37,7 @@ def run_llama_pipeline(input_data: List[str], hf_repo_id: str, gguf_path: str, p
         # It seems that llama has a tendency to correctly recognize that there is no coupons in the input
         # and print "[]", but after that start to generate garbage. That's why adding "[]" to stop sequences
         # provides a significant speedup.
-        out = llama.create_completion(prompt, max_tokens=512, stop=["### Response:", "[]"])["choices"][0]["text"]
+        out = llama.create_completion(prompt, max_tokens=512, stop=["### Response:", "### Input:", "[]"])["choices"][0]["text"]
 
         if out == "":
             out = "[]"

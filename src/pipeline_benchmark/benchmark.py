@@ -6,6 +6,7 @@ import json
 import logging
 import importlib
 import copy
+import os
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
@@ -261,66 +262,73 @@ def init_new_logger(log_file: str) -> None:
     logger.setLevel(logging.INFO)
 
 
-def benchmark_pipeline(data: Dict[str, any], cache_dir: str) -> Dict[str, any]:
+def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Dict[str, any]:
     exp_name = data['name']
     dataset_name = data['dataset_name']
-    split = data['split']
+    splits = data['splits']
     threshold = data['threshold']
     func, args, kwargs = load_pipeline(data)
 
-    init_new_logger(exp_name + ".log")
-
-    dataset = load_dataset(dataset_name, split=split, cache_dir=cache_dir)
-
-    input = [entry[INPUT] for entry in dataset]
-    expected = [entry[OUTPUT] for entry in dataset]
-    generated = func(input_data=input, *args, **kwargs)
-
-    if len(expected) != len(generated):
-        raise ValueError(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
-
-    similarity_list = []
-    total_expected = 0
-    total_generated = 0
-    total_missed = 0
-    total_hallucinated = 0
-    for idx, (exp, gen) in tqdm(enumerate(zip(expected, generated, strict=True)), desc="Processing entries"):
-        expected_coupons = get_coupons(exp, "Expected output")
-
-        generated_coupons = get_coupons(gen, "Generated output")
-
-        similarities, missed, hallucinated = compute_similarities(expected_coupons, 
-                                                                  generated_coupons,
-                                                                  threshold)
-
-        similarity_list.extend(similarities)
-        total_expected += len(expected_coupons)
-        total_generated += len(generated_coupons)
-        total_missed += missed
-        total_hallucinated += hallucinated
-
-        entry_score = np.sum(similarities) / len(expected_coupons) if len(expected_coupons) > 0 else 1.0
-        entry_info = f"Entry {idx + 1} - "
-        logging.info(entry_info + f"Score: {entry_score}")
-        logging.info(entry_info + f"Expected: {len(expected_coupons)}")
-        logging.info(entry_info + f"Generated: {len(generated_coupons)}")
-        logging.info(entry_info + f"Missed: {missed}")
-        logging.info(entry_info + f"Hallucinated: {hallucinated}")
-
-    total_score = np.sum(similarity_list) / total_expected if total_expected > 0 else 1.0
-
-    logging.info(f"Total score: {total_score}")
-    logging.info(f"Total number of expected coupons: {total_expected}")
-    logging.info(f"Total number of generated coupons: {total_generated}")
-    logging.info(f"Total number of missed coupons: {total_missed}")
-    logging.info(f"Total number of hallucinated coupons: {total_hallucinated}")
-
     res = copy.deepcopy(data)
-    res["score"] = total_score
-    res["expected"] = total_expected
-    res["generated"] = total_generated
-    res["missed"] = total_missed
-    res["hallucinated"] = total_hallucinated
+    res["scores"] = {}
+    res["expected"] = {}
+    res["generated"] = {}
+    res["missed"] = {}
+    res["hallucinated"] = {}
+
+    for split_name, ds_split in splits.items():
+        init_new_logger(os.path.join(log_dir, f"{exp_name}-{split_name}.log"))
+
+        dataset = load_dataset(dataset_name, split=ds_split, cache_dir=cache_dir)
+
+        input = [entry[INPUT] for entry in dataset]
+        expected = [entry[OUTPUT] for entry in dataset]
+        generated = func(input_data=input, *args, **kwargs)
+
+        if len(expected) != len(generated):
+            raise ValueError(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
+
+        similarity_list = []
+        total_expected = 0
+        total_generated = 0
+        total_missed = 0
+        total_hallucinated = 0
+        for idx, (exp, gen) in tqdm(enumerate(zip(expected, generated, strict=True)), desc="Processing entries"):
+            expected_coupons = get_coupons(exp, "Expected output")
+
+            generated_coupons = get_coupons(gen, "Generated output")
+
+            similarities, missed, hallucinated = compute_similarities(expected_coupons, 
+                                                                      generated_coupons,
+                                                                      threshold)
+
+            similarity_list.extend(similarities)
+            total_expected += len(expected_coupons)
+            total_generated += len(generated_coupons)
+            total_missed += missed
+            total_hallucinated += hallucinated
+
+            entry_score = np.sum(similarities) / len(expected_coupons) if len(expected_coupons) > 0 else 1.0
+            entry_info = f"Entry {idx + 1} - "
+            logging.info(entry_info + f"Score: {entry_score}")
+            logging.info(entry_info + f"Expected: {len(expected_coupons)}")
+            logging.info(entry_info + f"Generated: {len(generated_coupons)}")
+            logging.info(entry_info + f"Missed: {missed}")
+            logging.info(entry_info + f"Hallucinated: {hallucinated}")
+
+        total_score = np.sum(similarity_list) / total_expected if total_expected > 0 else 1.0
+
+        logging.info(f"Total score: {total_score}")
+        logging.info(f"Total number of expected coupons: {total_expected}")
+        logging.info(f"Total number of generated coupons: {total_generated}")
+        logging.info(f"Total number of missed coupons: {total_missed}")
+        logging.info(f"Total number of hallucinated coupons: {total_hallucinated}")
+
+        res["scores"][split_name] = total_score
+        res["expected"][split_name] = total_expected
+        res["generated"][split_name] = total_generated
+        res["missed"][split_name] = total_missed
+        res["hallucinated"][split_name] = total_hallucinated
 
     return res
 
@@ -361,6 +369,12 @@ def parse_args() -> argparse.Namespace:
                         default='./datasets',
                         help='Path to the dataset cache directory'
     )
+    parser.add_argument('-l',
+                        '--log_dir',
+                        type=str,
+                        default='./logs',
+                        help='Path to the log directory'
+    )
     args = parser.parse_args()
     return args
 
@@ -370,8 +384,9 @@ if __name__ == '__main__':
     config = json.load(open(args.config_path))
     output_file = args.output_file
     dataset_cache_dir = args.dataset_cache_dir
+    log_dir = args.log_dir
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    os.makedirs(log_dir, exist_ok=True)
 
     results = load_checkpoint(output_file)
 
@@ -379,7 +394,7 @@ if __name__ == '__main__':
         if any(r.get("name") == data["name"] for r in results):
             continue
 
-        result = benchmark_pipeline(data, dataset_cache_dir)
+        result = benchmark_pipeline(data, dataset_cache_dir, log_dir)
         results.append(result)
 
         with open(output_file, "w") as f:
