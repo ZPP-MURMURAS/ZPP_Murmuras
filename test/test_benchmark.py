@@ -60,6 +60,8 @@ class TestBenchmark:
          Coupon("UNICORN", "", "", "b"), 0.8),
         (Coupon("UNICORN", "a", "a", ""),
          Coupon("UNICORN", "b", "b", ""), 0.44),
+        (Coupon("unicorn", "", "", ""),
+         Coupon("UNICORN", "", "", ""), 0.0),
     ])
     def test_compare_coupons(self, coupon1, coupon2, expected_score):
         assert np.isclose(compare_coupons(coupon1, coupon2), expected_score, atol=0.01)
