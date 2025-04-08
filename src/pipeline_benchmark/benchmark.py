@@ -7,6 +7,7 @@ import logging
 import importlib
 import copy
 import os
+import time
 from tqdm import tqdm
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
@@ -269,7 +270,7 @@ def init_new_logger(log_file: str) -> None:
     logger.setLevel(logging.INFO)
 
 
-def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Dict[str, any]:
+def benchmark_pipeline(config: Dict[str, any], cache_dir: str, log_dir: str) -> Dict[str, any]:
     """
     Benchmarks a pipeline based on the given config.
 
@@ -278,10 +279,10 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Di
     :param log_dir: the directory to store the logs
     :return: a dictionary with the pipeline config and benchmarking results
     """
-    exp_name = config['name']
-    dataset_name = config['dataset_name']
-    splits = config['splits']
-    threshold = config['threshold']
+    exp_name = config["name"]
+    dataset_name = config["dataset_name"]
+    splits = config["splits"]
+    threshold = config["threshold"]
     func, args, kwargs = load_pipeline(config)
 
     res = copy.deepcopy(config)
@@ -290,6 +291,7 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Di
     res["generated"] = {}
     res["missed"] = {}
     res["hallucinated"] = {}
+    res["generation_time"] = {}
 
     for split_name, ds_split in splits.items():
         init_new_logger(os.path.join(log_dir, f"{exp_name}-{split_name}.log"))
@@ -298,7 +300,11 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Di
 
         input = [entry[INPUT] for entry in dataset]
         expected = [entry[OUTPUT] for entry in dataset]
+
+        start = time.perf_counter()
         generated = func(input_data=input, *args, **kwargs)
+        end = time.perf_counter()
+        generation_time = end - start
 
         if len(expected) != len(generated):
             raise ValueError(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
@@ -338,12 +344,14 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Di
         logging.info(f"Total number of generated coupons: {total_generated}")
         logging.info(f"Total number of missed coupons: {total_missed}")
         logging.info(f"Total number of hallucinated coupons: {total_hallucinated}")
+        logging.info(f"Generation time: {generation_time:.4f} seconds")
 
         res["scores"][split_name] = total_score
         res["expected"][split_name] = total_expected
         res["generated"][split_name] = total_generated
         res["missed"][split_name] = total_missed
         res["hallucinated"][split_name] = total_hallucinated
+        res["generation_time"][split_name] = generation_time
 
     return res
 
@@ -402,7 +410,7 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == '__main__':
     args = parse_args()
-    config = json.load(open(args.config_path))
+    configs = json.load(open(args.config_path))
     output_file = args.output_file
     dataset_cache_dir = args.dataset_cache_dir
     log_dir = args.log_dir
@@ -411,11 +419,11 @@ if __name__ == '__main__':
 
     results = load_checkpoint(output_file)
 
-    for data in tqdm(config, desc="Processing experiments"):
-        if any(r.get("name") == data["name"] for r in results):
+    for config in tqdm(configs, desc="Processing experiments"):
+        if any(r.get("name") == config["name"] for r in results):
             continue
 
-        result = benchmark_pipeline(data, dataset_cache_dir, log_dir)
+        result = benchmark_pipeline(config, dataset_cache_dir, log_dir)
         results.append(result)
 
         with open(output_file, "w") as f:

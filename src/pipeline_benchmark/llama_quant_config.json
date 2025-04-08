@@ -1,0 +1,82 @@
+[
+    {
+        "name": "llama-w-not_quantized",
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-w/unsloth.BF16.gguf",
+            "prompt_type": "w"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.5
+    },
+    {
+        "name": "llama-w-q8_0",
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-w/unsloth.Q8_0.gguf",
+            "prompt_type": "w"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.5
+    },
+    {
+        "name": "llama-w-q4_k_m",
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-w/unsloth.Q4_K_M.gguf",
+            "prompt_type": "w"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.5
+    },
+    {
+        "name": "llama-w-q4_0",
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-w/unsloth.Q4_0.gguf",
+            "prompt_type": "w"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.5
+    }
+]

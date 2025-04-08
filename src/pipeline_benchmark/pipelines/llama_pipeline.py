@@ -1,9 +1,11 @@
+import re
 from typing import List
 from tqdm import tqdm
 from llama_cpp import Llama
 
 
-N_CTX = 16384
+N_CTX = 8192
+SEED = 69
 
 
 def run_llama_pipeline(input_data: List[str], model_path: str, prompt_type: str) -> List[str]:
@@ -30,11 +32,11 @@ def run_llama_pipeline(input_data: List[str], model_path: str, prompt_type: str)
         # It seems that llama has a tendency to correctly recognize that there is no coupons in the input
         # and print "[]", but after that start to generate garbage. That's why adding "[]" to stop sequences
         # provides a significant speedup.
-        out = llama.create_completion(prompt, max_tokens=N_CTX - len(prompt), stop=["### Response:", "### Input:", "[]"])["choices"][0]["text"]
+        out = llama.create_completion(prompt, max_tokens=-1, stop=["]"], seed=SEED)
+        out_text = out["choices"][0]["text"]
 
-        if out == "":
-            out = "[]"
+        out_text = out_text + "]"
 
-        output.append(out)
+        output.append(out_text)
 
     return output
