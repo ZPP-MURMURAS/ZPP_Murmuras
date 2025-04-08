@@ -201,3 +201,5 @@ tools/gdrive_credentials.json
 
 #  csv files
 *.csv
+
+local/**

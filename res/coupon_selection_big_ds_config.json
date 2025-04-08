@@ -1,41 +1,41 @@
 {
   "frames": [
     {
-      "content": "datasets/coupons big/Edeka/content_generic_edeka_2025_03_13.csv",
-      "coupons": "datasets/coupons big/Edeka/coupons_edeka_2025-03-13T09_03_32.508347956+01_00.csv",
+      "content": "datasets/coupons_big_rev2/edeka/edeka_content.csv",
+      "coupons": "datasets/coupons_big_rev2/edeka/edeka_coupons.csv",
       "format": 1,
       "split": "edeka"
     },
     {
-      "content": "datasets/coupons big/DM/dm_content_generic_complete_from_2024.csv",
-      "coupons": "datasets/coupons big/DM/coupons_dm.csv",
+      "content": "datasets/coupons_big_rev2/dm/dm_content.csv",
+      "coupons": "datasets/coupons_big_rev2/dm/dm_coupons.csv",
       "format": 2,
       "split": "dm"
     },
     {
-      "content": "datasets/coupons big/Lidl/content_generic_lidl_2025_03_13.csv",
-      "coupons": "datasets/coupons big/Lidl/coupons_lidl_2025-03-13T09_40_11.213120937+01_00.csv",
+      "content": "datasets/coupons_big_rev2/lidl/lidl_content.csv",
+      "coupons": "datasets/coupons_big_rev2/lidl/lidl_coupons.csv",
       "format": 1,
       "split": "lidl"
     },
     {
-      "content": "datasets/coupons big/Penny/content_generic_penny_2025_03_13.csv",
-      "coupons": "datasets/coupons big/Penny/coupons_penny_cleared.csv",
+      "content": "datasets/coupons_big_rev2/penny/penny_content.csv",
+      "coupons": "datasets/coupons_big_rev2/penny/penny_coupons.csv",
       "format": 1,
       "split": "penny"
     },
     {
-      "content": "datasets/coupons big/Rewe/content_generic_rewe_2025_03_13.csv",
-      "coupons": "datasets/coupons big/Rewe/coupons_rewe_2025-03-13T08_58_21.509638957+01_00.csv",
+      "content": "datasets/coupons_big_rev2/rewe/rewe_content.csv",
+      "coupons": "datasets/coupons_big_rev2/rewe/rewe_coupons.csv",
       "format": 1,
       "split": "rewe"
     },
     {
-      "content": "datasets/coupons big/Rossmann/content_generic_rossmann_2025_03_13.csv",
-      "coupons": "datasets/coupons big/Rossmann/coupons_rossmann_2025-03-13T09_25_10.66644692+01_00.csv",
+      "content": "datasets/coupons_big_rev2/rossmann/rossmann_content.csv",
+      "coupons": "datasets/coupons_big_rev2/rossmann/rossmann_coupons.csv",
       "format": 1,
       "split": "rossmann"
     }
   ],
-  "json_format": true
+  "json_format": false
 }

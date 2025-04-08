@@ -33,3 +33,29 @@ Because coupons in the coupons frame sometimes are not in a correct order.
 As `i` column in content frames is persistent across timestamps I found it more convenient to group by `id` 
 ### (Lack of) Usage of `i` column
 After quick exploration of `coupons big` dataset I found out that `min_i` and `max_i` are not always aligned perfectly. Additionally, I have experienced other anomalies. Due to the lack of time I decided not to develop additional heuristics to handle them and I used prefix tree approach for `coupons big` too.
+
+# Field extraction dataset
+This directory contains a script that can be used for creating and publishing datasets for the coupon labeling task.<br/>
+Running the script:<br/>
+```bash
+python generate_field_extraction_ds.py <config_path> <ds_name> <create_repo>
+```
+Where `config_path` is a path to the configuration file in format demonstrated by `example_config.json` file, and
+create_repo is either 'y' or 'n'; it is used to mark whetver the dataset is being pushed to an existing or new repo. <br/>
+To run the script `HF_HUB_KEY` env variable is expected to be set to your access key to hf hub.
+## Dataset Format
+The dataset contains a list of pairs of text sequences and labels:
+* TAG_UNKNOWN: unknown
+* TAG_B_PRODUCT: begin product name
+* TAG_I_PRODUCT: inside product name
+* TAG_B_DISCOUNT: begin discount text
+* TAG_I_DISCOUNT: inside discount text
+* TAG_B_VALIDITY: begin validity text
+* TAG_I_VALIDITY: inside validity text
+* TAG_B_ACTIVATION: inside activation text
+* TAG_I_ACTIVATION: inside activation text
+The inside labels are not used in this dataset and are expected to be used after tokenization for the model.
+## Supported dataset formats
+Currently the `format` field in config is ignored
+## Augmentations
+Due to the repetitious nature of the data, I've decided to use some basic augmentations. That is, sections (e.g., product info section and discount info section) are sometimes shuffled or dropped.
