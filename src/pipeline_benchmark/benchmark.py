@@ -17,7 +17,7 @@ from typing import Optional, List, Union, Dict, Tuple, Callable
 @dataclass()
 class Coupon:
     """
-    Class representing a simple coupon.
+    Class representing a coupon.
     """
     product_name: str
     discount_text: str
@@ -49,7 +49,13 @@ INPUT = 'Context'
 OUTPUT = 'Response'
 
 
-def load_pipeline(config: Dict) -> Tuple[Callable, List[any], Dict[str, any]]:
+def load_pipeline(config: Dict[str, any]) -> Tuple[Callable, List[any], Dict[str, any]]:
+    """
+    Loads a pipeline from a config.
+
+    :param config: pipeline config
+    :return: a tuple with the pipeline function, its positional arguments and its keyword arguments
+    """
     module = importlib.import_module(config["module"])
     func = getattr(module, config["function"])
     args = config.get("args", [])
@@ -59,7 +65,7 @@ def load_pipeline(config: Dict) -> Tuple[Callable, List[any], Dict[str, any]]:
 
 def get_coupons(json_str: str, source_name: str) -> List[Coupon]:
     """
-    This function will parse a json string that contains coupons. 
+    Parses a JSON string that contains coupons. 
     
     :param json_str: A json string that contains the coupons
     :param source_name: The name of the source of the coupons (needed for logging)
@@ -125,10 +131,8 @@ def get_coupons(json_str: str, source_name: str) -> List[Coupon]:
 def compare_coupons(coupon_1: Optional[Coupon],
                     coupon_2: Optional[Coupon]) -> float:
     """
-    This function will compare two simple coupons and return a float value that
-    represents the similarity between the two coupons. The higher the value, the
-    more similar the coupons are. The lower the value, the more different the
-    coupons are.
+    Compares two coupons and return a float value that represents the similarity 
+    between the two coupons. The higher the value, the more similar the coupons.
 
     :param coupon_1, coupon_2: The first and second coupons to compare
     :return: A float value that represents the similarity between the two coupons
@@ -171,12 +175,10 @@ def compare_coupons(coupon_1: Optional[Coupon],
 def compute_similarity_matrix(expected_coupons: List[Coupon],
                               generated_coupons: List[Coupon]) -> np.ndarray:
     """
-    This function will compute the similarity matrix between the expected and generated
-    coupons using the compare_function to compare the coupons. The similarity matrix
-    will have the same number of rows as the expected coupons and the same number of
-    columns as the generated coupons. The value in the i-th row and j-th column of the
-    matrix will represent the similarity between the i-th expected coupon and the j-th
-    generated coupon.
+    Computes the similarity matrix between the expected and generated coupons. 
+    The similarity matrix has the same number of rows as the expected coupons and the same 
+    number of columns as the generated coupons. The value in the i-th row and j-th column of the
+    matrix will represent the similarity between the i-th expected coupon and the j-th generated coupon.
 
     :param expected_coupons: A list of Coupon objects that represent the expected coupons
     :param generated_coupons: A list of Coupon objects that represent the generated coupons
@@ -193,8 +195,8 @@ def compute_similarity_matrix(expected_coupons: List[Coupon],
 
 def greedy_matching(similarity_matrix: np.ndarray, threshold: float) -> tuple[List[float], int, int]:
     """
-    This function will perform a greedy matching between the expected and generated
-    coupons using the similarity matrix. For more details on the algorithm, see the README.md file.
+    Performs a greedy matching between the expected and generated coupons using the similarity matrix. 
+    For more details on the algorithm, see the README.md file.
 
     :param similarity_matrix: A numpy array that represents the similarity matrix between the coupons
     :param threshold: A float value that represents the minimum similarity to match two coupons
@@ -233,7 +235,7 @@ def compute_similarities(expected_coupons: List[Coupon],
                          generated_coupons: List[Coupon],
                          threshold: float) -> tuple[List[float], int, int]:
     """
-    This function will compute similarities between the expected and generated coupons.
+    Computes similarities between the expected and generated coupons.
     For more details on the algorithm, see the README.md file.
     
     :param expected_coupons: A list of Coupon objects that represent the expected coupons
@@ -250,6 +252,11 @@ def compute_similarities(expected_coupons: List[Coupon],
 
 
 def init_new_logger(log_file: str) -> None:
+    """
+    Sets a new log file.
+
+    :param log_file: path to the new log file
+    """
     logger = logging.getLogger()
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
@@ -263,13 +270,21 @@ def init_new_logger(log_file: str) -> None:
 
 
 def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Dict[str, any]:
-    exp_name = data['name']
-    dataset_name = data['dataset_name']
-    splits = data['splits']
-    threshold = data['threshold']
-    func, args, kwargs = load_pipeline(data)
+    """
+    Benchmarks a pipeline based on the given config.
 
-    res = copy.deepcopy(data)
+    :param config: pipeline config
+    :param cache_dir: the directory for dataset caching
+    :param log_dir: the directory to store the logs
+    :return: a dictionary with the pipeline config and benchmarking results
+    """
+    exp_name = config['name']
+    dataset_name = config['dataset_name']
+    splits = config['splits']
+    threshold = config['threshold']
+    func, args, kwargs = load_pipeline(config)
+
+    res = copy.deepcopy(config)
     res["scores"] = {}
     res["expected"] = {}
     res["generated"] = {}
@@ -334,6 +349,12 @@ def benchmark_pipeline(data: Dict[str, any], cache_dir: str, log_dir: str) -> Di
 
 
 def load_checkpoint(checkpoint_file: str) -> List[Dict[str, any]]:
+    """
+    Loads checkpointed data.
+
+    :param checkpoint_file: the path to the checkpoint file
+    :return: the checkpointed data
+    """
     try: 
         with open(checkpoint_file, "r") as f:
             data = json.load(f)
@@ -346,7 +367,7 @@ def load_checkpoint(checkpoint_file: str) -> List[Dict[str, any]]:
 
 def parse_args() -> argparse.Namespace:
     """
-    This function will parse the input arguments.
+    Parses the input arguments.
 
     :return: The parsed input arguments
     """

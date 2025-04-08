@@ -21,7 +21,13 @@ COUPON_ACTIVATION_TEXT = "activation_text"
 
 
 def _download_model(model_name: str, cache_dir: str) -> str:
-    """Downloads a model from Hugging Face Hub if not already cached."""
+    """
+    Downloads a model from Hugging Face Hub if not already cached.
+
+    :param model_name: name of the model on HuggingFace
+    :param cache_dir: the directory for model caching
+    :return: path to the model
+    """
     hf_token = os.getenv("HF_TOKEN")
     if not hf_token:
         raise ValueError("Hugging Face token not found. Please set the HF_TOKEN environment variable.")
@@ -31,7 +37,13 @@ def _download_model(model_name: str, cache_dir: str) -> str:
 
 
 def _perform_ner(model_path: str, texts: List[str]) -> List[List[Dict[str, any]]]:
-    """Uses a model to perform Named Entity Recognition (NER) on the input text using the BIO2 scheme."""
+    """
+    Uses a model to perform Named Entity Recognition (NER) on the input texts.
+
+    :param model_path: path to the token classification model
+    :param texts: list of texts to perform NER on
+    :return: list of NER pipeline outputs
+    """
     if texts == []:
         return []
 
@@ -43,14 +55,20 @@ def _perform_ner(model_path: str, texts: List[str]) -> List[List[Dict[str, any]]
     return nlp(texts)
 
 
-def _coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
-    """Converts a coupon tagged by the model to a JSON object. Only the first entity of each type is considered."""
+def _labeled_text_to_coupon_first(labeled_text: List[Dict[str, any]]) -> Dict[str, str]:
+    """
+    Converts a text labeled by the model to a coupon in the format expected from the BERT pipeline. 
+    Only the first entity of each type is considered.
+
+    :param labeled_text: labeled text in the HuggingFace pipeline output format
+    :return: coupon in the format expected from the BERT pipeline 
+    """
     coupon = {COUPON_PRODUCT_NAME: "", 
               COUPON_DISCOUNT_TEXT: "", 
               COUPON_VALID_UNTIL: "", 
               COUPON_ACTIVATION_TEXT: ""}
 
-    for entity in reversed(model_coupon):
+    for entity in reversed(labeled_text):
         if entity[NER_ENTITY_GROUP] == TAG_PRODUCT_NAME:
             coupon[COUPON_PRODUCT_NAME] = entity[NER_TEXT]
         elif entity[NER_ENTITY_GROUP] == TAG_DISCOUNT_TEXT:
@@ -63,14 +81,20 @@ def _coupon_to_json_first(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
     return coupon
 
 
-def _coupon_to_json_concat(model_coupon: List[Dict[str, any]]) -> Dict[str, str]:
-    """Converts a coupon tagged by the model to a JSON object. All entities of each type are concatenated."""
+def _labeled_text_to_coupon_concat(labeled_text: List[Dict[str, any]]) -> Dict[str, str]:
+    """
+    Converts a text labeled by the model to a coupon in the format expected from the BERT pipeline. 
+    All entities of each type are concatenated.
+
+    :param labeled_text: labeled text in the HuggingFace pipeline output format
+    :return: coupon in the format expected from the BERT pipeline 
+    """
     coupon = {COUPON_PRODUCT_NAME: "", 
               COUPON_DISCOUNT_TEXT: "", 
               COUPON_VALID_UNTIL: "", 
               COUPON_ACTIVATION_TEXT: ""}
 
-    for entity in model_coupon:
+    for entity in labeled_text:
         if entity[NER_ENTITY_GROUP] == TAG_PRODUCT_NAME:
             coupon[COUPON_PRODUCT_NAME] += entity[NER_TEXT] + " "
         elif entity[NER_ENTITY_GROUP] == TAG_DISCOUNT_TEXT:
@@ -86,12 +110,18 @@ def _coupon_to_json_concat(model_coupon: List[Dict[str, any]]) -> Dict[str, str]
     return coupon
 
 
-def _coupon_to_json(model_coupon: List[Dict[str, any]], strategy: str) -> Dict[str, str]:
-    """Converts a coupon tagged by the model to a JSON object."""
+def _labeled_text_to_coupon(labeled_text: List[Dict[str, any]], strategy: str) -> Dict[str, str]:
+    """
+    Converts a text labeled by the model to a coupon in the format expected from the BERT pipeline.
+
+    :param labeled_text: labeled text in the HuggingFace pipeline output format
+    :param strategy: the strategy to use in case of multiple entities with the same label in one coupon
+    :return: coupon in the format expected from the BERT pipeline 
+    """
     if strategy == "first":
-        return _coupon_to_json_first(model_coupon)
+        return _labeled_text_to_coupon_first(model_coupon)
     elif strategy == "concat":
-        return _coupon_to_json_concat(model_coupon)
+        return _labeled_text_to_coupon_concat(model_coupon)
     else:
         raise ValueError(f"Invalid strategy: {strategy}")
 
@@ -99,8 +129,18 @@ def _coupon_to_json(model_coupon: List[Dict[str, any]], strategy: str) -> Dict[s
 def run_bert_pipeline(input_data: List[str], 
                       selection_model: str, 
                       extraction_model: str, 
-                      strategy: str = "first", 
+                      strategy: str, 
                       cache_dir: str = "./models") -> List[str]:
+    """
+    Runs the BERT pipeline on a list of inputs.
+
+    :param input_data: list of inputs to extract coupons from
+    :param selection_model: name of the coupon selection model on HuggingFace
+    :param selection_model: name of the field extraction model on HuggingFace
+    :param strategy: the strategy to use in case of multiple entities with the same label in one coupon
+    :param cache_dir: the directory for model caching
+    :return: list of coupon JSONs as strings
+    """
 
     cs_path = _download_model(selection_model, cache_dir)
     fe_path = _download_model(extraction_model, cache_dir)
