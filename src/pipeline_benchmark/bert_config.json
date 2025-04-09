@@ -132,8 +132,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-plain-dm",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_solo-dm",
+            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-dm",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-dm",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -150,8 +150,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-plain-lidl",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_solo-lidl",
+            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-lidl",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-lidl",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -169,8 +169,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-plain-rewe",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_solo-rewe",
+            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-rewe",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-rewe",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -189,8 +189,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-plain-rossmann",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_solo-rossmann",
+            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-rossmann",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-rossmann",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -210,8 +210,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-plain-dm",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_grow-dm",
+            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-dm",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-dm",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -228,8 +228,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-plain-lidl",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_grow-lidl",
+            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-lidl",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-lidl",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -247,8 +247,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-plain-rewe",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_grow-rewe",
+            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-rewe",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-rewe",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -267,8 +267,8 @@
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-plain-rossmann",
-            "extraction_model": "zpp-murmuras/bert_extraction_add_grow-rossmann",
+            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-rossmann",
+            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-rossmann",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",

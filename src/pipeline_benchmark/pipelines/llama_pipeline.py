@@ -5,6 +5,7 @@ from llama_cpp import Llama
 
 
 N_CTX = 8192
+MAX_TOKENS = 2048
 SEED = 69
 
 
@@ -32,11 +33,15 @@ def run_llama_pipeline(input_data: List[str], model_path: str, prompt_type: str)
         # It seems that llama has a tendency to correctly recognize that there is no coupons in the input
         # and print "[]", but after that start to generate garbage. That's why adding "[]" to stop sequences
         # provides a significant speedup.
-        out = llama.create_completion(prompt, max_tokens=-1, stop=["]"], seed=SEED)
+        out = llama.create_completion(prompt, max_tokens=MAX_TOKENS, stop=["]"], seed=SEED)
         out_text = out["choices"][0]["text"]
 
-        out_text = out_text + "]"
+        last_brace_idx = out_text.rfind("}")
+        if last_brace_idx != -1:
+            res = out_text[:last_brace_idx + 1] + "]"
+        else:
+            res = "[]"
 
-        output.append(out_text)
+        output.append(res)
 
     return output

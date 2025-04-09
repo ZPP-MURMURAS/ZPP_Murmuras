@@ -119,9 +119,9 @@ def _labeled_text_to_coupon(labeled_text: List[Dict[str, any]], strategy: str) -
     :return: coupon in the format expected from the BERT pipeline 
     """
     if strategy == "first":
-        return _labeled_text_to_coupon_first(model_coupon)
+        return _labeled_text_to_coupon_first(labeled_text)
     elif strategy == "concat":
-        return _labeled_text_to_coupon_concat(model_coupon)
+        return _labeled_text_to_coupon_concat(labeled_text)
     else:
         raise ValueError(f"Invalid strategy: {strategy}")
 
@@ -152,7 +152,7 @@ def run_bert_pipeline(input_data: List[str],
         coupons = [res[NER_TEXT] for res in cs_results]
 
         fe_results = _perform_ner(fe_path, coupons)
-        json_coupons = [_coupon_to_json(coupon, strategy) for coupon in fe_results]
+        json_coupons = [_labeled_text_to_coupon(coupon, strategy) for coupon in fe_results]
         output.append(json.dumps(json_coupons))
 
     return output
