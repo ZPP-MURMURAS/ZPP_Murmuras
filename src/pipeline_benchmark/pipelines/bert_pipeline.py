@@ -136,7 +136,7 @@ def run_bert_pipeline(input_data: List[str],
 
     :param input_data: list of inputs to extract coupons from
     :param selection_model: name of the coupon selection model on HuggingFace
-    :param selection_model: name of the field extraction model on HuggingFace
+    :param extraction_model: name of the field extraction model on HuggingFace
     :param strategy: the strategy to use in case of multiple entities with the same label in one coupon
     :param cache_dir: the directory for model caching
     :return: list of coupon JSONs as strings

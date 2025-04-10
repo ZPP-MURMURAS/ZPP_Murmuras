@@ -24,8 +24,8 @@ def run_llama_pipeline(input_data: List[str], model_path: str, prompt_type: str)
     llama = Llama(model_path, n_gpu_layers=100, n_ctx=N_CTX)
 
     output = []
-    for input in tqdm(input_data, desc="Llama inference"):
-        prompt = "### Input:\n" + input + "\n\n### Response:\n"
+    for inp in tqdm(input_data, desc="Llama inference"):
+        prompt = "### Input:\n" + inp + "\n\n### Response:\n"
 
         if prompt_type == "w":
             prompt = "You are provided with text representing contents of the phone screen. Your task is to extract information about coupons from the text. The information should include the product name, the validity date, the discount, the old price, and the new price.\n\n" + prompt
