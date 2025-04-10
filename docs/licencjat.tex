@@ -287,36 +287,95 @@ The transformation implemented by a layer is defined (parametrized) by its \text
 
 The advancement of deep learning contributed to the development of generative AI such as ChatGPT as well as Natural Language Processing (NLP) which enables machines understand and generate text and speech. This is useful for translations and extracting meaning from large quantities of data \cite{ibm_dl}.
 
-
-% \subsection{}
 % \subsection{Assessing the model - benchmarking}
 % Benchmarking is the process of running a set of, among others, computer programs against a set of tests to assess their relative performance or precision \cite{benchmark}. Benchmarks are employed to evaluate and quantify the efficiency, accuracy, speed, and other metrics of a machine learning model or pipeline, thereby enabling the selection of the best overall solution to our problem.
 
 
-% \subsection{Natural Language Processing (NLP)}
+\subsection{Transformers}
+Transformers are deep learning models introduced in the 2017 paper "Attention Is All You Need" by Vaswani et al., which have significantly impacted natural language processing and other sequential data tasks. Unlike traditional recurrent neural networks (RNNs), transformers utilize self-attention mechanisms to process input data in parallel, enhancing efficiency and scalability. This architecture has become foundational in models like BERT, and GPT \cite{medium_t}.
+\subsubsection{Model architecture}
+The proposed architecture has a encoder-decoder structure wherein “the encoder maps an input sequence of symbol representations $ (x_1, … , x_n) $ to a sequence of continuous representations $ z = (z_1, … , z_n) $”. The decoder takes $ z $ and outputs a sequence $ (y_1, … , y_n) $. At every step, the model utilizes previously-generated symbols as additional input when creating the next output. This is shown in figure ~\ref{fig:transformers_fig}. 
 
-% \subsubsection{Relevant NLP models}
+The Encoder consists of 6 identical layers, each with two main parts. The first part is a multi-head self-attention mechanism, and the second is a simple fully connected feed-forward network. Each part uses a residual connection and layer normalization, which helps improve the model's performance. The output of each layer has a fixed size (512 dimensions).
+
+The Decoder is similar to the encoder, with 6 identical layers. In addition to the two parts in the encoder, the decoder has a third part that performs attention over the encoder’s output. It also uses residual connections and layer normalization. To ensure the model does not look ahead in the sequence, the self-attention in the decoder is modified to prevent the model from attending to future positions, so each prediction only depends on earlier information.
+
+Please refer to the aforementioned paper for more details.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{bachelor_images/transformer_arch.png}
+    \caption{Transformer Architecture \cite{attention}}
+    \label{fig:transformers_fig}
+\end{figure}
+
+\subsubsection{Attention and multi-head attention}
+The attention mechanism is the core innovation of transformers. It allows the model to weigh the importance of each word (or token) in a sequence with respect to every other word. This is done by computing a set of attention scores, which decide how much attention one word should pay to others in the sequence.
+Multi-head attention is a key component of transformer architectures, enabling models to focus on different parts of an input sequence simultaneously. It works by projecting the input data into multiple subspaces, each corresponding to a separate attention head. These heads independently process the data, capturing various relationships and features. The outputs are then concatenated and transformed to produce the final result \cite{attention}.
+This approach allows the model to attend to multiple aspects of the input, such as different positions or semantic relationships, enhancing its ability to understand complex patterns. For example, in natural language processing tasks, one attention head might focus on syntactic structures while another captures semantic nuances. 
+By distributing the attention mechanism across multiple heads, transformers can efficiently process information in parallel, leading to improved performance in tasks like machine translation, text summarization, and language understanding \cite{medium_medium_t}. 
+The relationship between attention and multi-head attention is depicted in figure ~\ref{fig:attention_fig}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{bachelor_images/attention_fig.png}
+    \caption{Attention and multi-head attention \cite{attention}}
+    \label{fig:attention_fig}
+\end{figure}
+
+
+\subsection{Quantization}
+Quantization is a technique employed in many fields including machine learning, to reduce the precision of numerical representations within models, typically converting high-precision formats like 32-bit floating point (FP32) to lower-precision formats such as 8-bit integers (INT8). Using integer operations instead of floating-point reduces the computational and memory requirements during inference, thereby making it more efficient and faster, which is an essential benefit for real-time applications. Furthermore, quantization enables deployment on resource-constrained hardware such as smartphones and tablets, while also reducing power consumption due to lighter computational loads. Though this may slightly reduce model accuracy, the trade-off often proves worthwhile in practical applications \cite{ibm_quantization}.
+The two most common quantization techniques are float32 -> float16 and float32 -> int8.
+\subsubsection{float32 -> float16}
+Performing quantization from float32 to float16 is relatively straightforward as both data types are represented in the same manner. Float32 has the following format: 
+\begin{enumerate}
+	\item The most significant bit (MBS) represents the sign of the number, ie. whether it is negative or positive.
+	\item The next 8 bits represent the exponent.
+	\item The remaining 23 bits, are the mantissa, ie. the decimal.
+\end{enumerate}
+
+When converting from fromt32 to float16, we just remove the last 13 bits of the mantissa, creating a rounding error, and “shrinks” the exponent to fit into 5 bits. This may create a float overflow error if the float32 number is greater than $ 6.55e^4$ \cite{quant_explained}. 
+
+
+\subsubsection{float32 -> int8}
+This type of quantization is more complicated as an int8 can only represent 256 values which is significantly less compared to the $ 2^24 $  values represented by a float32. The idea of this quantization is to find the best way to map float32 values into the int8 space, using the affine quantization scheme: $ x = S * (x_q - Z) $. 
+\begin{enumerate}
+	\item $ x $ is the float32 value to be quantized.
+	\item  $ x_q $ is the quantized int8 value associated with $ x $. It can be computed as follows $ x_q = round(x/S + Z) $.	
+	\item $ S \in float32$ is the scale.
+	\item $ Z $ is the zero-point, which is the int8 value that corresponds to 0 in the float32 range \cite{quant_hf}.
+\end{enumerate}
+
+
+\subsection{Finetuning}
+Fine-tuning is a specialized form of transfer learning that involves adapting a pre-trained model to perform a specific task, such as identifying coupons or extracting relevant information from them, rather than identifying all kinds of objects. Instead of training a model from scratch, fine-tuning starts with a model already trained on a large dataset and further trains it using a smaller, task-specific dataset. Attempting to train a large model from scratch on a small dataset can lead to overfitting, where the model performs well on training data but generalizes poorly to unseen data. This approach is particularly beneficial for deep learning models, such as large language models (LLMs) in natural language processing or convolutional neural networks (CNNs) in computer vision, as it reduces the computational resources and labeled data required \cite{ibm_finetuning}.
+Fine-tuning consists of the following steps:
+\begin{enumerate}
+	\item Training a source model on a large, general-purpose dataset. This enables the model to learn broadly useful feature representations.
+	\item Construct a new target model by copying the architecture and parameters of the source model, excluding its final output layer. The retained parameters are presumed to encode transferable knowledge, while the output layer—being specific to the source dataset —is discarded.
+	\item Introduce a new output layer tailored to the target task, ensuring it matches the number of classes in the target dataset. Initialize this layer’s parameters randomly.
+	\item Train the target model on the new, task-specific dataset (e.g., a dataset of coupons. The new output layer is trained from scratch, while the remaining layers are fine-tuned using the pre-trained weights as a starting point \cite{finetune_cool_image}.
+\end{enumerate}
 
 \section{Should We Be Afraid of AI? - Assessing the Risks and Ethical Implications of Artificial Intelligence}
-
-% nie wydaje mi się że pisanie o adversarial attacks czy accuracy concerns w tym miejscu jest potrzebne. adversarial attacks bo nie robimy czegos co moze byc tak wykorzystane. accuracy bo bedziemy o tym pisać w kolejnych sekcjach i nie ma co od razu kota z worka wyciągać
 
 As artificial intelligence becomes increasingly complex and integrated into our daily lives, the voices raising concerns about its dangers grow louder. Some express concern about the risks of excessive surveillance and privacy erosion, envisioning a future where AI systems are deeply intertwined with our surroundings, essentially hearing what we hear and seeing what we see \cite{sroka_vid}. Others highlight the environmental challenges tied to large-scale AI deployment, such as rising energy and water consumption, along with the need for rare materials in microchip production \cite{ai_env_concerns}. This section will focus on assessing the risks of artificial intelligence and how our solution will take them into account.
 
 \subsection{Privacy Erosion}
-AI systems heavily rely on vast amounts of user data to deploy machine learning techniques that identify subtle patterns and behaviors that may not be immediately evident, thus enabling personalized recommendations \cite{data_guard}. Social media platforms like TikTok exemplify this, as their algorithms suggest content based on users' previous interactions \cite{it_convergence} \cite{builtin}. While this personalization enhances user engagement, it also risks influencing people's opinions and shaping their worldview by trapping them in ideological echo chambers.
+AI systems heavily rely on vast amounts of user data to deploy machine learning techniques that identify subtle patterns and behaviors that may not be immediately evident, thus enabling personalized recommendations \cite{data_guard}. Social media platforms like TikTok exemplify this, as their algorithms suggest content based on users' previous interactions \cite{it_convergence} \cite{builtin}. While this personalization enhances user engagement, it also risks influencing people's opinions and shaping their worldview by trapping them in ideological echo chambers\cite{echo_chambers}.
 
 Consequently, ‘information privacy’ is one of the primary concerns surrounding the use of AI. ‘Information privacy’ refers to the protection of personal data that is being collected, processed and stored by AI systems \cite{transcend}. Training machine learning models typically requires immense datasets, involving terabytes or even petabytes of information. Therefore, these training sets likely include sensitive user information such as healthcare records and biometric data \cite{ibm_vast_data}. Beyond explicit data collection, AI systems can also infer highly personal attributes, such as political beliefs, sexual orientation, or health conditions, from seemingly unrelated data — a phenomenon known as 'predictive harm' \cite{transcend}. This information can be utilized to subject individuals to targeted advertising, unwanted profiling, and even identity theft, often without the user’s consent or awareness \cite{data_guard}, thus posing a serious privacy risk.
 
 Moreover, AI systems can pose ‘autonomy harms’, wherein the insights derived from data are used to influence individuals' decisions or behavior without their knowledge or proper consent. The common mindset of having "nothing to hide" overlooks the broader implications of these practices, which can undermine personal freedom and informed decision-making. A significant example of this problem is the Facebook-Cambridge Analytica scandal, in which a seemingly benign personality quiz was utilized to harvest over 87 million Facebook users’ data. Based on this data, detailed psychological profiles were constructed and leveraged to target individuals with personalized political ads during the 2016 US Presidential Election. This case underscores how AI can extract deeply personal insights from mundane user interactions, demonstrating the potential for misuse when data privacy protections are inadequate \cite{transcend}.
 
 To address privacy concerns associated with AI systems, we are implementing locally-deployable models that process data directly on users' devices. This ensures that raw, unprocessed information never leaves the device or gets transmitted to external servers. By keeping data local, we significantly reduce the risk of unauthorized access, data breaches, or misuse. This approach empowers users with greater control over their information while still benefiting from the capabilities of AI in a secure and privacy-conscious manner. 
-% ngl to jest troche bullshit ale trzeba jakoś uzasadnić że my nie jesteśmy tymi złymi
-
 \subsection{Environmental Concerns}
 AI has a notable carbon footprint due to its increasing energy consumption, particularly during model training and usage \cite{forbes_dl_env}. One study predicts that by 2027, AI-related energy consumption could reach 85–134 TWh, representing nearly 0.5\% of today's global electricity usage. This estimate is based on the energy consumption of the Nvidia A100 servers - the hardware estimated to be used by 95 percent of the A.I. market, and their projected sales in the upcoming years \cite{nyt_el}. Training LLMs typically requires significantly more energy in comparison to making a single prediction on the trained model \cite{sci_dir_comp}, for instance BERT required "the energy of a round-trip transcontinental flight" to train, while GPT-3 emitted 552 metric tons of carbon dioxide which is "the equivalent of 123 gasoline-powered passenger vehicles driven for one year" \cite{sci_am_co2}. 
 
 Furthermore, while a quarter of the world lacks access to clean water and sanitation, data centers consume significant quantities of water during their construction and during operation to cool electrical components \cite{first}. AI server cooling requires up to 9 liters of water per kWh of energy used. Given the amount of energy required to train and operate a model, this will exacerbate the lack of water, with UN estimates stating that by 2030 half of the world’s population will be facing severe water stress \cite{water_scarcity}. It is estimated that globally, infrastructure related to AI will soon require six times more water than Denmark \cite{first}. 
+
+In our approach, we opted to fine-tune existing language models rather than train new ones from scratch, a decision driven by both computational efficiency and environmental considerations. As highlighted by Wang et al. (2023), pre-training a model like BERT can require the equivalent energy of anywhere from 400 to 45,000 fine-tuning runs, depending on the dataset size. Their analysis shows that the number of training tokens is a reliable heuristic for estimating energy use during fine-tuning, and that sequence length significantly impacts energy intensity during this phase. These findings emphasize the substantial energy and carbon costs associated with pre-training, underscoring the environmental benefits of leveraging pre-trained models for downstream tasks \cite{finetuning_env_good}.
 
 \chapter{Overview of Existing Solutions}
 
@@ -348,251 +407,397 @@ Moreover, due to mobile devices typically having limited processing power and me
 
 \begin{thebibliography}{99}
 
-\addcontentsline{toc}{chapter}{Bibliography}
-\raggedright
-
-\bibitem{murmuras} 
-\textit{Murmuras website}.  
-\url{https://murmuras.com/}.  
-[Accessed 2025-02-11].
-
-\bibitem{seo2023}
-\textit{Seo, D., \& Yoo, Y. (2023). Improving Shopping Mall Revenue by Real-Time Customized Digital Coupon Issuance. IEEE Access, 11, 7924–7932.}
-\url{https://doi.org/10.1109/ACCESS.2023.3239425}
-
-\bibitem{coupon_definition}
-\textit{Britannica Dictionary definition of COUPON}.
-\url{https://www.britannica.com/dictionary/coupon}.
-[Accessed 2025-02-03].
-
-\bibitem{nayal2021}
-\textit{Nayal, P., \& Pandey, N. (2021). What Makes a Consumer Redeem Digital Coupons? Behavioral Insights from Grounded Theory Approach. *Journal of Promotion Management*, 28(3), 205–238.}
-\url{https://doi.org/10.1080/10496491.2021.1989541}
-
-\bibitem{danaher2015}
-\textit{Danaher, P. J., Smith, M. S., Ranasinghe, K., \& Danaher, T. S. (2015). *Where, when, and how long: Factors that influence the redemption of mobile phone coupons.* *Journal of Marketing Research*, *52*(5), 710--725.}
-\url{https://journals.sagepub.com/doi/full/10.1509/jmr.13.0341}
-
-\bibitem{jayadharshini2023}
-\textit{Jayadharshini, P., Sharon Roji, Priya. C, Lalitha, K., Santhiya, S., Keerthika, S., \& Abinaya, N. (2023). *Enhancing Retailer Auctions and Analyzing the Impact of Coupon Offers on Customer Engagement and Sales Through Machine Learning.* *2023 Intelligent Computing and Control for Engineering and Business Systems (ICCEBS)*, 1–6. }
-\url{https://doi.org/10.1109/ICCEBS58601.2023.10448900}
-
-
-\bibitem{design_of_coupons}
-Xiong Keyi, Yang Wensheng
-\textit{Research on the Design of E-coupons for Directional Marketing of Two Businesses in Competitive Environment}.
-\url{https://www.sciencepublishinggroup.com/article/10.11648/j.ijefm.20200801.16}.
-[Accessed 2025-02-04].
-
-\bibitem{li2024}
-\textit{Li, J. (2024). The evolution, applications, and future prospects of large language models: An in-depth overview. Applied and Computational Engineering 35, 234–244.}\url{https://doi.org/10.54254/2755-2721/35/20230399}
-
-\bibitem{sui2024}
-\textit{Sui, Y., Zhou, M., Zhou, M., Han, S., \& Zhang, D. (2024). Table meets LLM: Can large language models understand structured table data? A benchmark and empirical study. Proceedings of the 17th ACM International Conference on Web Search and Data Mining, 645--654.}
-
-\bibitem{targeted_reminders}
-Li Li, et. al.
-\textit{Targeted reminders of electronic coupons: using predictive analytics to facilitate coupon marketing}.
-\url{https://link.springer.com/article/10.1007/s10660-020-09405-4}.
-[Accessed 2025-02-04].
-
-\bibitem{competitor_tariffs}
-Bernhard König, et. al.
-\textit{Analysing competitor tariffs with machine learning}.
-\url{https://www.milliman.com/en/insight/analysing-competitor-tariffs-with-machine-learning}.
-[Accessed 2025-02-04].
-
-\bibitem{ml_general}
-Iqbal H. Sarker
-\textit{Machine Learning: Algorithms, Real-World Applications and Research Directions}.
-\url{https://link.springer.com/article/10.1007/s42979-021-00592-x}.
-[Accessed 2025-02-05].
-
-\bibitem{emarketer_coupon_stats}
-Sara Lebow
-\textit{How consumers access digital coupons}.
-\url{https://www.emarketer.com/content/how-consumers-access-digital-coupons}.
-[Accessed 2025-02-05].
-
-\bibitem{coupon_stats_2}
-\textit{Unveiling IT Coupons Trends and Statistics}
-\url{https://www.go-globe.com/unveiling-it-coupons-trends-statistics/}.
-[Accessed 2025-02-05].
-
-\bibitem{android_view}
-\textit{Android API Reference - View}
-\url{https://developer.android.com/reference/android/view/View}
-[Accessed 2025-03-11]
-
-\bibitem{brinkmann2023}
-\textit{Brinkmann, A., Shraga, R., Der, R. C., \& Bizer, C. (2023). Product Information Extraction using ChatGPT. arXiv preprint, arXiv:2306.14921.}
-\url{https://arxiv.org/abs/2306.14921}
-
-
-\bibitem{chatgpt_params}
-\textit{Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared
-Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish
-Sastry, Amanda Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen
-Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel M.
-Ziegler, Jeffrey Wu, Clemens Winter, Christopher Hesse, Mark Chen,
-Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin Chess, Jack Clark,
-Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, and
-Dario Amodei. Language models are few-shot learners, 2020}
-
-\bibitem{scapegraph_repo}
-Marco Perini, Lorenzo Padoan, Marco Vinciguerra
-\textit{Scrapegraph-ai}.
-\url{https://github.com/VinciGit00/Scrapegraph-ai}.
-[Accessed 2025-02-24].
-
-\bibitem{ollama_repo}
-\textit{Ollama}.
-\url{https://github.com/ollama/ollama}.
-[Accessed 2025-02-24].
-
-\bibitem{scapegraph_usage}
-Marco Perini, Lorenzo Padoan, Marco Vinciguerra
-\textit{Scrapegraph-ai usage}.
-\url{https://github.com/ScrapeGraphAI/Scrapegraph-ai?tab=readme-ov-file#-usage}.
-[Accessed 2025-02-24].
-
-\bibitem{scapegraph_sdks}
-Marco Perini, Lorenzo Padoan, Marco Vinciguerra
-\textit{Scrapegraph-ai API and SDKs}.
-\url{https://github.com/ScrapeGraphAI/Scrapegraph-ai?tab=readme-ov-file#-scrapegraph-api--sdks}.
-[Accessed 2025-02-24].
-
-\bibitem{android_dev_site}
-\textit{Android developer fundamentals website}.
-\url{https://developer.android.com/guide/components/fundamentals}.
-[Accessed 2025-02-24].
-
-\bibitem{ios_dev_site}
-\textit{Apple developer website}.
-\url{https://developer.apple.com/develop/}.
-[Accessed 2025-02-24].
-
-\bibitem{omniparser_intro}
-\textit{Yadong Lu, Jianwei Yang, Yelong Shen, and Ahmed Awadallah. Omni-
-parser for pure vision based gui agent, 2024.}
-
-\bibitem{cheng2024}
-\textit{Cheng, K., Sun, Q., Chu, Y., Xu, F., Li, Y., Zhang, J., \& Wu, Z. (2024). SeeClick: Harnessing GUI Grounding for Advanced Visual GUI Agents. arXiv preprint, arXiv:2401.10935.} \url{https://arxiv.org/abs/2401.10935}
-
-
-\bibitem{mobile_resources}
-Xiang Li, et. al.
-\textit{Large Language Models on Mobile Devices: Measurements, Analysis, and Insights}
-\url{https://dl.acm.org/doi/10.1145/3662006.366205}
-
-\bibitem{LinguaLinked}
-Junchen Zhao, et. al.
-\textit{LinguaLinked: A Distributed Large Language Model Inference System for Mobile Devices}
-\url{https://arxiv.org/pdf/2312.00388}
-
-\bibitem{sequence_matcher}
-\textit{difflib — Helpers for computing deltas}
-\url{https://docs.python.org/3/library/difflib.html}
-
-\bibitem{francuz}
-\textit{Deep Learning with Python}
-
-\bibitem{ibm_ai}
-\textit{What is artificial intelligence (AI)?}
-\url{https://www.ibm.com/think/topics/artificial-intelligence}
-
-\bibitem{ibm_privacy}
-\textit{Exploring privacy issues in the age of AI}
-\url{https://www.ibm.com/think/insights/ai-privacy}
-
-\bibitem{mycin}
-\textit{MYCIN}
-\url{https://www.britannica.com/technology/MYCIN}
-
-\bibitem{supervised_ibm}
-\textit{Supervised versus unsupervised learning: What's the difference?}
-\url{https://www.ibm.com/think/topics/supervised-vs-unsupervised-learning}
-
-\bibitem{benchmark} 
-\textit{Computer Benchmark}.
-\url{https://bhatabhishek-ylp.medium.com/benchmarking-in-computer-c6d364681512}.
-[Accessed 2025-02-03].
-
-\bibitem{sroka_vid} 
-\textit{ End-to-End Encryption Now a Historical Footnote. They Won. }.
-\url{https://www.youtube.com/watch?v=yh1pF1zaauc}.
-[Accessed 2025-03-24].
-
-\bibitem{ai_env_concerns}
-\textit{AI has an environmental problem. Here’s what the world can do about that.}
-\url{https://www.unep.org/news-and-stories/story/ai-has-environmental-problem-heres-what-world-can-do-about}
-[Accessed 2025-03-24]
-
-\bibitem{it_convergence} 
-\textit{Top Use Cases of AI-Based Recommendation Systems}.
-\url{https://www.itconvergence.com/blog/top-use-cases-of-ai-based-recommendation-systems/}.
-[Accessed 2025-03-24].
-
-\bibitem{builtin} 
-\textit{ 14 Risks and Dangers of Artificial Intelligence (AI)}.
-\url{https://builtin.com/artificial-intelligence/risks-of-artificial-intelligence}.
-[Accessed 2025-03-24].
-
-
-\bibitem{data_guard} 
-\textit{The growing data privacy concerns with AI: What you need to know}.
-\url{https://www.dataguard.com/blog/growing-data-privacy-concerns-ai/}.
-[Accessed 2025-03-24].
-
-\bibitem{transcend} 
-\textit{Examining Privacy Risks in AI Systems}.
-\url{https://transcend.io/blog/ai-and-privacy}.
-[Accessed 2025-03-24].
-
-\bibitem{ibm_vast_data} 
-\textit{Exploring privacy issues in the age of AI}.
-\url{https://www.ibm.com/think/insights/ai-privacy}.
-[Accessed 2025-03-24].
-
-
-\bibitem{forbes_dl_env}
-\textit{Deep Learning’s Carbon Emissions Problem}.
-\url{https://www.forbes.com/sites/robtoews/2020/06/17/deep-learnings-climate-change-problem/}.
-[Accessed 2025-03-24].
-
-\bibitem{nyt_el}
-\textit{A.I. Could Soon Need as Much Electricity as an Entire Country}.
-\url{https://www.nytimes.com/2023/10/10/climate/ai-could-soon-need-as-much-electricity-as-an-entire-country.html}.
-[Accessed 2025-03-24].
-
-\bibitem{sci_dir_comp}
-\textit{Trends in AI inference energy consumption: Beyond the performance-vs-parameter laws of deep learning}.
-\url{https://www.sciencedirect.com/science/article/pii/S2210537923000124#sec7}.
-[Accessed 2025-03-24].
-
-\bibitem{sci_am_co2}
-\textit{A Computer Scientist Breaks Down Generative AI’s Hefty Carbon Footprint}.
-\url{https://www.scientificamerican.com/article/a-computer-scientist-breaks-down-generative-ais-hefty-carbon-footprint/}.
-[Accessed 2025-03-24].
-
-\bibitem{water_scarcity}
-\textit{AI Is Accelerating the Loss of Our Scarcest Natural Resource: Water}.
-\url{https://www.forbes.com/sites/cindygordon/2024/02/25/ai-is-accelerating-the-loss-of-our-scarcest-natural-resource-water/}.
-[Accessed 2025-03-24].
-
-\bibitem{first}
-\textit{AI has an environmental problem. Here’s what the world can do about that.}.
-\url{https://www.unep.org/news-and-stories/story/ai-has-environmental-problem-heres-what-world-can-do-about}.
-[Accessed 2025-03-24].
-
-\bibitem{ibm_dl}
-\textit{What is deep learning?}.
-\url{https://www.ibm.com/think/topics/deep-learning}.
-[Accessed 2025-03-24].
-
-
-\end{thebibliography}
-
+    \addcontentsline{toc}{chapter}{Bibliography}
+    \raggedright
+    
+    \bibitem{murmuras} 
+    \textit{Murmuras website}.  
+    \url{https://murmuras.com/}.  
+    [Accessed 2025-02-11].
+    
+    \bibitem{seo2023}
+    \textit{Seo, D., \& Yoo, Y. (2023). Improving Shopping Mall Revenue by Real-Time Customized Digital Coupon Issuance. IEEE Access, 11, 7924–7932.}
+    \url{https://doi.org/10.1109/ACCESS.2023.3239425}
+    
+    \bibitem{coupon_definition}
+    \textit{Britannica Dictionary definition of COUPON}.
+    \url{https://www.britannica.com/dictionary/coupon}.
+    [Accessed 2025-02-03].
+    
+    \bibitem{nayal2021}
+    \textit{Nayal, P., \& Pandey, N. (2021). What Makes a Consumer Redeem Digital Coupons? Behavioral Insights from Grounded Theory Approach. *Journal of Promotion Management*, 28(3), 205–238.}
+    \url{https://doi.org/10.1080/10496491.2021.1989541}
+    
+    \bibitem{danaher2015}
+    \textit{Danaher, P. J., Smith, M. S., Ranasinghe, K., \& Danaher, T. S. (2015). *Where, when, and how long: Factors that influence the redemption of mobile phone coupons.* *Journal of Marketing Research*, *52*(5), 710--725.}
+    \url{https://journals.sagepub.com/doi/full/10.1509/jmr.13.0341}
+    
+    \bibitem{jayadharshini2023}
+    \textit{Jayadharshini, P., Sharon Roji, Priya. C, Lalitha, K., Santhiya, S., Keerthika, S., \& Abinaya, N. (2023). *Enhancing Retailer Auctions and Analyzing the Impact of Coupon Offers on Customer Engagement and Sales Through Machine Learning.* *2023 Intelligent Computing and Control for Engineering and Business Systems (ICCEBS)*, 1–6. }
+    \url{https://doi.org/10.1109/ICCEBS58601.2023.10448900}
+    
+    \bibitem{design_of_coupons}
+    Xiong Keyi, Yang Wensheng
+    \textit{Research on the Design of E-coupons for Directional Marketing of Two Businesses in Competitive Environment}.
+    \url{https://www.sciencepublishinggroup.com/article/10.11648/j.ijefm.20200801.16}.
+    [Accessed 2025-02-04].
+    
+    \bibitem{li2024}
+    \textit{Li, J. (2024). The evolution, applications, and future prospects of large language models: An in-depth overview. Applied and Computational Engineering 35, 234–244.}\url{https://doi.org/10.54254/2755-2721/35/20230399}
+    
+    \bibitem{sui2024}
+    \textit{Sui, Y., Zhou, M., Zhou, M., Han, S., \& Zhang, D. (2024). Table meets LLM: Can large language models understand structured table data? A benchmark and empirical study. Proceedings of the 17th ACM International Conference on Web Search and Data Mining, 645--654.}
+    
+    \bibitem{targeted_reminders}
+    Li Li, et. al.
+    \textit{Targeted reminders of electronic coupons: using predictive analytics to facilitate coupon marketing}.
+    \url{https://link.springer.com/article/10.1007/s10660-020-09405-4}.
+    [Accessed 2025-02-04].
+    
+    \bibitem{competitor_tariffs}
+    Bernhard König, et. al.
+    \textit{Analysing competitor tariffs with machine learning}.
+    \url{https://www.milliman.com/en/insight/analysing-competitor-tariffs-with-machine-learning}.
+    [Accessed 2025-02-04].
+    
+    \bibitem{ml_general}
+    Iqbal H. Sarker
+    \textit{Machine Learning: Algorithms, Real-World Applications and Research Directions}.
+    \url{https://link.springer.com/article/10.1007/s42979-021-00592-x}.
+    [Accessed 2025-02-05].
+    
+    \bibitem{emarketer_coupon_stats}
+    Sara Lebow
+    \textit{How consumers access digital coupons}.
+    \url{https://www.emarketer.com/content/how-consumers-access-digital-coupons}.
+    [Accessed 2025-02-05].
+    
+    \bibitem{coupon_stats_2}
+    \textit{Unveiling IT Coupons Trends and Statistics}
+    \url{https://www.go-globe.com/unveiling-it-coupons-trends-statistics/}.
+    [Accessed 2025-02-05].
+    
+    \bibitem{android_view}
+    \textit{Android API Reference - View}
+    \url{https://developer.android.com/reference/android/view/View}
+    [Accessed 2025-03-11]
+    
+    \bibitem{brinkmann2023}
+    \textit{Brinkmann, A., Shraga, R., Der, R. C., \& Bizer, C. (2023). Product Information Extraction using ChatGPT. arXiv preprint, arXiv:2306.14921.}
+    \url{https://arxiv.org/abs/2306.14921}
+    
+    \bibitem{chatgpt_params}
+    \textit{Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared
+    Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish
+    Sastry, Amanda Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen
+    Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel M.
+    Ziegler, Jeffrey Wu, Clemens Winter, Christopher Hesse, Mark Chen,
+    Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin Chess, Jack Clark,
+    Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, and
+    Dario Amodei. Language models are few-shot learners, 2020}
+    
+    \bibitem{scapegraph_repo}
+    Marco Perini, Lorenzo Padoan, Marco Vinciguerra
+    \textit{Scrapegraph-ai}.
+    \url{https://github.com/VinciGit00/Scrapegraph-ai}.
+    [Accessed 2025-02-24].
+    
+    \bibitem{ollama_repo}
+    \textit{Ollama}.
+    \url{https://github.com/ollama/ollama}.
+    [Accessed 2025-02-24].
+    
+    \bibitem{scapegraph_usage}
+    Marco Perini, Lorenzo Padoan, Marco Vinciguerra
+    \textit{Scrapegraph-ai usage}.
+    \url{https://github.com/ScrapeGraphAI/Scrapegraph-ai?tab=readme-ov-file#-usage}.
+    [Accessed 2025-02-24].
+    
+    \bibitem{scapegraph_sdks}
+    Marco Perini, Lorenzo Padoan, Marco Vinciguerra
+    \textit{Scrapegraph-ai API and SDKs}.
+    \url{https://github.com/ScrapeGraphAI/Scrapegraph-ai?tab=readme-ov-file#-scrapegraph-api--sdks}.
+    [Accessed 2025-02-24].
+    
+    \bibitem{android_dev_site}
+    \textit{Android developer fundamentals website}.
+    \url{https://developer.android.com/guide/components/fundamentals}.
+    [Accessed 2025-02-24].
+    
+    \bibitem{ios_dev_site}
+    \textit{Apple developer website}.
+    \url{https://developer.apple.com/develop/}.
+    [Accessed 2025-02-24].
+    
+    \bibitem{omniparser_intro}
+    \textit{Yadong Lu, Jianwei Yang, Yelong Shen, and Ahmed Awadallah. Omni-
+    parser for pure vision based gui agent, 2024.}
+    
+    \bibitem{cheng2024}
+    \textit{Cheng, K., Sun, Q., Chu, Y., Xu, F., Li, Y., Zhang, J., \& Wu, Z. (2024). SeeClick: Harnessing GUI Grounding for Advanced Visual GUI Agents. arXiv preprint, arXiv:2401.10935.} \url{https://arxiv.org/abs/2401.10935}
+    
+    \bibitem{mobile_resources}
+    Xiang Li, et. al.
+    \textit{Large Language Models on Mobile Devices: Measurements, Analysis, and Insights}
+    \url{https://dl.acm.org/doi/10.1145/3662006.366205}
+    
+    \bibitem{LinguaLinked}
+    Junchen Zhao, et. al.
+    \textit{LinguaLinked: A Distributed Large Language Model Inference System for Mobile Devices}
+    \url{https://arxiv.org/pdf/2312.00388}
+    
+    \bibitem{sequence_matcher}
+    \textit{difflib — Helpers for computing deltas}
+    \url{https://docs.python.org/3/library/difflib.html}
+    
+    \bibitem{francuz_1}
+    page 1
+    \textit{Deep Learning with Python}
+    \url{https://sourestdeeds.github.io/pdf/Deep%20Learning%20with%20Python.pdf}
+    
+    \bibitem{francuz_2}
+    pages 2 and 3
+    \textit{Deep Learning with Python}
+    \url{https://sourestdeeds.github.io/pdf/Deep%20Learning%20with%20Python.pdf}
+    
+    \bibitem{francuz_3}
+    pages 3 and 4
+    \textit{Deep Learning with Python}
+    \url{https://sourestdeeds.github.io/pdf/Deep%20Learning%20with%20Python.pdf}
+    
+    \bibitem{francuz_8}
+    pages 7 and 8
+    \textit{Deep Learning with Python}
+    \url{https://sourestdeeds.github.io/pdf/Deep%20Learning%20with%20Python.pdf}
+    
+    \bibitem{francuz_9}
+    pages 8 - 10
+    \textit{Deep Learning with Python}
+    \url{https://sourestdeeds.github.io/pdf/Deep%20Learning%20with%20Python.pdf}
+    
+    \bibitem{nvidiaimage}
+    \textit{What’s the Difference Between Artificial Intelligence, Machine Learning and Deep Learning?}
+    \url{https://blogs.nvidia.com/blog/whats-difference-artificial-intelligence-machine-learning-deep-learning-ai/}
+    
+    \bibitem{ibm_ai}
+    \textit{What is artificial intelligence (AI)?}
+    \url{https://www.ibm.com/think/topics/artificial-intelligence}
+    
+    \bibitem{ibm_privacy}
+    \textit{Exploring privacy issues in the age of AI}
+    \url{https://www.ibm.com/think/insights/ai-privacy}
+    
+    \bibitem{mycin}
+    \textit{MYCIN}
+    \url{https://www.britannica.com/technology/MYCIN}
+    
+    \bibitem{supervised_ibm}
+    \textit{Supervised versus unsupervised learning: What's the difference?}
+    \url{https://www.ibm.com/think/topics/supervised-vs-unsupervised-learning}
+    
+    \bibitem{benchmark} 
+    \textit{Computer Benchmark}.
+    \url{https://bhatabhishek-ylp.medium.com/benchmarking-in-computer-c6d364681512}.
+    [Accessed 2025-02-03].
+    
+    \bibitem{not_sroka_vid} 
+    \textit{The privacy paradox with AI}.
+    \url{https://www.reuters.com/legal/legalindustry/privacy-paradox-with-ai-2023-10-31/}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{ai_scare2}
+    \textit{Beware the Privacy Violations in Artificial Intelligence Applications}
+    \url{https://www.isaca.org/resources/news-and-trends/isaca-now-blog/2021/beware-the-privacy-violations-in-artificial-intelligence-applications}
+    [Accessed 2025-04-01]
+    
+    \bibitem{ai_scare3}
+    \textit{AI – the threats it poses to reputation, privacy and cyber security, and some practical solutions to combating those threats}
+    \url{https://www.taylorwessing.com/en/global-data-hub/2024/cyber-security---weathering-the-cyber-storms/ai---the-threats-it-poses-to-reputation}
+    
+    \bibitem{ai_env_concerns}
+    \textit{AI has an environmental problem. Here’s what the world can do about that.}
+    \url{https://www.unep.org/news-and-stories/story/ai-has-environmental-problem-heres-what-world-can-do-about}
+    [Accessed 2025-03-24]
+    
+    \bibitem{it_convergence} 
+    \textit{Top Use Cases of AI-Based Recommendation Systems}.
+    \url{https://www.itconvergence.com/blog/top-use-cases-of-ai-based-recommendation-systems/}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{builtin} 
+    \textit{ 14 Risks and Dangers of Artificial Intelligence (AI)}.
+    \url{https://builtin.com/artificial-intelligence/risks-of-artificial-intelligence}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{data_guard} 
+    \textit{The growing data privacy concerns with AI: What you need to know}.
+    \url{https://www.dataguard.com/blog/growing-data-privacy-concerns-ai/}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{transcend} 
+    \textit{Examining Privacy Risks in AI Systems}.
+    \url{https://transcend.io/blog/ai-and-privacy}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{ibm_vast_data} 
+    \textit{Exploring privacy issues in the age of AI}.
+    \url{https://www.ibm.com/think/insights/ai-privacy}.
+    [Accessed 2025-03-24].
+    
+    
+    \bibitem{forbes_dl_env}
+    \textit{Deep Learning’s Carbon Emissions Problem}.
+    \url{https://www.forbes.com/sites/robtoews/2020/06/17/deep-learnings-climate-change-problem/}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{nyt_el}
+    \textit{A.I. Could Soon Need as Much Electricity as an Entire Country}.
+    \url{https://www.nytimes.com/2023/10/10/climate/ai-could-soon-need-as-much-electricity-as-an-entire-country.html}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{sci_dir_comp}
+    \textit{Trends in AI inference energy consumption: Beyond the performance-vs-parameter laws of deep learning}.
+    \url{https://www.sciencedirect.com/science/article/pii/S2210537923000124#sec7}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{sci_am_co2}
+    \textit{A Computer Scientist Breaks Down Generative AI’s Hefty Carbon Footprint}.
+    \url{https://www.scientificamerican.com/article/a-computer-scientist-breaks-down-generative-ais-hefty-carbon-footprint/}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{water_scarcity}
+    \textit{AI Is Accelerating the Loss of Our Scarcest Natural Resource: Water}.
+    \url{https://www.forbes.com/sites/cindygordon/2024/02/25/ai-is-accelerating-the-loss-of-our-scarcest-natural-resource-water/}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{first}
+    \textit{AI has an environmental problem. Here’s what the world can do about that.}.
+    \url{https://www.unep.org/news-and-stories/story/ai-has-environmental-problem-heres-what-world-can-do-about}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{ibm_dl}
+    \textit{What is deep learning?}.
+    \url{https://www.ibm.com/think/topics/deep-learning}.
+    [Accessed 2025-03-24].
+    
+    \bibitem{BERT_intro}
+    \textit{BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding}.
+    \url{https://arxiv.org/abs/1810.04805v2}.
+    [Accessed 2025-04-04]
+    
+    \bibitem{BERT_hf}
+    \textit{BERT model page on hf}.
+    \url{https://huggingface.co/google-bert/bert-base-uncased}.
+    [Accessed 2025-04-04]
+    
+    \bibitem{Region_proposal}
+    \textit{Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks}
+    \url{https://arxiv.org/abs/1506.01497}
+    [Accessed 2025-04-04]
+    
+    \bibitem{RoBERTa}
+    \textit{RoBERTa: A Robustly Optimized BERT Pretraining Approach}.
+    \url{https://arxiv.org/abs/1907.11692}
+    [Accessed 2025-04-04]
+    
+    \bibitem{ALBERT}
+    \textit{ALBERT: A Lite BERT for Self-supervised Learning of Language Representations}.
+    \url{https://arxiv.org/abs/1909.11942}
+    [Accessed 2025-04-04]
+    
+    \bibitem{ALBERT_hf}
+    \textit{ALBERT model page on hf}.
+    \url{https://huggingface.co/albert/albert-base-v2}.
+    [Accessed 2025-04-04]
+    
+    \bibitem{DISTILBERT}
+    \textit{DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter}
+    \url{https://arxiv.org/abs/1910.01108}
+    [Accessed 2025-04-04]
+    
+    \bibitem{BERT_comp}
+    \textit{Comparative Analysis of BERT Variants for Text Detection Tasks}
+    \url{https://www.researchgate.net/publication/385142549_Comparative_Analysis_of_BERT_Variants_for_Text_Detection_Tasks}
+    [Accessed 2025-04-04]
+    
+    \bibitem{FBAIHF}
+    \textit{Facebook AI on HuggingFace}
+    \url{https://huggingface.co/FacebookAI}
+    [Accessed 2025-04-04]
+    
+    \bibitem{BERT_multiling}
+    \textit{Multilingual BERT on HuggingFace}
+    \url{https://huggingface.co/google-bert/bert-base-multilingual-cased}
+    [Accessed 2025-04-04]
+    
+    \bibitem{ModernBERTPaper}
+    \textit{Smarter, Better, Faster, Longer: A Modern Bidirectional Encoder for Fast, Memory Efficient, and Long Context Finetuning and Inference}
+    \url{https://arxiv.org/abs/2412.13663}
+    [Accessed 2025-04-05]
+    
+    \bibitem{ModernBERThf}
+    \textit{ModernBERT on HiggingFace}
+    \url{https://huggingface.co/answerdotai/ModernBERT-base}
+    [Accessed 2025-04-05]
+    
+    \bibitem{CurrLearn}
+    \textit{Curriculum learning}
+    \url{https://dl.acm.org/doi/abs/10.1145/1553374.1553380}
+    [Accessed 2025-04-07]
+    
+    \bibitem{echo_chambers} 
+    The echo chamber effect on social media
+    \url{https://pubmed.ncbi.nlm.nih.gov/33622786/}
+    [Accessed 2025-04-09]
+    
+    \bibitem{finetuning_env_good} 
+    Energy and Carbon Considerations of Fine-Tuning BERT
+    \url{https://arxiv.org/html/2311.10267}
+    [Accessed 2025-04-09]
+    
+    \bibitem{ibm_finetuning} 
+    What is fine-tuning?
+    \url{https://www.ibm.com/think/topics/fine-tuning}
+    [Accessed 2025-04-09]
+    
+    \bibitem{finetune_cool_image} 
+    14.2. Fine-Tuning
+    \url{https://d2l.ai/chapter_computer-vision/fine-tuning.html}
+    [Accessed 2025-04-09]
+    
+    \bibitem{ibm_quantization} 
+    What is quantization?
+    \url{https://www.ibm.com/think/topics/quantization/}
+    [Accessed 2025-04-09]
+    
+    \bibitem{quant_hf} 
+    Quantization
+    \url{https://huggingface.co/docs/optimum/en/concept_guides/quantization}
+    [Accessed 2025-04-09]
+    
+    \bibitem{quant_explained} 
+    Float32 vs Float16 vs BFloat16?
+    \url{https://newsletter.theaiedge.io/p/float32-vs-float16-vs-bfloat16}
+    [Accessed 2025-04-09]
+    
+    \bibitem{attention}
+    Attention Is All You Need
+    \url{https://arxiv.org/pdf/1706.03762} 
+    [Accessed 2025-04-08]
+    
+    \bibitem{medium_medium_t}
+    Exploring Multi-Head Attention: Why More Heads Are Better Than One
+    \url{https://medium.com/%40hassaanidrees7/exploring-multi-head-attention-why-more-heads-are-better-than-one-006a5823372b}
+    [Accessed 2025-04-08]
+    
+    \bibitem{medium_t}
+    Understanding the Transformer Model: A Report on “Attention Is All You Need” by Ashish Vaswani et al.
+    \url{https://medium.com/%40shivayapandey359/attention-is-all-you-need-26586e6ab8ca}
+    [Accessed 2025-04-08]
+    
+    
+    \end{thebibliography}
+    
 \end{document}
 
 
