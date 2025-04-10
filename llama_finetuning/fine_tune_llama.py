@@ -10,7 +10,7 @@ SAVE_AS_UNSLOTH = True
 
 HF_ORG = 'zpp-murmuras/'
 
-FT_MODE = 'progressive_ft_total'
+FT_MODE = 'total'
 
 # list of quantization options to use and push to repo
 # for all possible quantization options see https://docs.unsloth.ai/basics/running-and-saving-models/saving-to-gguf
@@ -135,7 +135,7 @@ def __save_model(model, run_name, hf_token, tokenizer):
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no, mode):
     assert mode in ["total", "appwise", "progressive_ft_total", "progressive_ft_separate"]
-    run_name = "llama-w-prog"
+    run_name = "llama-w-fixed"
     from datasets import load_dataset, concatenate_datasets
     import wandb
     from random import sample, seed
