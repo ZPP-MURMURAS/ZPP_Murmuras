@@ -28,7 +28,7 @@ def run_llama_pipeline(input_data: List[str], model_path: str, prompt_type: str)
         prompt = "### Input:\n" + inp + "\n\n### Response:\n"
 
         if prompt_type == "w":
-            prompt = "You are provided with text representing contents of the phone screen. Your task is to extract information about coupons from the text. The information should include the product name, the validity date, the discount, the old price, and the new price.\n\n" + prompt
+            prompt = "You are provided with text representing contents of the phone screen. Your task is to extract information about coupons from the text. The information should include the product name, the validity text, the discount text and the activation text.\n\n" + prompt
 
         # It seems that llama has a tendency to correctly recognize that there is no coupons in the input
         # and print "[]", but after that start to generate garbage. That's why adding "[]" to stop sequences
