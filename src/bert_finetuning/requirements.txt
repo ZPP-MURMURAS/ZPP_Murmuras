@@ -71,3 +71,4 @@ watchfiles
 xxhash 
 yarl 
 torch 
+scikit-learn
