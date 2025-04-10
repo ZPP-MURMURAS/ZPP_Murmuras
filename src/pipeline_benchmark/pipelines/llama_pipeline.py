@@ -30,9 +30,6 @@ def run_llama_pipeline(input_data: List[str], model_path: str, prompt_type: str)
         if prompt_type == "w":
             prompt = "You are provided with text representing contents of the phone screen. Your task is to extract information about coupons from the text. The information should include the product name, the validity text, the discount text and the activation text.\n\n" + prompt
 
-        # It seems that llama has a tendency to correctly recognize that there is no coupons in the input
-        # and print "[]", but after that start to generate garbage. That's why adding "[]" to stop sequences
-        # provides a significant speedup.
         out = llama.create_completion(prompt, max_tokens=MAX_TOKENS, stop=["]"], seed=SEED)
         out_text = out["choices"][0]["text"]
 
