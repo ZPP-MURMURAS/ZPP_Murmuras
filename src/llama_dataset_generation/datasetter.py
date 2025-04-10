@@ -6,7 +6,7 @@ from datasets import Dataset
 __PROMPT = (
     "You are provided with text representing contents of the phone screen. Your task is to extract "
     "information about coupons from the text. The information should include the product name, the validity text, "
-    "the discount text and the activation tet.\n\n"
+    "the discount text and the activation text.\n\n"
     "### Input:\n{}\n\n"
     "### Response:\n{}"
 )
