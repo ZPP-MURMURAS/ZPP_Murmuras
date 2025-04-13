@@ -4,8 +4,7 @@ The experiment was conducted by running the llama-wth model with different quant
 
 # Results
 
-The results can be found in the `quantization_comparison_results.json` file. The file contains a list of dictionaries in a JSON format. Each dictionary contains fields:
-- `quantization`: quantization that was used
+The results can be found in the `quantization_comparison_results.json` file. The file contains a dictionary in a JSON format, where keys are quantization names and values are dictionaries with the following fields:
 - `prompt_eval_rate`: rate of prompt evaluation measured in tokens / second
 - `generation_rate`: rate of generation measured in tokens / second
 - `file_size`: the size of the gguf file containing the model in bytes
