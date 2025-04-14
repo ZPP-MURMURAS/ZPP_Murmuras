@@ -2,6 +2,7 @@ import modal
 import wandb
 from datasets import load_dataset, concatenate_datasets, DatasetDict, Dataset
 from transformers import AutoModelForTokenClassification, AutoTokenizer
+from huggingface_hub import login
 import finetuner as ft
 import os
 
@@ -63,6 +64,7 @@ def concat_data(data: DatasetDict) -> Dataset:
 
 @app.function(image=finetune_image, gpu="H100", timeout=60000)
 def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
+    login(token=hf_token)
     cs = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token)
     train_test_dataset = concat_data(cs)
     train_test_dataset = train_test_dataset.train_test_split(test_size=0.2)
@@ -86,6 +88,7 @@ def run_fine_tuning(hf_token, wandb_key, dataset_name, push_to_hub=False):
 
 @app.function(image=finetune_image, gpu="H100", timeout=60000)
 def run_fine_tuning_per_app(hf_token, wandb_key, dataset_name, push_to_hub=False):
+    login(token=hf_token)
     cs = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token)
     wandb.login(key=wandb_key)
     concatenated_ds = concat_data(cs)
@@ -118,6 +121,7 @@ def run_fine_tuning_per_app(hf_token, wandb_key, dataset_name, push_to_hub=False
 @app.function(image=finetune_image, gpu="H100", timeout=60000)
 def run_fine_tuning_add_solo(hf_token, wandb_key, dataset_name, push_to_hub=False):
     from random import sample
+    login(token=hf_token)
     cs = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token)
     wandb.login(key=wandb_key)
     ft.init_finetuner(MODEL_CHECKPOINT)
@@ -151,6 +155,7 @@ def run_fine_tuning_add_solo(hf_token, wandb_key, dataset_name, push_to_hub=Fals
 @app.function(image=finetune_image, gpu="H100", timeout=60000)
 def run_fine_tuning_add_grow(hf_token, wandb_key, dataset_name, push_to_hub=False):
     from random import sample
+    login(token=hf_token)
     cs = load_dataset('zpp-murmuras/' + dataset_name, token=hf_token)
     wandb.login(key=wandb_key)
     ft.init_finetuner(MODEL_CHECKPOINT)
