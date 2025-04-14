@@ -1,7 +1,6 @@
 import os
 
 import modal
-from datasets import concatenate_datasets
 
 app = modal.App("example-fine-tuning")
 
@@ -10,7 +9,7 @@ SAVE_AS_UNSLOTH = True
 
 HF_ORG = 'zpp-murmuras/'
 
-FT_MODE = 'total'
+FT_MODE = 'appwise'
 
 # list of quantization options to use and push to repo
 # for all possible quantization options see https://docs.unsloth.ai/basics/running-and-saving-models/saving-to-gguf
@@ -43,7 +42,7 @@ finetune_image = (
     .apt_install("libcurl4-openssl-dev")
 )
 
-def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
+def load_model(model_name, max_seq_length, wandb_key, name, wandb_project, hf_token):
     from unsloth import FastLanguageModel, major_version, minor_version
     print(major_version, minor_version)
     import wandb
@@ -56,6 +55,7 @@ def load_model(model_name, max_seq_length, wandb_key, name, wandb_project):
         max_seq_length=max_seq_length,
         load_in_4bit=False,
         dtype=None,
+        token=hf_token
     )
 
     model = FastLanguageModel.get_peft_model(
@@ -106,8 +106,8 @@ def train_model(model, tokenizer, run_name, training_data, eval_data: dict, max_
         args=TrainingArguments(
             learning_rate=5e-4,
             lr_scheduler_type="linear",
-            per_device_train_batch_size=8,
-            gradient_accumulation_steps=8,
+            per_device_train_batch_size=4,
+            gradient_accumulation_steps=4,
             num_train_epochs=epoch_no,
             fp16=not is_bfloat16_supported(),
             bf16=is_bfloat16_supported(),
@@ -135,37 +135,36 @@ def __save_model(model, run_name, hf_token, tokenizer):
 @app.function(image=finetune_image, gpu="H100", timeout=int(os.getenv('TIMEOUT')))
 def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no, mode):
     assert mode in ["total", "appwise", "progressive_ft_total", "progressive_ft_separate"]
-    run_name = "llama-w-fixed"
+    run_name = "llama-wth-all"
     from datasets import load_dataset, concatenate_datasets
     import wandb
     from random import sample, seed
-    from time import time_ns
     seed(213769)
 
     dataset = load_dataset(HF_ORG + dataset_name, token=hf_token)
     test_data = concatenate_datasets([dataset[split] for split in TEST_SPLITS])
     max_seq_length = 4096
     if mode == "total":
-        model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name, wandb_proj)
+        model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name, wandb_proj, hf_token)
         training_data = concatenate_datasets([dataset[split] for split in TRAIN_SPLITS])
         eval_data = concatenate_datasets([dataset[split] for split in EVAL_SPLITS])
         train_model(model, tokenizer, run_name, training_data, {'eval': eval_data, 'test': test_data}, max_seq_length, epoch_no)
         __save_model(model, run_name.replace(' ', '-'), hf_token, tokenizer)
     elif mode == "appwise":
         for app in APP_SPLITS['train']:
-            model, tokenizer = load_model(model_name, max_seq_length, wandb_key, f"{run_name}-{app}", wandb_proj)
+            model, tokenizer = load_model(model_name, max_seq_length, wandb_key, f"{run_name}-{app}", wandb_proj, hf_token)
             ds_train = dataset[f"{app}_train"]
             ds_eval = dataset[f"{app}_test"]
             train_model(model, tokenizer, f"{run_name}-{app}", ds_train, {'eval': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
             wandb.finish()
-            __save_model(model, run_name.replace(' ', '-') + '-', hf_token, tokenizer)
+            __save_model(model, run_name.replace(' ', '-') + '-' + app, hf_token, tokenizer)
     elif mode == "progressive_ft_total":
         app = APP_SPLITS['train'][0]
         ds_train = dataset[f"{app}_train"]
         ds_eval = dataset[f"{app}_test"]
         for inc_size in [15, 50, 100]:
             run_name_loc = f"{run_name}-prog-{inc_size}-{app}"
-            model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name_loc, wandb_proj)
+            model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name_loc, wandb_proj, hf_token)
             train_model(model, tokenizer, run_name_loc, ds_train, {'eval': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
             wandb.finish()
             __save_model(model, run_name.replace(' ', '-') + '-' + app, hf_token, tokenizer)
@@ -187,7 +186,7 @@ def wrapper(model_name, hf_token, wandb_key, dataset_name, wandb_proj, epoch_no,
             ds_train = dataset[f"{app}_train"]
             ds_eval = dataset[f"{app}_test"]
             run_name_loc = f"{run_name}-prog-sep-{inc_size}-{app[0]}"
-            model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name_loc, wandb_proj)
+            model, tokenizer = load_model(model_name, max_seq_length, wandb_key, run_name_loc, wandb_proj, hf_token)
             train_model(model, tokenizer, run_name_loc, ds_train, {'eval_curr': ds_eval, 'test': test_data}, max_seq_length, epoch_no)
             wandb.finish()
             __save_model(model, run_name.replace(' ', '-') + '-' + app, hf_token, tokenizer)
@@ -215,4 +214,4 @@ def main():
         epoch_no = int(os.getenv('EPOCH_NO'))
     except (ValueError, TypeError):
         epoch_no = 25
-    wrapper.remote('meta-llama/Llama-3.2-1B', hf_token, wandb_key, dataset_name, wandb_proj, epoch_no, FT_MODE)
+    wrapper.remote('zpp-murmuras/llama-wth', hf_token, wandb_key, dataset_name, wandb_proj, epoch_no, FT_MODE)
