@@ -294,13 +294,11 @@ The advancement of deep learning contributed to the development of generative AI
 \subsection{Transformers}
 Transformers are deep learning models introduced in the 2017 paper "Attention Is All You Need" by Vaswani et al., which have significantly impacted natural language processing and other sequential data tasks. Unlike traditional recurrent neural networks (RNNs), transformers utilize self-attention mechanisms to process input data in parallel, enhancing efficiency and scalability. This architecture has become foundational in models like BERT, and GPT \cite{medium_t}.
 \subsubsection{Model architecture}
-The proposed architecture has a encoder-decoder structure wherein “the encoder maps an input sequence of symbol representations $ (x_1, … , x_n) $ to a sequence of continuous representations $ z = (z_1, … , z_n) $”. The decoder takes $ z $ and outputs a sequence $ (y_1, … , y_n) $. At every step, the model utilizes previously-generated symbols as additional input when creating the next output. This is shown in figure ~\ref{fig:transformers_fig}. 
+The proposed architecture has a encoder-decoder structure wherein, given a sequence of input symbols $ (x_1, … , x_n) $, the encoder computes a sequence of continuous vector representations $ z = (z_1, … , z_n) $, where each encodes contextual information about the corresponding within the entire input sequence. The decoder takes $ z $ and outputs a sequence $ (y_1, … , y_n) $. At every step, the model utilizes previously-generated symbols as additional input when creating the next output. This is shown in figure ~\ref{fig:transformers_fig}. 
 
-The Encoder consists of 6 identical layers, each with two main parts. The first part is a multi-head self-attention mechanism, and the second is a simple fully connected feed-forward network. Each part uses a residual connection and layer normalization, which helps improve the model's performance. The output of each layer has a fixed size (512 dimensions).
+The encoder consists of multiple layers, each typically comprising of two parts: a multi-head self-attention mechanism and a simple fully connected feed-forward network. Residual connection and layer normalization is utilized to improve model performance. 
 
-The Decoder is similar to the encoder, with 6 identical layers. In addition to the two parts in the encoder, the decoder has a third part that performs attention over the encoder’s output. It also uses residual connections and layer normalization. To ensure the model does not look ahead in the sequence, the self-attention in the decoder is modified to prevent the model from attending to future positions, so each prediction only depends on earlier information.
-
-Please refer to the aforementioned paper for more details.
+Similarly, the decoder has a similar structure. In addition to the two parts in the encoder, each layer performs attention over the encoder’s output. To ensure the model does not look ahead in the sequence, the self-attention in the decoder is modified to prevent the model from attending to future positions, so each prediction only depends on earlier information.
 
 \begin{figure}
     \centering
@@ -326,7 +324,7 @@ The relationship between attention and multi-head attention is depicted in figur
 
 \subsection{Quantization}
 Quantization is a technique employed in many fields including machine learning, to reduce the precision of numerical representations within models, typically converting high-precision formats like 32-bit floating point (FP32) to lower-precision formats such as 8-bit integers (INT8). Using integer operations instead of floating-point reduces the computational and memory requirements during inference, thereby making it more efficient and faster, which is an essential benefit for real-time applications. Furthermore, quantization enables deployment on resource-constrained hardware such as smartphones and tablets, while also reducing power consumption due to lighter computational loads. Though this may slightly reduce model accuracy, the trade-off often proves worthwhile in practical applications \cite{ibm_quantization}.
-The two most common quantization techniques are float32 -> float16 and float32 -> int8.
+The two most common quantization techniques are float32 -> float16 and float32 -> int8 \cite{quant_hf}.
 \subsubsection{float32 -> float16}
 Performing quantization from float32 to float16 is relatively straightforward as both data types are represented in the same manner. Float32 has the following format: 
 \begin{enumerate}
@@ -370,8 +368,9 @@ Consequently, ‘information privacy’ is one of the primary concerns surroundi
 Moreover, AI systems can pose ‘autonomy harms’, wherein the insights derived from data are used to influence individuals' decisions or behavior without their knowledge or proper consent. The common mindset of having "nothing to hide" overlooks the broader implications of these practices, which can undermine personal freedom and informed decision-making. A significant example of this problem is the Facebook-Cambridge Analytica scandal, in which a seemingly benign personality quiz was utilized to harvest over 87 million Facebook users’ data. Based on this data, detailed psychological profiles were constructed and leveraged to target individuals with personalized political ads during the 2016 US Presidential Election. This case underscores how AI can extract deeply personal insights from mundane user interactions, demonstrating the potential for misuse when data privacy protections are inadequate \cite{transcend}.
 
 To address privacy concerns associated with AI systems, we are implementing locally-deployable models that process data directly on users' devices. This ensures that raw, unprocessed information never leaves the device or gets transmitted to external servers. By keeping data local, we significantly reduce the risk of unauthorized access, data breaches, or misuse. This approach empowers users with greater control over their information while still benefiting from the capabilities of AI in a secure and privacy-conscious manner. 
+
 \subsection{Environmental Concerns}
-AI has a notable carbon footprint due to its increasing energy consumption, particularly during model training and usage \cite{forbes_dl_env}. One study predicts that by 2027, AI-related energy consumption could reach 85–134 TWh, representing nearly 0.5\% of today's global electricity usage. This estimate is based on the energy consumption of the Nvidia A100 servers - the hardware estimated to be used by 95 percent of the A.I. market, and their projected sales in the upcoming years \cite{nyt_el}. Training LLMs typically requires significantly more energy in comparison to making a single prediction on the trained model \cite{sci_dir_comp}, for instance BERT required "the energy of a round-trip transcontinental flight" to train, while GPT-3 emitted 552 metric tons of carbon dioxide which is "the equivalent of 123 gasoline-powered passenger vehicles driven for one year" \cite{sci_am_co2}. 
+AI has a notable carbon footprint due to its increasing energy consumption, particularly during model training and usage \cite{forbes_dl_env}. One study predicts that by 2027, AI-related energy consumption could reach 85–134 TWh \cite{this_study}, representing nearly 0.5\% of today's global electricity usage. This estimate is based on the energy consumption of the Nvidia A100 servers - the hardware estimated to be used by 95 percent of the A.I. market, and their projected sales in the upcoming years \cite{nyt_el}. Training LLMs typically requires significantly more energy in comparison to making a single prediction on the trained model \cite{sci_dir_comp}, for instance BERT required "the energy of a round-trip transcontinental flight" to train, while GPT-3 emitted 552 metric tons of carbon dioxide which is "the equivalent of 123 gasoline-powered passenger vehicles driven for one year" \cite{sci_am_co2}. 
 
 Furthermore, while a quarter of the world lacks access to clean water and sanitation, data centers consume significant quantities of water during their construction and during operation to cool electrical components \cite{first}. AI server cooling requires up to 9 liters of water per kWh of energy used. Given the amount of energy required to train and operate a model, this will exacerbate the lack of water, with UN estimates stating that by 2030 half of the world’s population will be facing severe water stress \cite{water_scarcity}. It is estimated that globally, infrastructure related to AI will soon require six times more water than Denmark \cite{first}. 
 
@@ -794,7 +793,13 @@ Moreover, due to mobile devices typically having limited processing power and me
     Understanding the Transformer Model: A Report on “Attention Is All You Need” by Ashish Vaswani et al.
     \url{https://medium.com/%40shivayapandey359/attention-is-all-you-need-26586e6ab8ca}
     [Accessed 2025-04-08]
-    
+
+    \bibitem{this_study}
+    \textit{The growing energy footprint of artificial intelligence}.
+    \url{https://www.researchgate.net/publication/374598219_The_growing_energy_footprint_of_artificial_intelligence}.
+    %https://www.cell.com/joule/pdf/S2542-4351(23)00365-3.pdf
+    [Accessed 2025-04-16].
+        
     
     \end{thebibliography}
     
