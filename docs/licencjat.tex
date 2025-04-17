@@ -284,6 +284,167 @@ However, Scrapepraph AI provides only Python and Node.js SDKs \cite{scapegraph_s
 
 Moreover, due to mobile devices typically having limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}, we cannot solely rely on the size of the model in order to improve performance. We believe that through fine-tuning LLMs, we are able to develop tools that are far more viable for edge device usage.
 
+
+\chapter{Description of datasets}
+\section{Raw datasets} 
+We received datasets corresponding to six different mobile applications: Edeka, Rossmann, DM, Rewe, Lidl, and Penny. Each dataset was provided as a CSV file containing XML representations of the data captured from the device interface during user interactions with the respective app. The selection of these applications, as well as the data collection and processing procedures, were carried out by Murmuras.
+
+For each application, two key files were provided: the \textit{content\_generic} CSV file, which contains screen-captured data in XML format (see ~\ref{tab:csv_raw_cg}), and the \textit{coupons} CSV file, which serves as the ground truth (see ~\ref{tab:csv_raw_coupons}). The latter includes the coupons that our solution is expected to identify, along with the specific information that should be extracted from them. 
+
+We have streamlined the tables by removing the columns that were deemed unnecessary for our project, as their inclusion would have added excessive complexity without providing relevant value.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llllll}
+\toprule
+id & time & i & view\_depth & text & description \\
+\midrule
+12240295656 & 2024-03-07T16:55:32.405 & 1 & 3 & Coupon Text &  \\
+\bottomrule
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{llllll}
+\toprule
+seen\_timestamp & is\_visible & x\_1 & y\_1 & x\_2 & y\_2 \\
+\midrule
+1709826932091 & true & 0 & 81 & 1080 & 2188 \\
+\bottomrule
+\end{tabular}
+
+\caption{Content generic file format (split view for readability)}
+\label{tab:csv_raw_cg}
+\end{table}
+
+\begin{table}[h]
+\centering
+
+\begin{tabular}{lllll}
+\toprule
+id & time & coupon\_i & visible \\
+\midrule
+12240296756 & 2024-03-07T16:55:51.831 & 2 & 1 \\
+\bottomrule
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{lll}
+\toprule
+discount\_details & validity\_text & activation\_text \\
+\midrule
+Vor Aktivierung bitte Hinweise lesen. & Gültig bis 31.03.2024   \\
+\bottomrule
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{l}
+\toprule
+content\_full \\
+\midrule
+"[Düfte ,  Vor Aktivierung bitte Hinweise lesen. ,  15\% ,  Gültig bis 31.03.2024]"  \\
+\bottomrule
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\toprule
+content\_proper & product\_text \\
+\midrule
+"[Düfte]" & Düfte \\
+\bottomrule
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{llllll}
+\toprule
+extra & discount\_text & product & limitation & validity\_date \\
+\midrule
+ & 15\% & Düfte &  & 2024-03-31 \\
+\bottomrule
+\end{tabular}
+
+\caption{Coupon file format (split for readability)}
+\label{tab:csv_raw_coupons}
+\end{table}
+
+\section{Dataset Formats}
+We preprocess the raw data to ensure it is structured in a manner that can be effectively utilized by the models.
+
+\subsection{BERT Datasets}
+The BERT models accept two dataset formats:
+
+\begin{enumerate}
+    \item \textbf{Plain format:} This format consists of raw, concatenated texts extracted from the `text` field in the \texttt{content\_generic} CSV file.
+    \item \textbf{XML Tree format:} This format encodes the data from the \texttt{content\_generic} CSV file into an XML tree structure, which is then represented in JSON format, as shown in ~\ref{fig:json_example_xml_tree}.
+\end{enumerate}
+
+
+
+\begin{figure}[h]
+\centering
+\begin{tcolorbox}[sharp corners, boxrule=0.5mm, colframe=black, colback=white, coltitle=black, width=0.9\textwidth] 
+\begin{BVerbatim}
+{
+   "text": "text field content",
+   "children": {
+       "child1_view_id": ...,
+       "child2_view_id": ...,
+       ...
+   }
+}
+\end{BVerbatim}
+\end{tcolorbox}
+\caption{Sample JSON Format for BERT Dataset}
+\label{fig:json_example_xml_tree}
+\end{figure}
+
+\subsection{Llama Datasets}
+The Llama models take in the following dataset formats:
+
+\begin{enumerate}
+    \item \textbf{one\_input\_multiple\_outputs\_wrequest}: the dataset includes a request to the Llama model.
+    \item \textbf{one\_input\_multiple\_outputs\_wthrequest}: the dataset does not include a request.
+\end{enumerate}
+
+The input format for the Llama models is as in ~\ref{fig:llama_ds_w} and ~\ref{fig:llama_ds_wth}.
+
+\begin{figure}[h]
+\centering
+\begin{tcolorbox}[sharp corners, boxrule=0.5mm, colframe=black, colback=white, coltitle=black, width=0.9\textwidth] 
+\begin{BVerbatim}
+{
+   {prompt text}
+   +
+   ## Input: {coupon text extracted for one timestamp}
+   +
+   ## Response:{response text}
+}
+\end{BVerbatim}
+\end{tcolorbox}
+\caption{Llama dataset format with a prompt}
+\label{fig:llama_ds_w}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\begin{tcolorbox}[sharp corners, boxrule=0.5mm, colframe=black, colback=white, coltitle=black, width=0.9\textwidth] 
+\begin{BVerbatim}
+{
+   ## Input: {coupon text extracted for one timestamp}
+   +
+   ## Response:{response text}
+}
+\end{BVerbatim}
+\end{tcolorbox}
+\caption{Llama dataset format without a prompt}
+\label{fig:llama_ds_wth}
+\end{figure}
+
 % \section{}
 
 % \chapter{Technologies}
