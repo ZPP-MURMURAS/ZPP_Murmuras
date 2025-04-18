@@ -270,31 +270,29 @@ def init_new_logger(log_file: str) -> None:
     logger.setLevel(logging.INFO)
 
 
-def benchmark_pipeline(config: Dict[str, any], cache_dir: str, log_dir: str) -> Dict[str, any]:
+def benchmark_pipeline(pipeline_name: str, config: Dict[str, any], cache_dir: str, log_dir: str) -> Dict[str, any]:
     """
     Benchmarks a pipeline based on the given config.
 
+    :param pipeline_name: name of the experiment
     :param config: pipeline config
     :param cache_dir: the directory for dataset caching
     :param log_dir: the directory to store the logs
     :return: a dictionary with the pipeline config and benchmarking results
     """
-    exp_name = config["name"]
     dataset_name = config["dataset_name"]
     splits = config["splits"]
     threshold = config["threshold"]
     func, args, kwargs = load_pipeline(config)
 
     res = copy.deepcopy(config)
-    res["scores"] = {}
     res["expected"] = {}
     res["generated"] = {}
-    res["missed"] = {}
-    res["hallucinated"] = {}
+    res["matched"] = {}
     res["generation_time"] = {}
 
     for split_name, ds_split in splits.items():
-        init_new_logger(os.path.join(log_dir, f"{exp_name}-{split_name}.log"))
+        init_new_logger(os.path.join(log_dir, f"{pipeline_name}-{split_name}.log"))
 
         dataset = load_dataset(dataset_name, split=ds_split, cache_dir=cache_dir)
 
@@ -309,11 +307,9 @@ def benchmark_pipeline(config: Dict[str, any], cache_dir: str, log_dir: str) -> 
         if len(expected) != len(generated):
             raise ValueError(f"Expected {len(expected)} coupons, but got {len(generated)} coupons.")
 
-        similarity_list = []
         total_expected = 0
         total_generated = 0
-        total_missed = 0
-        total_hallucinated = 0
+        total_matched = 0
         for idx, (exp, gen) in tqdm(enumerate(zip(expected, generated, strict=True)), desc="Processing entries"):
             expected_coupons = get_coupons(exp, "Expected output")
 
@@ -323,40 +319,29 @@ def benchmark_pipeline(config: Dict[str, any], cache_dir: str, log_dir: str) -> 
                                                                       generated_coupons,
                                                                       threshold)
 
-            similarity_list.extend(similarities)
             total_expected += len(expected_coupons)
             total_generated += len(generated_coupons)
-            total_missed += missed
-            total_hallucinated += hallucinated
+            total_matched += len(similarities)
 
-            entry_score = np.sum(similarities) / len(expected_coupons) if len(expected_coupons) > 0 else 1.0
             entry_info = f"Entry {idx + 1} - "
-            logging.info(entry_info + f"Score: {entry_score}")
             logging.info(entry_info + f"Expected: {len(expected_coupons)}")
             logging.info(entry_info + f"Generated: {len(generated_coupons)}")
-            logging.info(entry_info + f"Missed: {missed}")
-            logging.info(entry_info + f"Hallucinated: {hallucinated}")
+            logging.info(entry_info + f"Matched: {len(similarities)}")
 
-        total_score = np.sum(similarity_list) / total_expected if total_expected > 0 else 1.0
-
-        logging.info(f"Total score: {total_score}")
         logging.info(f"Total number of expected coupons: {total_expected}")
         logging.info(f"Total number of generated coupons: {total_generated}")
-        logging.info(f"Total number of missed coupons: {total_missed}")
-        logging.info(f"Total number of hallucinated coupons: {total_hallucinated}")
+        logging.info(f"Total number of matched coupons: {total_matched}")
         logging.info(f"Generation time: {generation_time:.4f} seconds")
 
-        res["scores"][split_name] = total_score
         res["expected"][split_name] = total_expected
         res["generated"][split_name] = total_generated
-        res["missed"][split_name] = total_missed
-        res["hallucinated"][split_name] = total_hallucinated
+        res["matched"][split_name] = total_matched
         res["generation_time"][split_name] = generation_time
 
     return res
 
 
-def load_checkpoint(checkpoint_file: str) -> List[Dict[str, any]]:
+def load_checkpoint(checkpoint_file: str) -> Dict[str, any]:
     """
     Loads checkpointed data.
 
@@ -367,7 +352,7 @@ def load_checkpoint(checkpoint_file: str) -> List[Dict[str, any]]:
         with open(checkpoint_file, "r") as f:
             data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        data = [] 
+        data = {}
 
     return data
 
@@ -419,12 +404,12 @@ if __name__ == '__main__':
 
     results = load_checkpoint(output_file)
 
-    for config in tqdm(configs, desc="Processing experiments"):
-        if any(r.get("name") == config["name"] for r in results):
+    for pipeline_name, config in tqdm(configs.items(), desc="Processing experiments"):
+        if pipeline_name in results:
             continue
 
-        result = benchmark_pipeline(config, dataset_cache_dir, log_dir)
-        results.append(result)
+        result = benchmark_pipeline(pipeline_name, config, dataset_cache_dir, log_dir)
+        results[pipeline_name] = result
 
         with open(output_file, "w") as f:
             json.dump(results, f)
