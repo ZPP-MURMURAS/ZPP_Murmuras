@@ -284,6 +284,14 @@ However, Scrapepraph AI provides only Python and Node.js SDKs \cite{scapegraph_s
 
 Moreover, due to mobile devices typically having limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}, we cannot solely rely on the size of the model in order to improve performance. We believe that through fine-tuning LLMs, we are able to develop tools that are far more viable for edge device usage.
 
+\chapter{Technologies}
+The main platforms that we used to store, develop and manage code, models and experiments were Hugging Face\cite{hugging-face} and Github\cite{github}. The primary programming language used for scripts was Python\cite{python}.
+
+Our first proposal, relying on Llama architecture is driven by custom, fine-tuned version of Llama-3.2-1b provided by Meta\cite{meta-llama}. The fine-tuning was performed with the help of the Unsloth\cite{unsloth} tool to reduce resources consumption. The overall process was located on the Modal\cite{modal} platform. We used Wandb\cite{wandb} for gathering logs and training progress.
+
+The second proposal - two-stage BERT pipeline was trained with the help of tools and libraries provided by the Hugging Face.
+
+
 % \section{}
 
 % \chapter{Technologies}
@@ -390,6 +398,41 @@ Junchen Zhao, et. al.
 \bibitem{sequence_matcher}
 \textit{difflib — Helpers for computing deltas}
 \url{https://docs.python.org/3/library/difflib.html}
+
+\bibitem{meta-llama}
+\textit{Llama 3.2 published by Meta}
+\url{https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/}
+[Accessed 2025-04-17]
+
+\bibitem{unsloth}
+\textit{Unsloth}
+\url{https://unsloth.ai/}
+[Accessed 2025-04-17]
+
+\bibitem{hugging-face}
+\textit{The Hugging Face Platform}
+\url{https://huggingface.co/}
+[accessed 17.04.2025]
+
+\bibitem{github}
+\textit{The Github platform}
+\url{https://github.com/}
+[accessed 17.04.2025]
+
+\bibitem{modal}
+\textit{The Modal platform}
+\url{https://modal.com/}
+[accessed 17.04.2025]
+
+\bibitem{wandb}
+\textit{The Wandb platform}
+\url{https://wandb.ai/}
+[accessed 17.04.2025]
+
+\bibitem{python}
+\textit{The website of Python programming language}
+\url{https://www.python.org/}
+[accessed 17.04.2025]
 
 \end{thebibliography}
 
