@@ -680,6 +680,7 @@ Figure \ref{fig:zpp} represents the general structure of the system. It consists
             \item \texttt{Product}
             \item \texttt{Validity text}
         \end{itemize}
+        There may be cases where multiple entities are classified under the same type, such as "ACTIVATION-TEXT". To handle this, we implemented two approaches. The first approach selects only the first entity of the given type, while the second approach concatenates all entities of that type. Both methods were evaluated in benchmark tests.
     \end{itemize}
 
     \item \textbf{Pipeline Output}:
