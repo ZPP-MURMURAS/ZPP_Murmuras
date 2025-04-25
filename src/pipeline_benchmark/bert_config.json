@@ -1,6 +1,6 @@
-[
+{
+    "bert-no-curr-first":
     {
-        "name": "bert-general-no-curr-first",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
@@ -18,10 +18,10 @@
             "rewe": "rewe_test",
             "rossmann": "rossmann_test"
         },
-        "threshold": 0.5
+        "threshold": 0.8
     },
+    "bert-no-curr-concat":
     {
-        "name": "bert-general-no-curr-concat",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
@@ -39,10 +39,10 @@
             "rewe": "rewe_test",
             "rossmann": "rossmann_test"
         },
-        "threshold": 0.5
+        "threshold": 0.8
     },
+    "bert-curr-concat":
     {
-        "name": "bert-general-curr-concat",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
@@ -60,10 +60,10 @@
             "rewe": "rewe_test",
             "rossmann": "rossmann_test"
         },
-        "threshold": 0.5
+        "threshold": 0.8
     },
+    "bert-single-app-dm":
     {
-        "name": "bert-single-app-dm",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
@@ -76,10 +76,10 @@
         "splits": {
             "dm": "dm_test"
         },
-        "threshold": 0.5
+        "threshold": 0.8
     },
+    "bert-single-app-lidl":
     {
-        "name": "bert-single-app-lidl",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
@@ -92,10 +92,10 @@
         "splits": {
             "lidl": "lidl_test"
         },
-        "threshold": 0.5
+        "threshold": 0.8
     },
+    "bert-single-app-rewe":
     {
-        "name": "bert-single-app-rewe",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
@@ -108,10 +108,10 @@
         "splits": {
             "rewe": "rewe_test"
         },
-        "threshold": 0.5
+        "threshold": 0.8
     },
+    "bert-single-app-rossmann":
     {
-        "name": "bert-single-app-rossmann",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
@@ -124,73 +124,16 @@
         "splits": {
             "rossmann": "rossmann_test"
         },
-        "threshold": 0.5
+        "threshold": 0.8
     },
+    "bert-with-edeka":
     {
-        "name": "bert-add-solo-dm",
         "module": "pipelines.bert_pipeline", 
         "function": "run_bert_pipeline", 
         "args": [], 
         "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-dm",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-dm",
-            "strategy": "concat"
-        },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
-        "splits": {
-            "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
-            "dm": "dm_test"
-        },
-        "threshold": 0.5
-    },
-    {
-        "name": "bert-add-solo-lidl",
-        "module": "pipelines.bert_pipeline", 
-        "function": "run_bert_pipeline", 
-        "args": [], 
-        "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-lidl",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-lidl",
-            "strategy": "concat"
-        },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
-        "splits": {
-            "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
-            "dm": "dm_test",
-            "lidl": "lidl_test"
-        },
-        "threshold": 0.5
-    },
-    {
-        "name": "bert-add-solo-rewe",
-        "module": "pipelines.bert_pipeline", 
-        "function": "run_bert_pipeline", 
-        "args": [], 
-        "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-rewe",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-rewe",
-            "strategy": "concat"
-        },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
-        "splits": {
-            "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
-            "dm": "dm_test",
-            "lidl": "lidl_test",
-            "rewe": "rewe_test"
-        },
-        "threshold": 0.5
-    },
-    {
-        "name": "bert-add-solo-rossmann",
-        "module": "pipelines.bert_pipeline", 
-        "function": "run_bert_pipeline", 
-        "args": [], 
-        "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-solo-2-plain-rossmann",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-solo-2-plain-rossmann",
+            "selection_model": "zpp-murmuras/bert-selection-all-plain-edeka",
+            "extraction_model": "zpp-murmuras/bert-extraction-all-plain-edeka",
             "strategy": "concat"
         },
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
@@ -202,84 +145,6 @@
             "rewe": "rewe_test",
             "rossmann": "rossmann_test"
         },
-        "threshold": 0.5
-    },
-    {
-        "name": "bert-add-grow-dm",
-        "module": "pipelines.bert_pipeline", 
-        "function": "run_bert_pipeline", 
-        "args": [], 
-        "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-dm",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-dm",
-            "strategy": "concat"
-        },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
-        "splits": {
-            "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
-            "dm": "dm_test"
-        },
-        "threshold": 0.5
-    },
-    {
-        "name": "bert-add-grow-lidl",
-        "module": "pipelines.bert_pipeline", 
-        "function": "run_bert_pipeline", 
-        "args": [], 
-        "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-lidl",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-lidl",
-            "strategy": "concat"
-        },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
-        "splits": {
-            "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
-            "dm": "dm_test",
-            "lidl": "lidl_test"
-        },
-        "threshold": 0.5
-    },
-    {
-        "name": "bert-add-grow-rewe",
-        "module": "pipelines.bert_pipeline", 
-        "function": "run_bert_pipeline", 
-        "args": [], 
-        "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-rewe",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-rewe",
-            "strategy": "concat"
-        },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
-        "splits": {
-            "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
-            "dm": "dm_test",
-            "lidl": "lidl_test",
-            "rewe": "rewe_test"
-        },
-        "threshold": 0.5
-    },
-    {
-        "name": "bert-add-grow-rossmann",
-        "module": "pipelines.bert_pipeline", 
-        "function": "run_bert_pipeline", 
-        "args": [], 
-        "kwargs": {
-            "selection_model": "zpp-murmuras/bert-selection-add-grow-2-plain-rossmann",
-            "extraction_model": "zpp-murmuras/bert-extraction-add-grow-2-plain-rossmann",
-            "strategy": "concat"
-        },
-        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
-        "splits": {
-            "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
-            "dm": "dm_test",
-            "lidl": "lidl_test",
-            "rewe": "rewe_test",
-            "rossmann": "rossmann_test"
-        },
-        "threshold": 0.5
+        "threshold": 0.8
     }
-]
+}
