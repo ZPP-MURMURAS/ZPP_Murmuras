@@ -35,7 +35,7 @@ class TestFinetuner:
                 assert self.curriculer._Curriculer__rows_with_c[i].spans[j].length() == self.init_c[k][j][2]
 
     def test_init_dataset(self):
-        new_dataset = self.curriculer.create_init_dataset(tv_split= 2.0/5.0, tt_split=0.5)
+        new_dataset = self.curriculer.create_init_dataset()
         # Inspect the validity of internal state (spans)
         for row in self.curriculer._Curriculer__rows_with_c:
             assert len(self.init_spans_dims[row.row_id]) == len(row.spans)
@@ -47,22 +47,20 @@ class TestFinetuner:
         # test dataset regeneration
         new_texts = []
         new_labels = []
-        for col in ['train', 'validation', 'test']:
-            assert len(new_dataset[col]) == len(self.init_test_data[col])
-            for i in range(len(new_dataset[col])):
-                new_texts.append(new_dataset[col][i]['texts'])
-                new_labels.append(new_dataset[col][i]['labels'])
-        for col in ['train', 'validation', 'test']:
-            for i in range(len(self.init_test_data[col])):
-                t = self.init_test_data[col][i]['texts']
-                l = self.init_test_data[col][i]['labels']
-                assert t in new_texts
-                assert l in new_labels
-                new_texts.remove(t)
-                new_labels.remove(l)
+        assert len(new_dataset) == len(self.init_test_data)
+        for item in new_dataset:
+            new_texts.append(item['texts'])
+            new_labels.append(item['labels'])
+        for item in self.init_test_data:
+            t = item['texts']
+            l = item['labels']
+            assert t in new_texts
+            assert l in new_labels
+            new_texts.remove(t)
+            new_labels.remove(l)
 
     def test_data_yielder(self):
-        dt = self.curriculer.create_init_dataset(tv_split=2.0 / 5.0, tt_split=0.5)
+        dt = self.curriculer.create_init_dataset()
         it = 0
         assert self.curriculer._Curriculer__splits_iter == it
         desired_c = len(self.init_c)
@@ -70,11 +68,11 @@ class TestFinetuner:
         assert self.curriculer._Curriculer__init_len == desired_c
         assert len(self.curriculer._Curriculer__rows_with_c) == desired_c
         assert len(self.curriculer._Curriculer__rows_without_c) == desired_non_c
-        assert len(dt['train']) + len(dt['validation']) + len(dt['test']) == desired_c
+        assert len(dt) == desired_c
         desired_cs = [8, 8, 9, 9, 9]
         for i in range(self.splits):
             it += 1
-            dt = self.curriculer.yield_dataset(tv_split= 2.0/5.0, tt_split=0.5, shuffle=False)
+            dt = self.curriculer.yield_dataset(shuffle=False)
             assert self.curriculer._Curriculer__splits_iter == it
             if i % 2 == 0:
                 desired_c += 1
@@ -84,23 +82,22 @@ class TestFinetuner:
                 desired_non_c = 0
             assert len(self.curriculer._Curriculer__rows_with_c) == desired_cs[i]
             assert len(self.curriculer._Curriculer__rows_without_c) == 9 - desired_cs[i]
-            assert len(dt['train']) + len(dt['validation']) + len(dt['test']) == desired_cs[i]
+            assert len(dt) == desired_cs[i]
 
         len_test_texts = 0
         len_test_labels = 0
         let_dt_texts = 0
         let_dt_labels = 0
-        for col in ['train', 'validation', 'test']:
-            for i in range(len(self.test_data[col])):
-                len_test_texts += len(self.test_data[col][i]['texts'])
-                len_test_labels += len(self.test_data[col][i]['labels'])
-                let_dt_texts += len(dt[col][i]['texts'])
-                let_dt_labels += len(dt[col][i]['labels'])
+        for i in range(len(self.test_data)):
+            len_test_texts += len(self.test_data[i]['texts'])
+            len_test_labels += len(self.test_data[i]['labels'])
+            let_dt_texts += len(dt[i]['texts'])
+            let_dt_labels += len(dt[i]['labels'])
         assert len_test_texts == let_dt_texts
         assert len_test_labels == let_dt_labels
 
         with pytest.raises(StopIteration):
-            self.curriculer.yield_dataset(tv_split= 2.0/5.0, tt_split=0.5)
+            self.curriculer.yield_dataset()
 
 
     @pytest.fixture(autouse=True)
@@ -118,82 +115,56 @@ class TestFinetuner:
             8: [(0, 3, 4)],
         }
 
-        train_texts = [
+        texts = [
             ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
             ['1', '2', '3', '4', '5'],
             ['1', '2', '3', '4', '5', '6', '7'],
             ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
             ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
+            ['1', '2', '3'],
+            ['1', '2', '3', '4']
         ]
-        train_labels = [
+        labels = [
             [0, 1, 2, 0, 0, 1, 0, 1, 2, 0, 1, 2, 2, 0],
             [0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
             [0, 1, 2, 2, 2, 1, 0, 1, 2, 0, 1, 2],
-            [1, 2, 2, 2, 2, 2]
-        ]
-        train_init_texts = [
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
-            ['1', '2', '3', '4', '5', '6'],
-        ]
-        train_init_labels = [
-            [0, 1, 2, 0, 0, 1, 0, 1, 2, 0, 1, 2, 2, 0],
-            [0, 1, 2, 2, 2, 1, 0, 1, 2, 0, 1, 2],
-            [1, 2, 2, 2, 2, 2]
-        ]
-
-        validation_texts = [
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
-        ]
-        validation_labels = [
+            [1, 2, 2, 2, 2, 2],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0]
-        ]
-        validation_init_texts = [
-            ['1', '2', '3', '4', '10', '11', '12', '13'],
-        ]
-        validation_init_labels = [
-            [0, 1, 2, 0, 0, 1, 2, 0]
-        ]
-
-        test_texts = [
-            ['1', '2', '3'],
-            ['1', '2', '3', '4']
-        ]
-        test_labels = [
+            [0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0],
             [0, 0, 0],
             [0, 0, 1, 2]
         ]
-        test_init_texts = [
+        init_texts = [
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '10', '11', '12', '13'],
             ['1', '2', '3', '4']
         ]
-        test_init_labels = [
+        init_labels = [
+            [0, 1, 2, 0, 0, 1, 0, 1, 2, 0, 1, 2, 2, 0],
+            [0, 1, 2, 2, 2, 1, 0, 1, 2, 0, 1, 2],
+            [1, 2, 2, 2, 2, 2],
+            [0, 1, 2, 0, 0, 1, 2, 0],
             [0, 0, 1, 2]
         ]
 
         dataset_dict = {
-            'train': {'texts': train_texts, 'labels': train_labels},
-            'validation': {'texts': validation_texts, 'labels': validation_labels},
-            'test': {'texts': test_texts, 'labels': test_labels}
+            'texts': texts,
+            'labels': labels,
         }
         dataset_init_dict = {
-            'train': {'texts': train_init_texts, 'labels': train_init_labels},
-            'validation': {'texts': validation_init_texts, 'labels': validation_init_labels},
-            'test': {'texts': test_init_texts, 'labels': test_init_labels}
+            'texts': init_texts,
+            'labels': init_labels,
         }
 
-        self.test_data = DatasetDict({
-            split: Dataset.from_dict(data, features=features)
-            for split, data in dataset_dict.items()
-        })
-        self.max_dataset_len = len(self.test_data['train']) + len(self.test_data['validation']) + len(self.test_data['test'])
+        self.test_data = Dataset.from_dict(dataset_dict, features=features)
+        self.max_dataset_len = len(self.test_data)
         self.curriculer = Curriculer(self.test_data, self.splits)
-        self.init_test_data = DatasetDict({
-            split: Dataset.from_dict(data, features=features)
-            for split, data in dataset_init_dict.items()
-        })
+        self.init_test_data = Dataset.from_dict(dataset_init_dict, features=features)
 
         self.init_c = {
              0: [(1, 2, 2), (5,5, 1), (7, 8, 2), (10, 12, 3)],

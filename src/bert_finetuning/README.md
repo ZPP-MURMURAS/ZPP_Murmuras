@@ -23,6 +23,10 @@ This process happens in a loop.
 extends either Y axis (adds rows without coupons) or X axis (extends spans to include more non-coupon labels) of the previous dataset.
 
 
-## Dev notes:
-Right now, each "step" (training on new dataset) has a new trainer; I tried to reuse it, but lr was still behaving in a weird way, 
-and for instance, trainer was resuming from epoch 2.9 (saved state). I wouldn't be surprised if its fixable, but I didn't have enough time to fix it.
+## Dev notes: Sequel
+1. Fixed the learning rate preservation between the training steps in the curriculer. However, now it seems
+that at some point BERT just stops learning (learning rate is too low). More experiments needs to be conducted.
+2. Added vibe-check. After some fights, I decided to help myself with the existing functionality of the HF,
+and right now the vibecheck returns "UNKNOWN" for words that has no tokens classified as part of the coupon, 
+and "COUPON" otherwise. Because rn models aren't performing very well (low LR), most of the words have
+at least one token classified as a coupon, hence they are treated as part of the coupon.

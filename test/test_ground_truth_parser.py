@@ -6,18 +6,21 @@ import pytest
 
 from src.llama_dataset_generation.ground_truth_parser import load_coupons, prepare_ground_truth_data, \
     prepare_ground_truth_data_no_ai
+from src.constants import *
 
 EXAMPLE_COUPON_FRAME = pd.DataFrame({
     'discount_text': ['heh', 'hah', 'hoh'],
-    'time': ['1-1', '2-2', '3-3'],
+    AGGREGATION_COLUMN: ['1-1', '2-2', '3-3'],
     'product_text': ['product1', 'product2', 'product3'],
     'validity_text': ['valid1', 'valid2', 'valid3'],
-    "content_full": ["['bydle']", "['bydle']", "['bydle']"]
+    "content_full": ["['bydle']", "['bydle']", "['bydle']"],
+    'activation_text': ['bydle', 'cydle', 'dydle']
 })
 
 EXAMPLE_GTD_NEW_FORMAT = {
     '1-1': [
         {
+            'activation_text': 'bydle',
             'product_name': 'product1',
             'valid_until': 'valid1',
             'discount_text': 'heh'
@@ -25,6 +28,7 @@ EXAMPLE_GTD_NEW_FORMAT = {
     ],
     '2-2': [
         {
+            'activation_text': 'cydle',
             'product_name': 'product2',
             'valid_until': 'valid2',
             'discount_text': 'hah'
@@ -32,6 +36,7 @@ EXAMPLE_GTD_NEW_FORMAT = {
     ],
     '3-3': [
         {
+            'activation_text': 'dydle',
             'product_name': 'product3',
             'valid_until': 'valid3',
             'discount_text': 'hoh'
@@ -124,7 +129,7 @@ class TestGroundTruthParser:
                 EXAMPLE_GTD_NEW_FORMAT
         ),
         (
-            pd.DataFrame({'discount_text': [], 'time': [], 'product_text': [], 'validity_text': [], "content_full": []}),
+            pd.DataFrame({'discount_text': [], AGGREGATION_COLUMN: [], 'product_text': [], 'validity_text': [], "content_full": []}),
             {}
         ),
         (
@@ -132,24 +137,28 @@ class TestGroundTruthParser:
                 'discount_text': ['10zł', '2137gr', 'pół piwa'],
                 'product_text': ['apples', 'sword', 'piwo'],
                 'validity_text': ['N/A', 'N/A', '31.02.2025'],
-                'time': ['t0', 't0', 't0'],
-                'content_full': ["['bydle']", "['bydle']", "['bydle', 'dziekan]"]
+                AGGREGATION_COLUMN: ['t0', 't0', 't0'],
+                'content_full': ["['bydle']", "['bydle']", "['bydle', 'dziekan]"],
+                'activation_text': ['bydle', 'cydle', 'dydle']
             }),
             {'t0': [
                 {
                     'product_name': 'apples',
                     'valid_until': 'N/A',
-                    'discount_text': '10zł'
+                    'discount_text': '10zł',
+                    'activation_text': 'bydle'
                 },
                 {
                     'product_name': 'sword',
                     'valid_until': 'N/A',
-                    'discount_text': '2137gr'
+                    'discount_text': '2137gr',
+                    'activation_text': 'cydle'
                 },
                 {
                     'product_name': 'piwo',
                     'valid_until': '31.02.2025',
-                    'discount_text': 'pół piwa'
+                    'discount_text': 'pół piwa',
+                    'activation_text': 'dydle'
                 }
             ]}
         )

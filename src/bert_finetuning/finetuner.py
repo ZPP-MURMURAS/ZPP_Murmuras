@@ -1,5 +1,8 @@
+import random
+
 from datasets import Dataset, DatasetDict
-from transformers import AutoTokenizer, DataCollatorForTokenClassification, TrainingArguments, Trainer
+from transformers import AutoTokenizer, DataCollatorForTokenClassification, TrainingArguments, Trainer, TrainerCallback, \
+    pipeline
 import numpy as np
 import evaluate
 from functools import partial
@@ -11,6 +14,13 @@ __MODEL_CHECKPOINT = ""
 __TOKENIZER = None
 __DATA_COLLATOR = None
 __METRIC = None
+
+# Needs to be global so tha both the curriculer algorithm and Trainer callback work
+__LEARNING_RATE = 2e-5
+
+class LrContainer:
+    def __init__(self, lr):
+        self.lr = lr
 
 
 def init_finetuner(model_checkpoint: str):
@@ -131,7 +141,7 @@ def __tokenize_and_align_labels(input_column: str, labels_column: str, bi_split:
     return tokenized_inputs
 
 
-def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_column: str, bi_split: bool =True) -> DatasetDict:
+def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_column: str, tt_split: bool = True,  bi_split: bool = True) -> DatasetDict:
     """
     Function that is responsible for tokenizing the inputs and aligning the labels with the tokens.
     Under the hood, it wraps __tokenize_and_align_labels function in something more user-friendly.
@@ -139,6 +149,7 @@ def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_co
     :param dataset: The dataset that will be tokenized
     :param input_column: The column that contains the inputs to tokenize
     :param labels_column: The column that contains the labels to align
+    :param tt_split: Whether the dataset contains train-test splits. Default is True
     :param bi_split: Whether the labels are in B-X and I-X format. Default is True
     :return: The tokenized dataset with aligned labels
     """
@@ -146,7 +157,7 @@ def tokenize_and_align_labels(dataset: DatasetDict, input_column: str, labels_co
     tokenized_dataset = dataset.map(
         partial(__tokenize_and_align_labels, input_column, labels_column, bi_split),
         batched=True,
-        remove_columns=dataset["train"].column_names,
+        remove_columns=dataset["train"].column_names if tt_split else dataset.column_names,
     )
     return tokenized_dataset
 
@@ -194,19 +205,49 @@ def __compute_metrics(custom_labels: list, eval_preds: list) -> dict:
 
     return result
 
+def print_vibe_check(model: callable, dataset: Dataset, index: int = -1, column: str = 'train') -> None:
+    """
+    Function that is responsible for performing the "vibe-check" of the model.
+    It means that it print the specified sample from the dataset (words and its labels),
+    and the predictions of the model (which is UNKNOWN if none of the tokens of the word was
+    classified as part of the coupon, and COUPON otherwise (e.g. if ABC gets split into tokens
+    A, B, B and at lets one of them is classified as part of the COUPON, the whole word is created as COUPON)).
+    This function is mainly used during training, but you can use it outside it as well.
 
-def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: bool=False, curriculum_learning: bool=False, splits: int=10):
+    :param model: The model that will be used to predict the output
+    :param dataset: The dataset that contains the samples
+    :param index: The index of the sample that will be used for the vibe-check. Default: random
+    :param column: The column that will be used for the vibe-check. Default: train
+    """
+    classifier = pipeline("token-classification", model=model, tokenizer=__TOKENIZER, device=0, aggregation_strategy="simple")
+
+    if index == -1:
+        index = random.randint(0, len(dataset[column]) - 1)
+    sample = dataset[column][index]
+    text_input = sample.get("texts")
+    label_input = sample.get("labels")
+
+    predictions = classifier(text_input)
+    res = []
+    for pred in predictions:
+        if len(pred) > 0:
+            for entry in pred:
+                res.append(entry['entity_group'][len(entry['entity_group'])-1:])
+    for en in zip(label_input, text_input, res):
+        print(en)
+
+def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, push_to_hub: bool=False, wandb_log: str='', curriculum_learning: bool=False, splits: int=10):
     """
     Function that is responsible for training the model. It assumes that the dataset
     is already tokenized and aligned with the labels. It should contain
     train, validation and test splits. Otherwise, an exception will be thrown.
 
     :param model: The model that will be trained (assumed BERT architecture)
-    :param dataset: The dataset that contains the train, validation and test splits
+    :param dataset: The dataset that contains the train, and test splits (other parts of the splits are allowed; they will be ignored)
     :param labels: The labels that will be used to compute the metrics
     :param run_name: The name of the run
     :param push_to_hub: Whether the model should be pushed to the hub after training. Default is False
-    :param wandb_log: Whether the model should be logged to wandb. Default is False
+    :param wandb_log: If empty, wandb logging is disabled. Otherwise, it is enabled (string will be used as target project). Default is empty
     :param curriculum_learning: Whether the model should use curriculum learning. Default is False
     :param splits: The number of splits that will be used in curriculum learning. Default is 10
     """
@@ -214,39 +255,51 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
 
     tokenized_dataset = tokenize_and_align_labels(dataset, "texts", "labels")
 
-    if wandb_log:
+    if wandb_log != '':
         wandb.init(
-            project="bert-multiling-training",
-            name="bert-finetuning-" + run_name,
+            project=wandb_log,
+            name= run_name,
             config={
                 "learning_rate": 2e-5,
-                "epochs": 3,
+                "epochs": 10,
                 "weight_decay": 0.01,
                 "model_name": "bert_multiling_cased",
             }
         )
 
+    lr_container = LrContainer(__LEARNING_RATE)
     args = TrainingArguments(
-        "zpp-murmuras/bert",
+        "zpp-murmuras/",
         eval_strategy="epoch",
         save_strategy="epoch",
-        learning_rate=2e-5,
-        num_train_epochs=3,
+        learning_rate=lr_container.lr,
+        num_train_epochs=10 if not curriculum_learning else 3,
         weight_decay=0.01,
         push_to_hub=push_to_hub,
         logging_dir="./logs",  # Directory for logs
         logging_steps=10,  # Log every 10 steps
-        report_to=["wandb"] if wandb_log else ["none"],  # Enable wandb logging
+        report_to=['wandb'] if wandb_log else ['none'],  # Enable wandb logging
     )
+
+    class StopCallback(TrainerCallback):
+        def __init__(self, lr_container):
+            super().__init__()
+            self.lr_container = lr_container
+
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            if 'learning_rate' in logs:
+                lr_container.lr = logs['learning_rate']
+
 
     trainer = Trainer(
         model=model,
         args=args,
         train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["validation"],
+        eval_dataset=tokenized_dataset["test"],
         data_collator=__DATA_COLLATOR,
         compute_metrics=partial(__compute_metrics, labels),
         processing_class=__TOKENIZER,
+        callbacks=[StopCallback(lr_container)]
     )
 
     if not curriculum_learning:
@@ -254,25 +307,32 @@ def train_model(model: callable, dataset: Dataset, labels: list, run_name: str, 
         # Left for historic purposes
         if push_to_hub:
             trainer.push_to_hub("Training completed")
-        test_res = trainer.evaluate(tokenized_dataset["test"])
-        if wandb_log:
-            wandb.log(test_res)
     else:
         # Curriculum learning
-        curriculer = Curriculer(dataset, splits)
+        print_vibe_check(model, dataset)
+        curriculer = Curriculer(dataset['train'], splits)
         curr_dataset = curriculer.create_init_dataset()
-        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
-        trainer.train_dataset = curr_dataset["train"]
-        trainer.eval_dataset = curr_dataset["validation"]
+        curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels", False)
+        trainer.train_dataset = curr_dataset
+        trainer.eval_dataset = tokenized_dataset["test"]
         trainer.train()
+        print_vibe_check(model, dataset)
         for i in range(splits):
-            eval_results = trainer.evaluate(curr_dataset["test"])
-            if wandb_log:
-                wandb.log(eval_results)
+            args.learning_rate = lr_container.lr
             curr_dataset = curriculer.yield_dataset()
-            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels")
-            trainer.train_dataset = curr_dataset["train"]
-            trainer.eval_dataset = curr_dataset["validation"]
+            curr_dataset = tokenize_and_align_labels(curr_dataset, "texts", "labels", False)
+            trainer = Trainer(
+                model=model,
+                args=args,
+                train_dataset=curr_dataset,
+                eval_dataset=tokenized_dataset["test"],
+                data_collator=__DATA_COLLATOR,
+                compute_metrics=partial(__compute_metrics, labels),
+                processing_class=__TOKENIZER,
+                #callbacks=[StopCallback(lr_container)]
+            )
             trainer.train()
+            print_vibe_check(model, dataset)
         if push_to_hub:
             trainer.push_to_hub("Training completed")
+    wandb.finish()

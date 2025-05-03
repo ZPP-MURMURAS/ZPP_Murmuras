@@ -5,8 +5,8 @@ from datasets import Dataset
 
 __PROMPT = (
     "You are provided with text representing contents of the phone screen. Your task is to extract "
-    "information about coupons from the text. The information should include the product name, the validity date, "
-    "the discount, the old price, and the new price.\n\n"
+    "information about coupons from the text. The information should include the product name, the validity text, "
+    "the discount text and the activation text.\n\n"
     "### Input:\n{}\n\n"
     "### Response:\n{}"
 )
@@ -79,15 +79,19 @@ def __parse_to_oimo(df: pd.DataFrame) -> pd.DataFrame:
     pre_df_dict = {'Context': [], 'Response': []}
     for key, value in concat_outputs.items():
         pre_df_dict['Context'].append(key)
-        pre_df_dict['Response'].append(value)
+        if value != '{}':
+            pre_df_dict['Response'].append(value)
     output_df = pd.DataFrame.from_dict(pre_df_dict)
+    for index, row in output_df.iterrows():
+        if row['Response'] == '[{}]':
+            row['Response'] = '[]'
     return output_df
 
 
 def run_mapping(df: pd.DataFrame, map_func: Callable) -> Dataset:
     """
     This function takes a pandas dataframe and a mapping function, and returns a Dataset object
-    with the mapping function applied to it (it adds a prompt to the data).
+    with the mapping function applied to it.
     :param df: A pandas dataframe to be mapped.
     :param map_func: A mapping function to be applied to the dataframe.
     :return training_data: A Dataset object with the mapping function applied.
