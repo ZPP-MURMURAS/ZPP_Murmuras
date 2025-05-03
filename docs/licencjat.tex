@@ -19,6 +19,16 @@
 \usepackage{xcolor}    % Allows hyperlink color customization
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage{minted}
+\usepackage[toc]{appendix}
+\usepackage{algorithm}
+\usepackage[most]{tcolorbox}
+\usepackage{tabularx}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+\usepackage{fancyvrb}
+\usepackage{booktabs}
+\usepackage{algorithmicx}
 
 % Define JSON formatting style for listings
 \lstdefinelanguage{json}{
@@ -418,6 +428,427 @@ The second approach—a two-stage BERT pipeline—was also trained on the Modal 
 
 Additional experiments conducted as part of this project involved frameworks such as SpaCy\cite{spacy}\cite{spacy-exp} and Scrapegraph AI\cite{scapegraph_repo}\cite{scrapegraph-exp}, as well as mobile deployment tools including ONNX\cite{onnx}\cite{onnx-exp}, liteRT\cite{lite-rt}\cite{lite-rt-exp}, and Executorch\cite{executorch}\cite{executorch-exp}. These experiments were developed using Android Studio\cite{android-studio}\cite{service_demo_app_repo} and Jupyter notebooks\cite{jupyter}, running in an IPython\cite{ipython} environment.
 
+\chapter{BERT 2-stage architecture overview}
+Our proposed solution addresses the problem by framing it as a Named Entity Recognition (NER) task and employing a pipeline of two BERT models. Introduced by Google in 2018~\cite{BERT_intro}, BERT has become a standard in NLP - as of 2025-04-04, it ranks as the fourth most downloaded model on HuggingFace~\cite{BERT_hf}. The base model contains 110 million parameters, and its output format is well-suited for token classification — this combination was the primary reason for choosing it. However, we observed that the model struggled to accurately predict coupon attributes solely within the target regions when processing complex input data (see~\ref{list:sel-input}).
+
+To mitigate this, we designed a two-stage architecture inspired by region proposal networks in computer vision~\cite{Region_proposal}. The first stage identifies coupon regions, while the second extracts their attributes. This hierarchical approach significantly reduces false positives outside coupon boundaries.
+\begin{center}
+   \begin{listing}
+        \begin{minted}[frame=single,
+                       framesep=3mm,
+                       linenos=true,
+                       xleftmargin=21pt,
+                       tabsize=4]{js}
+        {
+            "texts": ['Wasch-', '&', 'Reinigungsmittel', 'Vor',
+            'Aktivierung', 'bitte', 'Hinweise', 'lesen.',
+            'Deos,', 'Duschen,', 'Badezusätze', '&', 'Bodylotions',
+            'Vor', 'Aktivierung', 'bitte', 'Hinweise', 'lesen.']
+        }
+        \end{minted}
+        \caption{Pipeline input}
+        \label{list:sel-input}
+    \end{listing}
+\end{center}
+
+\section{BERT family of models}
+The widespread adoption of BERT~\cite{BERT_hf} has led to numerous architectural variants. Beyond the larger BERT-Large (around 300M parameters) and multilingual adaptations, efforts have focused on enhancing performance (e.g., RoBERTa~\cite{RoBERTa}, which outperforms vanilla BERT through extended pretraining) and improving efficiency (e.g., ALBERT~\cite{ALBERT}, which reduces parameters to  around 12M~\cite{ALBERT_hf}).
+Additionally, during our research, ModernBERT~\cite{ModernBERTPaper} was released, offering advancements such as extended context length (8,192 tokens), faster inference, and superior performance on benchmark tasks. On top of that, it was still comparable with the base model, having around 150M parameters~\cite{ModernBERThf}.
+After evaluating these variants, we selected the BERT-base multilingual model (179M parameters~\cite{BERT_multiling}). This decision was driven by ALBERT’s significant performance drop~\cite{BERT_comp} while both RoBERTa and ModernBert lacked multilingual support~\cite{FBAIHF}, making BERT-base the optimal balance of capability and versatility for our task.
+
+\section{2-stage architecture}
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\linewidth]{bachelor_images/zpp.png}
+    \caption{Pipeline graph}
+    \label{fig:zpp}
+\end{figure}
+Figure \ref{fig:zpp} represents the general structure of the system. It consists of:
+\begin{enumerate}
+    \item \textbf{Input Data} (Listing~\ref{list:sel-input}):
+    \begin{itemize}
+        \item Each frame captured by the user's phone is stored as an XML tree
+        \item XML data is flattened into a CSV file where entries from the same frame share a timestamp value
+        \item All text data from a frame is concatenated (grouped by timestamp) and fed into the model
+    \end{itemize}
+
+    \item \textbf{Selection Pass}:
+    \begin{itemize}
+        \item First multilingual BERT model performs Named Entity Recognition (NER)
+        \item Tags tokens as either \texttt{COUPON} or \texttt{UNKNOWN} in IOB2 format~\cite{iob2}
+    \end{itemize}
+
+    \item \textbf{Selection Pass Output}:
+    \begin{itemize}
+        \item Labeled tokens are reassembled into contiguous strings (grouping adjacent tokens with the same label)
+        \item Only text segments labeled \texttt{COUPON} are forwarded to the next stage
+    \end{itemize}
+
+    \item \textbf{Extraction Pass}:
+    \begin{itemize}
+        \item Second multilingual BERT model processes the filtered input
+        \item Performs fine-grained NER to classify tokens into four fields:
+        \begin{itemize}
+            \item \texttt{Activation}
+            \item \texttt{Discount}
+            \item \texttt{Product}
+            \item \texttt{Validity text}
+        \end{itemize}
+        There may be cases where multiple entities are classified under the same type, such as "ACTIVATION-TEXT". To handle this, we implemented two approaches. The first approach selects only the first entity of the given type, while the second approach concatenates all entities of that type. Both methods were evaluated in benchmark tests.
+    \end{itemize}
+
+    \item \textbf{Pipeline Output}:
+    \begin{itemize}
+        \item Tokens are concatenated into strings based on their field labels
+        \item Results are packaged into JSON objects
+        \item Final structure matches the format shown in Listing~\ref{list:pip-out}
+    \end{itemize}
+\end{enumerate}
+\begin{center}
+   \begin{listing}
+        \begin{minted}[frame=single,
+                       framesep=3mm,
+                       linenos=true,
+                       xleftmargin=21pt,
+                       tabsize=4]{js}
+        [
+            {
+                "ACTIVATION-TEXT" : string,
+                "DISCOUNT-TEXT" : string,
+                "PRODUCT-NAME" : string,
+                "VALIDITY-TEXT" : string,
+            }
+        ],
+        ...
+        \end{minted}
+        \caption{Pipeline output}
+        \label{list:pip-out}
+    \end{listing}
+\end{center}
+
+\section{Fine Tuning}
+We implemented independent training for both BERT models in our pipeline. This approach provides several key advantages:
+
+\begin{itemize}
+    \item \textbf{Isolated Error Penalization}: Each model is only penalized for its own mistakes during training. Joint training could distort the selection model's loss function due to errors propagating from the extraction pass.
+
+    \item \textbf{Data Integrity}: The extraction model trains on accurate intermediate representations, preventing potential bias from the selection model's imperfect predictions during joint training.
+
+    \item \textbf{Practical Benefits}:
+    \begin{itemize}
+        \item Simplified implementation compared to end-to-end training
+        \item Greater control over each model's learning process
+        \item Easier hyperparameter tuning for individual components
+    \end{itemize}
+\end{itemize}
+
+This modular training strategy ensures both models reach their optimal performance without compromising each other's learning objectives.
+\subsection{Fine-tuning methodology}
+Both selection and extraction models were trained on a dataset comprising data from four retail applications: DM, Lidl, Rewe, and Rossmann. The dataset was split 80\%--20\% for training and testing respectively, following common practice~\cite{pp}, with evaluation performed after each epoch. All fine-tuning experiments were conducted under the assumption that final model performance would be benchmarked on separate datasets from Edeka and Penny applications to maintain independence between training and evaluation data.
+
+\begin{enumerate}
+    \item \textbf{General Fine-tuning}:
+    \begin{itemize}
+        \item Objective: Establish baseline performance metrics
+        \item Approach: Models trained on combined data from all four applications
+    \end{itemize}
+
+    \item \textbf{Per-application Fine-tuning}:
+    \begin{itemize}
+        \item Objective: Evaluate cross-application generalization capabilities
+        \item Approach: Individual models fine-tuned separately on each application's data, then tested on other applications to measure dataset similarity
+    \end{itemize}
+
+    \item \textbf{Incremental Separate Fine-tuning}:
+    \begin{itemize}
+        \item Objective: Test knowledge extensibility through sequential learning
+        \item Approach: Four progressive models for each pass:
+        \begin{enumerate}
+            \item Base model fine-tuned only on DM data
+            \item Subsequent fine-tuning on Lidl data
+            \item Additional fine-tuning on Rewe data
+            \item Final fine-tuning on Rossmann data
+        \end{enumerate}
+    \end{itemize}
+
+    \item \textbf{Incremental Combined Fine-tuning}:
+    \begin{itemize}
+        \item Objective: Evaluate cumulative learning effects
+        \item Approach: Similar to incremental separate fine-tuning but with concatenated datasets:
+        \begin{enumerate}
+            \item Initial fine-tuning on DM data only
+            \item Subsequent fine-tuning on combined DM + Lidl data
+            \item Additional fine-tuning on DM + Lidl + Rewe data
+            \item Final fine-tuning on all four applications' data
+        \end{enumerate}
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Selection pass specifics}
+Beyond the basic fine-tuning approach, we conducted two additional experiments with the selection pass model:
+
+\begin{enumerate}
+    \item \textbf{XML Tree Preservation}:
+    \begin{itemize}
+        \item \textit{Hypothesis}: Maintaining structural information from the original XML tree could improve coupon detection
+        \item \textit{Implementation}: Created datasets where screen content strings were wrapped in JSON structures simulating the XML hierarchy
+        \item \textit{Results}:
+        \begin{itemize}
+            \item Increased training cost due to additional tokens (e.g., structural delimiters)
+            \item Ultimately underperformed compared to plain text approach
+            \item Abandoned after general fine-tuning trials (see Appendix~\ref{AppB} for details)
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Token Distribution Balancing}:
+    \begin{itemize}
+        \item \textit{Motivation}: Early datasets contained significant class imbalance with excessive non-coupon data. Additionally, JSON format introduced even more UNKNOWN tokens.
+        \item \textit{Implementation}: Applied techniques to rebalance token distribution
+        \item \textit{Findings}:
+        \begin{itemize}
+            \item Later data batches naturally resolved the imbalance issue
+            \item Final performance remained unsatisfactory (see Appendix~\ref{AppA})
+            \item Approach was discontinued
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+Both experimental approaches were ultimately abandoned in favor of the simpler, more effective plain text processing method.
+
+\section{Selection pass fine-tuning results}
+General fine-tuning experiment demonstrated that a simple data representation without any class balancing yielded the best results. As a consequence, we decided to abandon both the JSON format and the Curriculum Learning approach. Furthermore, subsequent experiments were conducted using 10 epochs instead of 30, as higher epoch counts led to increasing loss values for the base model. In the plots (\ref{fig:s_elg}, \ref{fig:s_epg}, \ref{fig:s_erg}), models labeled as "curr" were trained using the Curriculum Learning algorithm.
+
+For per-application fine-tuning, models generally performed poorly achieving recall statistic on data they had not encountered during training. An exception was the Lidl dataset, where the model achieved over 60\% recall (\ref{fig:s_ers}).
+
+In both incremental fine-tuning scenarios, although the model initially trained on DM data struggled with classification, further fine-tuning significantly improved its recall. This suggests that it is possible to extend the model's functionality with minimal effort through simple fine-tuning (\ref{fig:s_eras}, \ref{fig:s_erag}).
+
+\section{Extraction pass fine-tuning results}
+In the general fine-tuning setting, the extraction pass was learned smoothly. A potential concern, however, is the simultaneous increase in loss, recall, and precision, which may indicate slight overfitting (\ref{fig:e_elg}, \ref{fig:e_epg}, \ref{fig:e_erg}).
+
+The single-application experiment produced results similar to those observed in the selection pass. Once again, the Lidl dataset appeared to be the most similar to the others (\ref{fig:e_ers}).
+
+For both types of incremental experiments, the results closely mirrored those of the selection pass. However, in this case, fine-tuning on the Lidl dataset led to even greater performance improvements, making additional fine-tuning less impactful. This indicates that with the right dataset, a relatively small amount of data may be sufficient to expand the model’s capabilities (\ref{fig:e_eras}, \ref{fig:e_erag}).
+
+\let\cleardoublepage\clearpage
+\begin{appendices}
+\chapter{Curriculum Learning Approach} \label{AppA}
+
+To address class imbalance in Murmuras-provided data and the JSON-based selection pass, we implemented a curriculum learning algorithm inspired by curriculum learning \cite{CurrLearn}. This approach mimics human learning progression by gradually increasing task difficulty:
+
+\begin{itemize}
+    \item \textbf{Implementation}:
+    \begin{itemize}
+        \item Initial training on balanced datasets (equal coupon/non-coupon examples)
+        \item Progressive introduction of more non-coupon samples
+        \item Gradual complexity increase mirroring human learning patterns
+    \end{itemize}
+
+    \item \textbf{Observed Advantages}:
+    \begin{itemize}
+        \item Smoother, more stable loss descent during training
+        \item Reduced overfitting compared to baseline approaches
+        \item More predictable learning trajectory
+    \end{itemize}
+
+    \item \textbf{Performance Outcomes} \ref{fig:s_elg}, \ref{fig:s_epg}, \ref{fig:s_erg}:
+    \begin{itemize}
+        \item Consistently inferior metrics (accuracy/recall) versus baseline
+        \item 30-epoch evaluation showed no competitive improvement
+        \item Final decision to exclude from production pipeline
+    \end{itemize}
+\end{itemize}
+
+Despite its theoretical benefits and training stability, the curriculum approach was ultimately abandoned as baseline methods demonstrated superior practical performance across all key metrics. This suggests that for our specific task and data characteristics, direct exposure to the true data distribution may be preferable to gradual introduction of complexity.
+
+\begin{algorithm}
+\caption{Curriculum Data Preparation Algorithm}
+\begin{algorithmic}[1]
+\Require Dataset $D$ with fields \texttt{texts}, \texttt{labels}
+\Require Number of splits $S > 0$
+\Ensure Sequence of training datasets
+
+\State Initialize $\mathcal{R}_c \gets \{\}$, $\mathcal{R}_{\neg c} \gets \{\}$
+\For{each row $r$ in $D$}
+    \If{$r$ contains coupon labels}
+        \State Extract spans of contiguous coupon tokens
+        \State Add span info to $\mathcal{R}_c$
+    \Else
+        \State Add $r$ to $\mathcal{R}_{\neg c}$
+    \EndIf
+\EndFor
+
+\State Store $\text{init\_len} \gets |\mathcal{R}_c|$
+\For{each row $r$ in $\mathcal{R}_c$}
+    \State Extend spans of $r$ proportionally using \textsc{ExtendSpans}
+\EndFor
+\State Yield initial dataset from $\mathcal{R}_c$
+
+\For{$i = 1$ to $S-1$}
+    \If{$i = S-1$}
+        \State Append all of $\mathcal{R}_{\neg c}$ to $\mathcal{R}_c$
+    \ElsIf{$i \bmod 2 = 0$}
+        \State Append a subset of $\mathcal{R}_{\neg c}$ to $\mathcal{R}_c$
+    \Else
+        \For{each row $r$ in $\mathcal{R}_c$}
+            \State Extend spans of $r$ proportionally
+        \EndFor
+    \EndIf
+    \State Yield dataset from $\mathcal{R}_c$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{ExtendSpans Procedure}
+\begin{algorithmic}[1]
+\Procedure{ExtendSpans}{$spans, amount, max\_len$}
+\If{$spans = \emptyset$}
+    \State Create single span $[0, amount]$
+\Else
+    \State Distribute $amount$ evenly across spans
+    \State Shift span boundaries without overlap
+    \State Greedily expand remaining budget
+\EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\chapter{BERT Selection pass JSON format} \label{AppB}
+
+For the selection pass in our two-stage architecture, we evaluated two alternative data formats:
+
+\begin{itemize}
+    \item \textbf{Plain format}: A direct representation of the textual screen content for each timestamp (Listing~\ref{list:sel-input})
+    \item \textbf{JSON format}: An enriched representation that additionally encodes the XML tree structure of the Android screen content (Listing~\ref{list:sel-json})
+\end{itemize}
+
+Following comprehensive fine-tuning experiments, we discontinued the JSON format approach due to several factors:
+
+\begin{itemize}
+    \item Performance metrics during training were comparable to or worse than the curriculum learning approach
+    \item The JSON structure increased token count, resulting in:
+    \begin{itemize}
+        \item Longer training times
+        \item Higher computational costs
+    \end{itemize}
+    \item The approach failed to deliver satisfactory improvements in model accuracy
+\end{itemize}
+
+The comparative results are presented in Figures~\ref{fig:s_elg}, \ref{fig:s_epg}, and~\ref{fig:s_erg}.
+\begin{center}
+   \begin{listing}
+        \begin{minted}[frame=single,
+                       framesep=3mm,
+                       linenos=true,
+                       xleftmargin=21pt,
+                       tabsize=4]{js}
+        {
+            "text": null,
+            "children": {
+                "nan": {
+                    "text": "Sensodyne",
+                    "children": {}
+                },
+                "nan_0": {
+                    "text": "G\\u00fcltig', 'bis', '15.09.2024",
+                    "children": {}
+                },
+                "nan_1": {
+                    "text": "Yippy",
+                    "children": {}
+                }
+            }
+        }
+        \end{minted}
+        \caption{Pipeline JSON format input example}
+        \label{list:sel-json}
+    \end{listing}
+\end{center}
+
+\chapter{BERT selection pass fine-tuning results} \label{AppC}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_elg.png}
+    \caption{Eval/loss statistics of selection pass during general training}
+    \label{fig:s_elg}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_epg.png}
+    \caption{Eval/precision statistics of selection pass during general training}
+    \label{fig:s_epg}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_erg.png}
+    \caption{Eval/recall statistics of selection pass during general training}
+    \label{fig:s_erg}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_ers.png}
+    \caption{Eval/recall statistics of selection pass during training on separate apps}
+    \label{fig:s_ers}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_eras.png}
+    \caption{Eval/recall statistics of selection pass during incremental separate training}
+    \label{fig:s_eras}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_erag.png}
+    \caption{Eval/recall statistics of selection pass during incremental combined training}
+    \label{fig:s_erag}
+\end{figure}
+
+\chapter{BERT extraction pass fine-tuning results} \label{AppD}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_elg.png}
+    \caption{Eval/loss statistics of extraction pass during general training}
+    \label{fig:e_elg}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_epg.png}
+    \caption{Eval/precision statistics of extraction pass during general training}
+    \label{fig:e_epg}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_erg.png}
+    \caption{Eval/recall statistics of extraction pass during general training}
+    \label{fig:e_erg}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_ers.png}
+    \caption{Eval/recall statistics of extraction pass during separate training}
+    \label{fig:e_ers}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_eras.png}
+    \caption{Eval/recall statistics of extraction pass during incremental separate training}
+    \label{fig:e_eras}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_erag.png}
+    \caption{Eval/recall statistics of extraction pass during incremental combined training}
+    \label{fig:e_erag}
+\end{figure}
+
+
+\end{appendices}
 
 % \section{}
 
