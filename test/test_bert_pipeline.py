@@ -1,8 +1,4 @@
 import pytest
-import sys
-import os
-import numpy as np
-import logging
 
 from src.pipeline_benchmark.pipelines.bert_pipeline import _labeled_text_to_coupon, NER_ENTITY_GROUP, NER_SCORE, NER_TEXT, \
                                                            TAG_PRODUCT_NAME, TAG_DISCOUNT_TEXT, TAG_VALIDITY_TEXT, TAG_ACTIVATION_TEXT
