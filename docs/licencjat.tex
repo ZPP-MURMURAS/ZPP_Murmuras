@@ -22,13 +22,13 @@
 \usepackage{minted}
 \usepackage[toc]{appendix}
 \usepackage{algorithm}
-\usepackage{booktabs}
 \usepackage[most]{tcolorbox}
 \usepackage{tabularx}
 \usepackage{algpseudocode}
 \usepackage{amsmath}
-\usepackage{fancyvrb} 
-\usepackage{booktabs} 
+\usepackage{algorithmicx}
+\usepackage{fancyvrb}
+\usepackage{booktabs}
 
 
 % Define JSON formatting style for listings
@@ -122,7 +122,7 @@
 
 %tu idzie streszczenie na strone poczatkowa
 \begin{abstract}
-In the era of rapidly evolving digital applications, traditional scraping techniques face increasing challenges in maintaining reliable data collection pipelines. Commissioned by Murmuras, a company specializing in commercial and scientific data analysis, in this project we present a novel approach to processing phone screen content, such as displayed social media posts and website advertisements. Our solution leverages Large Language Models (LLMs) running locally on the user's device to handle diverse data formats while ensuring that sensitive information remains protected. The primary application explored in this study is the extraction of discount coupons, demonstrating the feasibility of our method in identifying and structuring valuable content from varying digital sources. Furthermore, the system is designed to be easily adaptable to other use cases, such as analyzing users' political views. Additionally we explore usage of non-LLM models for the defined task. The results highlight the potential of LLM-driven content analysis as an alternative to conventional scraping techniques.
+In the era of rapidly evolving digital applications, traditional scraping techniques face increasing challenges in maintaining reliable data collection pipelines. Commissioned by Murmuras, a company specializing in commercial and scientific data analysis, in this project we present a novel approach to processing phone screen content, such as displayed social media posts and website advertisements. Our solution leverages Large Language Models (LLMs) running locally on the user's device to handle diverse data formats while ensuring that sensitive information remains protected. The primary application explored in this study is the extraction of discount coupons, demonstrating the feasibility of our method in identifying and structuring valuable content from varying digital sources. Furthermore, the system is designed to be easily adaptable to other use cases, such as analyzing users' political views. Additionally, we explore the usage of non-LLM models for the defined task. The results highlight the potential of LLM-driven content analysis as an alternative to conventional scraping techniques.
 \raggedright
 \end{abstract}
 
@@ -149,13 +149,13 @@ A coupon is a physical piece of paper or digital voucher that can be redeemed fo
     \centering
     \begin{minipage}{0.45\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{coupon1.jpg}
+        \includegraphics[width=\linewidth]{bachelor_images/coupon1.jpg}
         \caption{Example coupon from fast-food restaurants chain mobile application}
     \end{minipage}
     \hfill
     \begin{minipage}{0.45\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{coupon2.jpg}
+        \includegraphics[width=\linewidth]{bachelor_images/coupon2.jpg}
         \caption{Example coupon from grocery store mobile application}
     \end{minipage}
     \caption{Example digital coupons}
@@ -263,7 +263,7 @@ Artificial intelligence (AI), machine learning (ML) and deep learning (DL) are t
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\linewidth]{nvidia_ai_hierarchy.png}
+    \includegraphics[width=0.5\linewidth]{bachelor_images/nvidia_ai_hierarchy.png}
     \caption{The hierarchy of artificial intelligence, machine learning and deep learning \cite{nvidiaimage}}
     \label{fig:hierarchy-ai-ml-dl}
 \end{figure}
@@ -311,7 +311,7 @@ Deep learning is a subset of machine learning wherein multilayered neural networ
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\linewidth]{nn_simple.png}
+    \includegraphics[width=0.5\linewidth]{bachelor_images/nn_simple.png}
     \caption{Data representations learned by a digit-classification model \cite{francuz_8}}
     \label{fig:nn_simple}
 \end{figure}
@@ -320,7 +320,7 @@ The transformation implemented by a layer is defined (parametrized) by its \text
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\linewidth]{nn_function.png}
+    \includegraphics[width=0.5\linewidth]{bachelor_images/nn_function.png}
     \caption{A visualization of how a Deep Learning model works \cite{francuz_9}}
     \label{fig:nn_function}
 \end{figure}
@@ -341,7 +341,7 @@ Please refer to the aforementioned paper for more details.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\linewidth]{transformer_arch.png}
+    \includegraphics[width=0.5\linewidth]{bachelor_images/transformer_arch.png}
     \caption{Transformer Architecture \cite{attention}}
     \label{fig:transformers_fig}
 \end{figure}
@@ -754,7 +754,7 @@ After evaluating these variants, we selected the BERT-base multilingual model (1
 \section{2-stage architecture}
 \begin{figure}
     \centering
-    \includegraphics[width=1.0\linewidth]{zpp.png}
+    \includegraphics[width=1.0\linewidth]{bachelor_images/zpp.png}
     \caption{Pipeline graph}
     \label{fig:zpp}
 \end{figure}
@@ -1099,40 +1099,40 @@ The comparative results are presented in Figures~\ref{fig:s_elg}, \ref{fig:s_epg
 \chapter{BERT selection pass fine-tuning results} \label{AppC}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{s_elg.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_elg.png}
     \caption{Eval/loss statistics of selection pass during general training}
     \label{fig:s_elg}
 \end{figure}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{s_epg.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_epg.png}
     \caption{Eval/precision statistics of selection pass during general training}
     \label{fig:s_epg}
 \end{figure}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{s_erg.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_erg.png}
     \caption{Eval/recall statistics of selection pass during general training}
     \label{fig:s_erg}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{s_ers.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_ers.png}
     \caption{Eval/recall statistics of selection pass during training on separate apps}
     \label{fig:s_ers}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{s_eras.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_eras.png}
     \caption{Eval/recall statistics of selection pass during incremental separate training}
     \label{fig:s_eras}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{s_erag.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/s_erag.png}
     \caption{Eval/recall statistics of selection pass during incremental combined training}
     \label{fig:s_erag}
 \end{figure}
@@ -1140,40 +1140,40 @@ The comparative results are presented in Figures~\ref{fig:s_elg}, \ref{fig:s_epg
 \chapter{BERT extraction pass fine-tuning results} \label{AppD}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{e_elg.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_elg.png}
     \caption{Eval/loss statistics of extraction pass during general training}
     \label{fig:e_elg}
 \end{figure}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{e_epg.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_epg.png}
     \caption{Eval/precision statistics of extraction pass during general training}
     \label{fig:e_epg}
 \end{figure}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{e_erg.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_erg.png}
     \caption{Eval/recall statistics of extraction pass during general training}
     \label{fig:e_erg}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{e_ers.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_ers.png}
     \caption{Eval/recall statistics of extraction pass during separate training}
     \label{fig:e_ers}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{e_eras.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_eras.png}
     \caption{Eval/recall statistics of extraction pass during incremental separate training}
     \label{fig:e_eras}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{e_erag.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/e_erag.png}
     \caption{Eval/recall statistics of extraction pass during incremental combined training}
     \label{fig:e_erag}
 \end{figure}
@@ -1200,42 +1200,42 @@ To mitigate this issue, the improved algorithm modifies how empty fields are han
 \chapter{Benchmarking Results} \label{AppF}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{benchmark/bert_first_vs_concat_recall.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/bert_first_vs_concat_recall.png}
     \caption{BERT-first vs BERT-concat - recall}
     \label{fig:bert_first_vs_concat_recall}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{benchmark/bert_first_vs_concat_precision.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/bert_first_vs_concat_precision.png}
     \caption{BERT-first vs BERT-concat - precision}
     \label{fig:bert_first_vs_concat_precision}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{benchmark/llama_wth_vs_w_recall.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/llama_wth_vs_w_recall.png}
     \caption{Llama-wth vs Llama-w - recall}
     \label{fig:llama_wth_vs_w_recall}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{benchmark/llama_wth_vs_w_precision.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/llama_wth_vs_w_precision.png}
     \caption{Llama-wth vs Llama-w - precision}
     \label{fig:llama_wth_vs_w_precision}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{benchmark/llama_vs_bert_recall.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/llama_vs_bert_recall.png}
     \caption{Llama-wth vs BERT-concat - recall}
     \label{fig:llama_vs_bert_recall}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{benchmark/llama_vs_bert_precision.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/llama_vs_bert_precision.png}
     \caption{Llama-wth vs BERT-concat - precision}
     \label{fig:llama_vs_bert_precision}
 \end{figure}
@@ -1243,28 +1243,28 @@ To mitigate this issue, the improved algorithm modifies how empty fields are han
 \chapter{Comparison of Llama Quantizations} \label{AppG}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{quant_comp/quantization_effect_on_recall.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/quant_comp/quantization_effect_on_recall.png}
     \caption{Llama-wth quantization effect on recall}
     \label{fig:quantization_effect_on_recall}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{quant_comp/quantization_effect_on_precision.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/quant_comp/quantization_effect_on_precision.png}
     \caption{Llama-wth quantization effect on precision}
     \label{fig:quantization_effect_on_precision}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{quant_comp/quantization_effect_on_model_speed.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/quant_comp/quantization_effect_on_model_speed.png}
     \caption{Llama-wth quantization effect on model speed}
     \label{fig:quantization_effect_on_model_speed}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{quant_comp/quantization_effect_on_gguf_file_size.png}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/quant_comp/quantization_effect_on_gguf_file_size.png}
     \caption{Llama-wth quantization effect on GGUF file size}
     \label{fig:quantization_effect_on_gguf_file_size}
 \end{figure}
