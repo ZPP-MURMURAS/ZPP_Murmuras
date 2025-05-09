@@ -97,6 +97,36 @@ class TestBertPipeline:
             ], 
             'top_score', 
             {"product_name": "B", "discount_text": "C", "valid_until": "E", "activation_text": ""}),
+        (
+            [
+                {
+                    NER_ENTITY_GROUP: TAG_PRODUCT_NAME,
+                    NER_TEXT: 'A',
+                    NER_SCORE: 0.5
+                },
+                {
+                    NER_ENTITY_GROUP: TAG_PRODUCT_NAME,
+                    NER_TEXT: 'B',
+                    NER_SCORE: 0.7
+                },
+                {
+                    NER_ENTITY_GROUP: TAG_DISCOUNT_TEXT,
+                    NER_TEXT: 'C',
+                    NER_SCORE: 0.5
+                },
+                {
+                    NER_ENTITY_GROUP: TAG_DISCOUNT_TEXT,
+                    NER_TEXT: 'D',
+                    NER_SCORE: 0.5
+                },
+                {
+                    NER_ENTITY_GROUP: TAG_VALIDITY_TEXT,
+                    NER_TEXT: 'E',
+                    NER_SCORE: 0.5
+                }
+            ], 
+            'top_score', 
+            {"product_name": "B", "discount_text": "C", "valid_until": "E", "activation_text": ""}),
         ])
     def test_labeled_text_to_coupon(self, labeled_text, strategy, coupon):
         assert _labeled_text_to_coupon(labeled_text, strategy) == coupon
