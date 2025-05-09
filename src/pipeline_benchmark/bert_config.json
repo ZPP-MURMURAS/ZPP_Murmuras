@@ -41,6 +41,27 @@
         },
         "threshold": 0.8
     },
+    "bert-no-curr-top_score":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
     "bert-curr-concat":
     {
         "module": "pipelines.bert_pipeline", 
