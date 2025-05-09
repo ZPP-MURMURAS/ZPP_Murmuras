@@ -456,7 +456,9 @@ Python\cite{python} was the primary programming language used, due to its broad 
 
 \section{LLaMA Proposal}
 
-Our first solution was based on the LLaMA architecture and utilized a custom fine-tuned version of LLaMA-3.2-1b provided by Meta\cite{meta-llama}. Fine-tuning was performed using the Unsloth\cite{unsloth} tool, which enabled efficient resource usage. Specifically, Unsloth applied the LoRA (Low-Rank Adaptation) fine-tuning technique\cite{hu2021loralowrankadaptationlarge}, reducing the number of trainable parameters to approximately 10 million. It also facilitated easy model conversion to the GGUF format.
+Our first solution was based on the LLaMA architecture and utilized a custom fine-tuned version of LLaMA-3.2-1b provided by Meta\cite{meta-llama}. We have chosen the \emph{meta/llama-3.2-1b} model as the base for the fine-tuning process. Other families of models were considered by us, but they were rejected in favor of the Llamas thanks to either their lack of support in Unsloth and framework provided by Hugging Face or due to the missalignment of the models sizes and performances, like \emph{Gemma 2}\cite{llama-32-intro}.
+
+Fine-tuning was performed using the Unsloth\cite{unsloth} tool, which enabled efficient resource usage. Specifically, Unsloth applied the LoRA (Low-Rank Adaptation) fine-tuning technique\cite{hu2021loralowrankadaptationlarge}, reducing the number of trainable parameters to approximately 10 million. It also facilitated easy model conversion to the GGUF format.
 
 The fine-tuning process was carried out on the Modal platform\cite{modal}, which allowed us to define execution environments directly in Python and execute code on cloud infrastructure equipped with H100 GPUs. Training progress and logs were monitored using Weights \& Biases (Wandb)\cite{wandb}.
 
@@ -672,10 +674,9 @@ The single-application experiment produced results similar to those observed in 
 
 For both types of incremental experiments, the results closely mirrored those of the selection pass. However, in this case, fine-tuning on the Lidl dataset led to even greater performance improvements, making additional fine-tuning less impactful. This indicates that with the right dataset, a relatively small amount of data may be sufficient to expand the model’s capabilities (\ref{fig:e_eras}, \ref{fig:e_erag}).
 
-\chapter{An alternative: fine-tuned Llama model}
+\chapter{Fine-tuned Llama model}
 Apart from the aforementioned BERT-based proposal, we have prepared a fine-tuned version of Llama\cite{meta-llama} model to measure its performance in the studied task as a scrapping tool.
 
-We have chosen the \emph{meta/llama-3.2-1b}\cite{llama-32-intro} model as the base for the fine-tuning process. Other families of models were considered by us, but they were rejected in favor of the Llamas thanks to either their lack of support in Unsloth\cite{unsloth-model-support} and framework provided by Hugging Face or due to the missalignment of the models sizes and performances, like \emph{Gemma 2}\cite{llama-32-intro}. The following sections describe the setup, the fine-tuning and the results of performed experiments.
 \section{Task setup}
 We assumed that the model is expected to take the content of the text fields displayed to the user on the screen and return a list of coupons in JSON format described in \ref{sec:coupon_model}. Additionally, we have explored the model performance when the prompt was enhanced with the task description. However, no significant gain was achieved by us this way. The full description of the prompt format is given in \ref{llamaDsDesc}.
 \section{Fine-Tuning}
@@ -1617,7 +1618,7 @@ Understanding the Transformer Model: A Report on “Attention Is All You Need”
 \url{https://github.com/ggml-org/llama.cpp/blob/master/examples/quantize/README.md}
 
 \bibitem{llama-32-intro}
-\textit{Llama 3.2 introduced by Meta}
+\textit{Llama 3.2 introduced by Meta; Comparison of llama-3.2-1b with Gemma 2 2B IT}
 \url{https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/}
 [Accessed 04.05.2025]
 
