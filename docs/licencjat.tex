@@ -688,17 +688,18 @@ The fine-tuning was performed on the Modal platform with the help of the Unsloth
 \section{Results of fine-tuning}
 In this part we will analyze only cross-entropy loss evaluated during the training here as the models' performance on our benchmark is described in [ref to benchmark results]. The detailed plots for fine-tuning results are available in Appendix~\ref{AppH}.
 \subsection{Baseline fine-tuning}
-The baseline fine-tuning was performed on the datasets from four apps: REWE, ROSSMANN, LIDL and DM and on each single app separately. During the training, the test loss was computed on the datasets from PENNY and EDEKA applications.
+The baseline fine-tuning was performed on the datasets from four apps: REWE, ROSSMANN, LIDL and DM. During the training, the test loss was computed on the datasets from PENNY and EDEKA applications.
 
-During the training of llama-wth we see constant fall of the training loss. It reaches While the train loss was decreasing as the training proceeded, reach
+During the training of llama-wth we see constant fall of the training loss. It reaches the value below 0.2 after 9 epochs (see plot~\ref{fig:llama-wth-loss}). The wvaluation loss drops to the value around 0.7 after initial epochs and then grows slowly to reach the value around 0.8 after 10 epochs. The test loss reached the value close to 1.3 after the first epoch and continued to grow over the rest of the epochs. This suggests that the model is overfitting to the training data.
+The llama-w training plot (see~\ref{fig:llama-w-loss}) shows us that the test loss is at approximately 1.25 after the first epoch, the evaluation loss is close to 0.6 in its minimum and the train loss value after 10 epochs is around 0.1. This is significant improvement when comparing with llama-wth, however, the overfitting still occurs.
+
+\subsection{Application-wise fine-tuning}
+We have also tested the model's ability to generalization when the fine-tuning was performed on the dataset consisting only one application. In this case, we have measured the training and evaluation loss on the data form the selected application, while the test loss was computed on the EDEKA and PENNY applications, as in the baseline experiment. Each experiment came in variant with task description inserted into prompt and without it.
+
+When training on the prompt without the description, the test loss was significanty higher than in case of training on 4 applications simultaniously (see plot~\ref{fig:llama-wth-appwise}. After the first epoch it reached the value around 2.95 in case of dataset from ROSSMANN, between 2.8 and 2.9 in case of DM and REWE, and the value slightly lower than 1.8 in case of LIDL. It continued to grow in the following epochs.
+However, when the training set contained the task description, for the ROSSMANN the test loss after the first epoch was on the level comparable to experiments from the previous subsection and it dropped further to the value around 1.15 after several epochs. After that, it started to grow. In case of LIDL, REWE, DM, the test loss reached it's minimum after the first epoch with value 1.15 (see plot~\ref{fig:llama-w-appwise}.
+
 \subsection{Experiments}
-
-
-The loss suggests that the model tries to generalize to evaluation part of the dataset in the first few epochs, reaching the loss about 0.7 \ref{fig:llama-wth-loss}. Further epochs result in overfitting. In general, model fails to generalize to the test dataset, with the loss below 1.5 after the first epoch of the training and stable growth afterwards.
-
-Adding task description to the model prompt decreased the test loss after the first epoch to the value below 1.25, but did not prevent the loss growth in next epochs \ref{fig:llama-w-loss}.
-
-Fine-tunings on data from single datasets resulted in drastically higher test loss in case of not providing the instruction to the model \ref{fig:llama-wth-appwise}. With instruction, the performance on the test set matched the previous experiment \ref{fig:llama-w-appwise}.
 
 \section{Experiments}
 Additionally, we have performed experiments similar to the ones in \ref{FTMethodologyBert}, point three and four. We have explored different sizes of datasets introduced alongside the training.
