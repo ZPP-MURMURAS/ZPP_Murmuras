@@ -94,10 +94,10 @@ def _labeled_text_to_coupon_concat(labeled_text: List[Dict[str, any]]) -> Dict[s
     for entity in labeled_text:
         key = TAG_TO_COUPON_KEY.get(entity[NER_ENTITY_GROUP])
         if key:
-            coupon[key] += entity[NER_TEXT] + " "
+            if coupon[key]:
+                coupon[key] += " "
 
-    for key in coupon.keys():
-        coupon[key] = coupon[key].strip()
+            coupon[key] += entity[NER_TEXT]
 
     return coupon
 
