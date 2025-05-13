@@ -28,6 +28,9 @@
 \usepackage{amsmath}
 \usepackage{algorithmicx}
 \usepackage{fancyvrb}
+\usepackage{rotating}
+\usepackage{geometry}
+\usepackage{caption}
 \usepackage{booktabs}
 
 
@@ -131,7 +134,7 @@ In the era of rapidly evolving digital applications, traditional scraping techni
 \listoftables
 \listofalgorithms
 
-\chapter{Introduction}
+\chapter{Introduction} \label{chap:intro}
 
 \section{Project background and motivation}
 With the rapid advancement of information technology, the Internet has become one of the most crucial facets for many businesses to perform marketing activities \cite{design_of_coupons}. One of the key marketing tools in business-to-consumer (B2C) e-commerce is the digital coupon \cite{targeted_reminders}. Compared to paper coupons, digital coupons are characterized by their wide reach, rapid distribution, and low spread costs. Furthermore, a key advantage of digital coupons is their ability to facilitate targeted marketing by offering personalized discounts to different customers, thereby increasing sales \cite{design_of_coupons}. 
@@ -252,7 +255,7 @@ Machine learning is proven to be a useful tool in the field of market competitor
 The aforementioned gathering of data about displayed coupons can also be utilized in further monitoring of competitors' coupon strategies, their effectiveness, and whether they provide better discounts. Using machine learning to identify and analyze competitors' strategies is more cost-effective compared to exhaustive web scraping or mystery shopping \cite{competitor_tariffs}. This will enable businesses to make better informed decisions about their own marketing campaigns and provide a comprehensive understanding of the competitive landscape.
 
 
-\chapter{Machine learning and the dangers associated with it}
+\chapter{Machine learning and the dangers associated with it}  \label{chap:ml}
 % \subsection{Benchmark}
 % Benchmarking is the process of running a set of, among others, computer programs against a set of tests to assess their relative performance or precision % \cite{benchmark}.
 
@@ -429,7 +432,7 @@ Furthermore, while a quarter of the world lacks access to clean water and sanita
 In our approach, we opted to fine-tune existing language models rather than train new ones from scratch, a decision driven by both computational efficiency and environmental considerations. As highlighted by Wang et al. (2023), pre-training a model like BERT can require the equivalent energy of anywhere from 400 to 45,000 fine-tuning runs, depending on the dataset size. Their analysis shows that the number of training tokens is a reliable heuristic for estimating energy use during fine-tuning, and that sequence length significantly impacts energy intensity during this phase. These findings emphasize the substantial energy and carbon costs associated with pre-training, underscoring the environmental benefits of leveraging pre-trained models for downstream tasks \cite{finetuning_env_good}.
 
 
-\chapter{Overview of Existing Solutions}
+\chapter{Overview of Existing Solutions}  \label{chap:solutions}
 To the best of our knowledge, at the time of this project's commissioning, no publicly available solutions directly addressed this problem. The most comparable approaches involve existing multimodal models. While widely used models such as ChatGPT and Gemini provide general data extraction capabilities~\cite{brinkmann2023}, they are unsuitable for our task due to their substantial computational requirements. A key limitation of these models is their large size—for example, GPT-3 consists of 175 billion parameters\cite{chatgpt_params}—rendering them impractical for deployment on mobile devices~\cite{LinguaLinked}.
 
 Alternatively, computer vision models can be used to extract text and bounding boxes from screen images. Microsoft’s OmniParser~\cite{omniparser_intro}, for instance, has demonstrated strong performance on the ScreenSpot dataset~\cite{omniparser_intro, cheng2024}. However, the challenge of organizing extracted text into structured coupon data renders this approach unsuitable for our study. Furthermore, our experiments with running OmniParser locally on example images indicate that it relies on CUDA technology, making it impractical for deployment on mobile devices.
@@ -440,13 +443,13 @@ Murmuras' current approach relies on a set of fixed scrapping programms tailored
 In contrast, Murmuras' most-recent proof of concept involves wrapping the \texttt{CSV} data with a prompt that instructs the model and sending it to GPT-4o-mini. This approach leverages an LLM to interpret the data to extract relevant coupon details. However, the reliance on an external server means the solution does not run locally on the mobile device, leading to potential privacy concerns, latency issues, and a dependence on internet connectivity. 
 
 \section{Scapegraph AI}
-ScrapeGraphAI is an open-source library that streamlines data extraction from websites and local documents by utilizing LLMs and graph logic to construct scraping pipelines \cite{scapegraph_repo}. The library supports integration with various LLMs, including local models through the use of Ollama \cite{ollama_repo} \cite{scapegraph_usage}.
+ScrapeGraphAI~\cite{scapegraph_repo} is an open-source library that streamlines data extraction from websites and local documents by utilizing LLMs and graph logic to construct scraping pipelines. The library supports integration with various LLMs, including local models through the use of Ollama \cite{ollama_repo} \cite{scapegraph_usage}.
 
 However, Scrapepraph AI provides only Python and Node.js SDKs \cite{scapegraph_sdks}, which could prove to be an issue with regard to mobile deployment, because neither Python nor Node.js is natively supported on iOS or Android \cite{android_dev_site} \cite{ios_dev_site}.
 
 Moreover, due to mobile devices typically having limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}, we cannot solely rely on the size of the model in order to improve performance. We believe that through fine-tuning LLMs, we are able to develop tools that are far more viable for edge device usage.
 
-\chapter{Description of datasets}
+\chapter{Description of datasets} \label{chap:datasets}
 \section{Raw datasets} 
 We received datasets corresponding to six different mobile applications: Edeka, Rossmann, DM, Rewe, Lidl, and Penny. Each dataset was provided as a CSV file containing XML representations of the data captured from the device interface during user interactions with the respective app. The selection of these applications, as well as the data collection and processing procedures, were carried out by Murmuras.
 
@@ -456,21 +459,21 @@ We have streamlined the tables by removing the columns that were deemed unnecess
 
 \begin{table}[h]
 \centering
-\begin{tabular}{llllll}
+\begin{tabular}{lllll}
 \toprule
-id & time & i & view\_depth & text & description \\
+id & time & i & view\_depth & text  \\
 \midrule
-12240295656 & 2024-03-07T16:55:32.405 & 1 & 3 & Coupon Text &  \\
+12240295656 & 2024-03-07T16:55:32.405 & 1 & 3 & Coupon Text \\
 \bottomrule
 \end{tabular}
 
 \vspace{1em}
 
-\begin{tabular}{llllll}
+\begin{tabular}{lllllll}
 \toprule
-seen\_timestamp & is\_visible & x\_1 & y\_1 & x\_2 & y\_2 \\
+description & seen\_timestamp & is\_visible & x\_1 & y\_1 & x\_2 & y\_2 \\
 \midrule
-1709826932091 & true & 0 & 81 & 1080 & 2188 \\
+  & 1709826932091 & true & 0 & 81 & 1080 & 2188 \\
 \bottomrule
 \end{tabular}
 
@@ -478,7 +481,7 @@ seen\_timestamp & is\_visible & x\_1 & y\_1 & x\_2 & y\_2 \\
 \label{tab:csv_raw_cg}
 \end{table}
 
-\begin{table}[h]
+\begin{sidewaystable}
 \centering
 
 \begin{tabular}{lllll}
@@ -495,7 +498,7 @@ id & time & coupon\_i & visible \\
 \toprule
 discount\_details & validity\_text & activation\_text \\
 \midrule
-Vor Aktivierung bitte Hinweise lesen. & Gültig bis 31.03.2024   \\
+Vor Aktivierung bitte Hinweise lesen. & Gültig bis 31.03.2024 & \\
 \bottomrule
 \end{tabular}
 
@@ -511,27 +514,18 @@ content\_full \\
 
 \vspace{1em}
 
-\begin{tabular}{ll}
+\begin{tabular}{llllllll}
 \toprule
-content\_proper & product\_text \\
+content\_proper & product\_text & extra & discount\_text & product & limitation & validity\_date \\
 \midrule
-"[Düfte]" & Düfte \\
-\bottomrule
-\end{tabular}
-
-\vspace{1em}
-
-\begin{tabular}{llllll}
-\toprule
-extra & discount\_text & product & limitation & validity\_date \\
-\midrule
- & 15\% & Düfte &  & 2024-03-31 \\
+ "[Düfte]" & Düfte & 15\% & Düfte &  & 2024-03-31 \\
 \bottomrule
 \end{tabular}
 
 \caption{Coupon file format (split for readability)}
 \label{tab:csv_raw_coupons}
-\end{table}
+\end{sidewaystable}
+
 
 \section{Dataset Formats}
 We preprocess the raw data to ensure it is structured in a manner that can be effectively utilized by the models.
@@ -564,7 +558,7 @@ The BERT models accept two dataset formats:
 \label{fig:json_example_xml_tree}
 \end{figure}
 
-\subsection{Llama Datasets}
+\subsection{Llama Datasets}\label{llamaDsDesc}
 The Llama models take in the following dataset formats:
 
 \begin{enumerate}
@@ -696,9 +690,16 @@ Rossmann  & 0     & 0     & 7     & 18    & 0.68\% \\
 \hline
 \end{tabular}
 \caption{Missing feature counts and percentage of coupons missing at least one feature per company}
+\label{tab:missing_coupons}
 \end{table}
 
-\chapter{Technologies}
+As seen in ~\ref{tab:missing_coupons}, 92.68\% of Edeka coupons and ~50\% of DM and Penny coupons, are missing at least one feature. This missing data in coupon features presents clear challenges for building reliable extraction models as it makes it difficult for models to learn consistent patterns across sources.
+
+A major consequence is lower recall. When key fields such as discount text, product names, or validity dates are missing during training, the model lacks enough examples to learn how to identify them reliably. This often results in false negatives, especially for sources with frequent data gaps, while performance tends to improve on more complete datasets.
+
+Missing data also complicates evaluation. When ground truth labels are incomplete, it becomes unclear whether a model's "mistake" is truly incorrect or simply unannotated. This can skew metrics like recall and F1-score, making model performance harder to assess accurately.
+
+\chapter{Technologies} \label{chap:technologies}
 
 \section{General}
 
@@ -723,7 +724,7 @@ The second approach—a two-stage BERT pipeline—was also trained on the Modal 
 Additional experiments conducted as part of this project involved frameworks such as SpaCy\cite{spacy}\cite{spacy-exp} and Scrapegraph AI\cite{scapegraph_repo}\cite{scrapegraph-exp}, as well as mobile deployment tools including ONNX\cite{onnx}\cite{onnx-exp}, liteRT\cite{lite-rt}\cite{lite-rt-exp}, and Executorch\cite{executorch}\cite{executorch-exp}. These experiments were developed using Android Studio\cite{android-studio}\cite{service_demo_app_repo} and Jupyter notebooks\cite{jupyter}, running in an IPython\cite{ipython} environment.
 
 
-\chapter{BERT 2-stage architecture overview}
+\chapter{BERT 2-stage architecture overview} \label{chap:bert}
 Our proposed solution addresses the problem by framing it as a Named Entity Recognition (NER) task and employing a pipeline of two BERT models. Introduced by Google in 2018~\cite{BERT_intro}, BERT has become a standard in NLP - as of 2025-04-04, it ranks as the fourth most downloaded model on HuggingFace~\cite{BERT_hf}. The base model contains 110 million parameters, and its output format is well-suited for token classification — this combination was the primary reason for choosing it. However, we observed that the model struggled to accurately predict coupon attributes solely within the target regions when processing complex input data (see~\ref{list:sel-input}).
 
 To mitigate this, we designed a two-stage architecture inspired by region proposal networks in computer vision~\cite{Region_proposal}. The first stage identifies coupon regions, while the second extracts their attributes. This hierarchical approach significantly reduces false positives outside coupon boundaries.
@@ -838,7 +839,7 @@ We implemented independent training for both BERT models in our pipeline. This a
 \end{itemize}
 
 This modular training strategy ensures both models reach their optimal performance without compromising each other's learning objectives.
-\subsection{Fine-tuning methodology}
+\subsection{Fine-tuning methodology}\label{FTMethodologyBert}
 Both selection and extraction models were trained on a dataset comprising data from four retail applications: DM, Lidl, Rewe, and Rossmann. The dataset was split 80\%--20\% for training and testing respectively, following common practice~\cite{pp}, with evaluation performed after each epoch. All fine-tuning experiments were conducted under the assumption that final model performance would be benchmarked on separate datasets from Edeka and Penny applications to maintain independence between training and evaluation data.
 
 \begin{enumerate}
@@ -924,10 +925,45 @@ The single-application experiment produced results similar to those observed in 
 
 For both types of incremental experiments, the results closely mirrored those of the selection pass. However, in this case, fine-tuning on the Lidl dataset led to even greater performance improvements, making additional fine-tuning less impactful. This indicates that with the right dataset, a relatively small amount of data may be sufficient to expand the model’s capabilities (\ref{fig:e_eras}, \ref{fig:e_erag}).
 
-\chapter{LLamas}
-\subsection{TODO}
+\chapter{Fine-tuned Llama model} \label{chap:llama}
+Apart from the aforementioned BERT-based proposal, we have prepared a fine-tuned version of Llama\cite{meta-llama} model to measure its performance in the studied task as a scrapping tool. The following sections focus on our setup for this proposal and the achieved results.
 
-\chapter{Benchmark and Results}
+\section{The choice of the model}
+Our primary model selection criterion was the model size - we wanted it to be deployable on as many smartphones as possible. That is why we have rejected models with more than 1 billion parameters, like \emph{Gemma 2 2B}\cite{gemma2} or \emph{Qwen2 1.5B}\cite{yang2024qwen2technicalreport}. We have also decided not to use models with acceptable size, but insufficient performance, like the 360M variant of \emph{SmolLM2}\cite{smollm2}. \emph{GPT-Neo}\cite{gpt-neo} was disqualified due to the lack of support from the Unsloth tool. Finally, we have chosen the 1B variant of the already mentioned \emph{llama3.2}.
+
+\section{Task setup}
+We assumed that the model is expected to take the content of the text fields displayed to the user on the screen and return a list of coupons in JSON format described in section~\ref{sec:coupon_model}. Additionally, we have explored the model's performance when the prompt was enhanced with the task description. However, no significant gain was achieved by us this way. We will refer to the llama fine-tuned with the task description as \emph{llama-w} and to the llama fine-tuned without it as \emph{llama-wth}. The full description of the prompt format is given in\ref{llamaDsDesc}.
+\section{Fine-Tuning}
+The fine-tuning was performed on the Modal platform with the help of the Unsloth tool. We used the cross-entropy loss\cite{mao2023crossentropylossfunctionstheoretical} and the AdamW optimizer adapted for 8-bit cached values\cite{hf-bnb}. Finally, we have applied weight decay and used a linear learning rate scheduler. The split between training and evaluation samples in the datasets was 80:20.
+
+\section{Results of the fine-tuning}
+In this part, we will analyze only cross-entropy loss evaluated during the training here as the models' performance on our benchmark is described in section~\ref{benchmarkResults}. The detailed plots for fine-tuning results are available in Appendix~\ref{AppH}.
+\subsection{Baseline fine-tuning}
+The baseline fine-tuning was performed on the datasets from four apps: REWE, ROSSMANN, LIDL and DM. During the training, the test loss was computed on the datasets from PENNY and EDEKA applications.
+
+During the training of llama-wth, we observe the constant decrease of the training loss. It reaches the value below 0.2 after 9 epochs (see plot~\ref{fig:llama-wth-loss}). The evaluation loss drops to the value around 0.7 after initial epochs and then grows slowly to reach a value around 0.8 after 10 epochs. The test loss reached a value close to 1.3 after the first epoch and continued to grow over the rest of the epochs. This suggests that the model is overfitting to the training data.
+The llama-w training plot (see~\ref{fig:llama-w-loss}) shows us that the test loss is at approximately 1.25 after the first epoch, the evaluation loss is close to 0.6 in its minimum and the train loss value after 10 epochs is around 0.1. This is a significant improvement compared to llama-wth, however, the overfitting still occurs.
+
+\subsection{Application-wise fine-tuning}
+We have also tested the model's ability to generalize when the fine-tuning was performed on the dataset consisting of only one application. In this case, we have measured the training and evaluation loss on the data from the selected application, while the test loss was computed on the EDEKA and PENNY applications, as in the baseline experiment. Each experiment came in a variant with the task description inserted into the prompt and without it.
+
+When training on the prompt without the description, the test loss was significantly higher than in case of training on 4 applications simultaneously (see plot~\ref{fig:llama-wth-appwise}). After the first epoch it reached a value around 2.95 in case of the dataset from ROSSMANN, between 2.8 and 2.9 in case of DM and REWE, and a value slightly lower than 1.8 in case of LIDL. It continued to grow in the following epochs.
+However, when the training set contained the task description, the test loss for ROSSMANN after the first epoch was on the level comparable to experiments from the previous subsection and it dropped further to a value around 1.15 after several epochs. After that, it started to grow. In case of LIDL, REWE and DM, the test loss reached its minimum after the first epoch with value 1.15 (see plot~\ref{fig:llama-w-appwise}).
+
+\subsection{Experiments}
+Additionally, we have performed experiments similar to the ones in Section~\ref{FTMethodologyBert}. We have performed the incremental combined fine-tuning where every $K$ epochs we introduced a new application to the dataset. Additionally, we have conducted an incremental separate fine-tuning where the dataset was replaced each $K$ epochs. We will refer to the newly introduced portion of the data as \emph{increment}. The results are described in the following subsubsections.
+\subsubsection{Incremental combined fine-tuning}
+We have tested different sizes of increments: 15, 50 and 100 (see plots~\ref{fig:llama-inc-tot-15-eval}~\ref{fig:llama-inc-tot-50-eval}~\ref{fig:llama-inc-tot-100-eval}). The evaluation loss was computed on the same applications as in the train set. When the task description is missing, we see that in each case the evaluation loss stabilizes around 0.9. However, it is worth noticing that when increment size is equal to 15, the evaluation loss drops to a value around 0.5 and then increases while in case of the greater values it starts at higher level and is decreasing as the training progresses. The test loss seems to fluctuate between 1.2 and 1.3 in the case of an increment size equal to 15 (see~\ref{fig:llama-inc-15-test}), behave in a more stable way around 1.2 for size 50 (see~\ref{fig:llama-inc-50-test}) and stabilize around 1.2 when increment size is 100 (see~\ref{fig:llama-inc-100-test}).
+
+When training with the task description the test loss fluctuates around 1.15, even for an increment of size 15, which suggests that the amount of the data required to fine-tune existing model to the new application might be small (see plots~\ref{fig:llama-inc-tot-15-test-w}~\ref{fig:llama-inc-tot-50-test-w}~\ref{fig:llama-inc-tot-100-test-w}).
+
+\subsubsection{Fine-tuning with dataset replacements}
+In this experiment, the evaluation loss was computed on the data from all apps used in the previous increments.
+When training without the task description, the evaluation loss plots look similar regardless of increment size (see plots~\ref{fig:llama-inc-15-eval}~\ref{fig:llama-inc-50-eval}~\ref{fig:llama-inc-100-eval}). The evaluation loss is at first around 0.5, then it jumps to around 0.85, finally, after the last dataset substitution, it ends around 0.9. These visualizations allow us to suggest the hypothesis that the model \emph{forgets} the overfitted dataset-specific knowledge as it no longer sees the samples from this dataset. The test loss jumps to the value above 1.4 after the first dataset swap and then drops to the value around 1.15 (see plots~\ref{fig:llama-inc-15-test}~\ref{fig:llama-inc-50-test}~\ref{fig:llama-inc-100-test}). This suggests that this methodology might be considered an interesting alternative for standard fine-tuning.
+
+Addition of the task description further decreases the test loss, to values below 1.1 in later epochs for an increment size of 10 (see~\ref{fig:llama-inc-10-test-w}), and even reached 1.05 in the case of larger increment sizes (see~\ref{fig:llama-inc-50-test-w} and~\ref{fig:llama-inc-100-test-w}).
+
+\chapter{Benchmark and Results} \label{chap:benchmark}
 
 The objective of the benchmark is to enable a fair comparison of the pipelines with respect to the quality of their outputs. To achieve this, the benchmark compares the coupons extracted by each pipeline against the ground truth data provided by Murmuras and counts the number of correctly extracted coupons. This is accomplished by computing the similarities between the generated and expected coupons and applying a simple greedy matching algorithm.
 
@@ -937,27 +973,45 @@ The coupon similarity metric employed in this work is based on comparing text fi
 
 \section{Benchmarking Algorithm}
 
-For each entry in the benchmarking dataset, the similarities between all expected and generated coupons are computed. The matching process then proceeds iteratively: at each step, the coupon pair with the highest similarity score is selected and marked as matched. The matched coupons are removed from their respective sets, and the next highest-scoring pair is selected from the remaining coupons. This process is repeated until the highest remaining similarity score falls below a predefined threshold. In this work, the threshold was set to 0.8. The benchmark returns the total numbers of expected, generated, and matched coupons across the entire benchmarking dataset.
+For each entry in the benchmarking dataset, the similarities between all expected and generated coupons are computed. The matching process then proceeds iteratively: at each step, the coupon pair with the highest similarity score is selected and marked as matched. The matched coupons are removed from their respective sets, and the next highest-scoring pair is selected from the remaining coupons. This process is repeated until the highest remaining similarity score falls below a predefined threshold. In this work, the threshold was set to 0.8. The benchmark returns the total number of expected, generated, and matched coupons across the entire benchmarking dataset.
 
 \section{Logging}
 
-The benchmark logs both the results for individual entries and any unexpected events encountered during processing. For example, during the parsing of the JSON output generated by the pipeline, any instance where a coupon lacks a product name or contains unexpected fields is recorded in the logs.
+The benchmark logs both the results for individual entries and any unexpected events encountered during processing. For instance, during the parsing of the pipeline’s JSON output, any cases of incorrectly formatted data or coupons containing unexpected fields are recorded in the logs.
 
-\section{Benchmarking Results}
+\section{Benchmarking Results} \label{benchmarkResults}
 
 By interpreting the number of expected coupons as the sum of true positives and false negatives, the number of generated coupons as the sum of true positives and false positives, and the number of matched coupons as the number of true positives, we can compute both recall and precision. Following discussions with Murmuras, it was determined that recall is the more important metric in our context, as correctly extracting as many coupons as possible is the primary objective, while false positives are considered to be of lesser concern.
 
-Based on Figures~\ref{fig:bert_first_vs_concat_recall} and~\ref{fig:bert_first_vs_concat_precision}, BERT-concat was identified as the best-performing variant of the BERT pipeline. Similarly, Figures~\ref{fig:llama_wth_vs_w_recall} and~\ref{fig:llama_wth_vs_w_precision} indicate that Llama-wth outperforms Llama-w. When comparing BERT-concat to Llama-wth (Figures \ref{fig:llama_vs_bert_recall} and \ref{fig:llama_vs_bert_precision}), the latter clearly emerges as the superior approach in terms of output quality.
+In Figures~\ref{fig:berts_recall} to~\ref{fig:llama_vs_bert_precision}, the models are evaluated across six datasets. The Penny and Edeka datasets were used in their entirety, while for DM, Lidl, Rewe, and Rossmann, only the test splits were used. Figures~\ref{fig:llama_appwise_recall} to~\ref{fig:bert_appwise_precision}, however, follow a different evaluation protocol. In these figures, each app-wise pipeline was trained and evaluated exclusively on a single dataset. For example, the Llama-with-appwise pipeline evaluated on DM was trained solely on DM, and is therefore distinct from the same-named pipeline evaluated on Lidl. In this case as well, only the test splits of DM, Lidl, Rewe, and Rossmann were used for evaluation.
 
-\section{Comparison of Llama Quantizations}
+For a detailed description of the datasets, see Chapter~\ref{chap:datasets}. Information on the BERT-based pipelines is provided in Chapter~\ref{chap:bert}, while the Llama-based pipelines are discussed in Chapter~\ref{chap:llama}.
+
+\subsection{Figures~\ref{fig:berts_recall} to~\ref{fig:llama_vs_bert_precision}}
+
+Based on Figures~\ref{fig:berts_recall} and~\ref{fig:berts_precision}, BERT-top\_score emerged as the best-performing variant within the BERT-based pipelines. It consistently outperformed BERT-first in both recall and precision. While the comparison with BERT-concat is less clear-cut, BERT-top\_score achieved more than twice the recall on the DM dataset, which was a decisive factor in its overall evaluation. 
+
+Similarly, Figures~\ref{fig:llama_wth_vs_w_recall} and~\ref{fig:llama_wth_vs_w_precision} show that Llama-wth outperforms Llama-w. While Llama-w demonstrated slightly better precision, recall was prioritized as the more important metric, as previously discussed. 
+
+When comparing BERT-top\_score to Llama-wth (Figures \ref{fig:llama_vs_bert_recall} and \ref{fig:llama_vs_bert_precision}), the latter clearly emerges as the superior approach in terms of output quality.
+
+Overall, the pipelines performed significantly better on the datasets they were trained on—namely DM, Lidl, Rewe, and Rossmann—compared to the previously unseen datasets, Penny and Edeka. However, Figures~\ref{fig:llama_wth_vs_w_recall} and~\ref{fig:llama_wth_vs_w_precision} suggest that the Llama-based pipelines exhibit a higher potential for generalization than their BERT-based counterparts.
+
+\subsection{Figures~\ref{fig:llama_appwise_recall} to~\ref{fig:bert_appwise_precision}}
+
+In Figure~\ref{fig:llama_appwise_recall}, Llama-wth outperformed each app-wise pipeline on its respective dataset, with the most pronounced improvement observed on the DM dataset. In contrast, Figure~\ref{fig:llama_appwise_precision} shows the opposite trend, where app-wise models achieved higher precision. This indicates that training on a bigger and more diverse dataset improved recall but resulted in a trade-off with precision.
+
+A similar experiment, presented in Figures~\ref{fig:bert_appwise_recall} and~\ref{fig:bert_appwise_precision}, yielded less conclusive results for the BERT-based pipelines. For DM, Lidl, and Rewe, the recall and precision scores were only marginally affected by the increased dataset size and heterogeneity. However, for Rossmann, both recall and precision were notably higher for the app-wise model.
+
+\section{Llama Quantizations}
 
 After identifying Llama-wth as the best-performing pipeline variant, we evaluated several quantized versions of the underlying model—specifically \texttt{Q8\_0}, \texttt{Q4\_K\_M}, and \texttt{Q4\_0}~\cite{llama-cpp-quantization}—in terms of recall, precision, inference speed on a mobile device, and GGUF file size. 
 
-The model speed was evaluated by running the Llama-wth model with various quantization schemes using the \texttt{llama.cpp} framework~\cite{llama-cpp} with the default CPU backend on a Samsung A25 device equipped with 6~GB of RAM. An initial warm-up run was performed using a short prompt of approximately 10 tokens, during which 16 tokens were generated. For the actual measurement, a prompt of around 300 tokens—sampled from one of the datasets—was used, and the model generated 64 tokens.
+The model speed was evaluated by running the Llama-wth model with various quantization schemes using the \texttt{llama.cpp} framework (see Chapter~\ref{chap:technologies}) with the default CPU backend on a Samsung A25 device equipped with 6~GB of RAM. An initial warm-up run was performed using a short prompt of approximately 10 tokens, during which 16 tokens were generated. For the actual measurement, a prompt of around 300 tokens—sampled from one of the datasets—was used, and the model generated 64 tokens.
 
 Based on the results shown in Figures~\ref{fig:quantization_effect_on_recall},~\ref{fig:quantization_effect_on_precision},~\ref{fig:quantization_effect_on_model_speed}, and~\ref{fig:quantization_effect_on_gguf_file_size}, we found that quantization introduced no substantial degradation in output quality while offering clear improvements in inference speed and reduced model size. The latter also contributes to lower memory (RAM) usage during execution.
 
-\chapter{Conclusion}
+\chapter{Conclusion} \label{chap:conclusion}
 \subsection{TODO}
 
 \let\cleardoublepage\clearpage
@@ -1181,7 +1235,7 @@ The comparative results are presented in Figures~\ref{fig:s_elg}, \ref{fig:s_epg
 \chapter{Coupon Similarity Metric} \label{AppE}
 The similarity between coupons is computed by comparing their textual fields using the \texttt{ratio()} method of Python's \texttt{difflib.SequenceMatcher} class~\cite{python-difflib}. The similarity computation algorithm is presented in two stages: first, the baseline approach is described, followed by an improved version. 
 
-The input to the algorithm consists of an expected coupon and a generated coupon, both containing the text fields \texttt{PRODUCT-NAME}, \texttt{DISCOUNT-TEXT}, \texttt{VALIDITY-TEXT}, and \texttt{ACTIVATION-TEXT}. It is assumed that the \texttt{PRODUCT-NAME} field is always non-empty.
+The input to the algorithm consists of an expected coupon and a generated coupon, both containing the text fields \texttt{PRODUCT-NAME}, \texttt{DISCOUNT-TEXT}, \texttt{VALIDITY-TEXT}, and \texttt{ACTIVATION-TEXT}.
 
 \section{Baseline Approach}
 The similarity of each text field is computed individually. For instance, if \texttt{text\_1} denotes the value of the \texttt{PRODUCT-NAME} field in the expected coupon and \texttt{text\_2} denotes the corresponding field in the generated coupon, their similarity is computed as follows:
@@ -1195,21 +1249,21 @@ Each field is assigned a weight reflecting its relative importance: \texttt{PROD
 However, this approach has a notable flaw. Consider the case where the expected coupon has only the \texttt{PRODUCT-NAME} field filled with the string \texttt{"a"}, while the generated coupon has the \texttt{PRODUCT-NAME} field filled with \texttt{"b"}; all other fields are empty. Despite the minimal information provided, the resulting similarity score would be 0.6, which overestimates the similarity.
 
 \section{Improved Algorithm}
-To mitigate this issue, the improved algorithm modifies how empty fields are handled. Specifically, if a given field is empty in both the expected and generated coupons, its contribution to the final similarity score is ignored. The final similarity score is then rescaled accordingly to reflect only the non-empty fields. For example, if both the \texttt{VALIDITY-TEXT} and \texttt{ACTIVATION-TEXT} fields are empty in both coupons, their similarities are considered to be 0, and the final similarity score is divided by 0.7, that is, the sum of the remaining fields' weights.
+To mitigate this issue, the improved algorithm modifies how empty fields are handled. Specifically, if a given field is empty in both the expected and generated coupons, its contribution to the final similarity score is ignored. The final similarity score is then rescaled accordingly to reflect only the non-empty fields. For example, if both the \texttt{VALIDITY-TEXT} and \texttt{ACTIVATION-TEXT} fields are empty in both coupons, their similarities are considered to be 0, and the final similarity score is divided by 0.7, that is, the sum of the remaining fields' weights. In case the sum of remaining fields' weights is 0, the similarity of the coupons is set to 1.
 
 \chapter{Benchmarking Results} \label{AppF}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/bert_first_vs_concat_recall.png}
-    \caption{BERT-first vs BERT-concat - recall}
-    \label{fig:bert_first_vs_concat_recall}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/berts_recall.png}
+    \caption{BERT-first vs BERT-concat vs BERT-top\_score - recall}
+    \label{fig:berts_recall}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/bert_first_vs_concat_precision.png}
-    \caption{BERT-first vs BERT-concat - precision}
-    \label{fig:bert_first_vs_concat_precision}
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/berts_precision.png}
+    \caption{BERT-first vs BERT-concat vs BERT-top\_score - precision}
+    \label{fig:berts_precision}
 \end{figure}
 
 \begin{figure}[h]
@@ -1240,6 +1294,34 @@ To mitigate this issue, the improved algorithm modifies how empty fields are han
     \label{fig:llama_vs_bert_precision}
 \end{figure}
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/llama_wth_appwise_recall.png}
+    \caption{Llama-wth-appwise family vs Llama-wth - recall}
+    \label{fig:llama_appwise_recall}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/llama_wth_appwise_precision.png}
+    \caption{Llama-wth-appwise family vs Llama-wth - precision}
+    \label{fig:llama_appwise_precision}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/bert_top_score_appwise_recall.png}
+    \caption{BERT-top\_score-appwise family vs BERT-top\_score - recall}
+    \label{fig:bert_appwise_recall}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/bert_top_score_appwise_precision.png}
+    \caption{BERT-top\_score-appwise family vs BERT-top\_score - precision}
+    \label{fig:bert_appwise_precision}
+\end{figure}
+
 \chapter{Comparison of Llama Quantizations} \label{AppG}
 \begin{figure}[h]
     \centering
@@ -1267,6 +1349,145 @@ To mitigate this issue, the improved algorithm modifies how empty fields are han
     \includegraphics[width=0.8\linewidth]{bachelor_images/quant_comp/quantization_effect_on_gguf_file_size.png}
     \caption{Llama-wth quantization effect on GGUF file size}
     \label{fig:quantization_effect_on_gguf_file_size}
+\end{figure}
+
+\chapter{Llama finetuning plots} \label{AppH}
+Note that the epoch numbering starts from 0. That means the leftmost value on the plots is the value after the first epoch.
+In case of incremental fine-tunings, the series name indicates the source of the data in increment that was added recently.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-wth-loss.png}
+    \caption{Llama fine-tuning losses for baseline experiment.}
+    \label{fig:llama-wth-loss}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-w-loss.png}
+    \caption{Llama fine-tuning losses for baseline experiment (with task description).}
+    \label{fig:llama-w-loss}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-appwise-wth-test.png}
+    \caption{Llama fine-tuning test losses for application-wise runs.}
+    \label{fig:llama-wth-appwise}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-appwise-w-test.png}
+    \caption{Llama fine-tuning test losses for application-wise runs (with task description).}
+    \label{fig:llama-w-appwise}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-15-tot-eval.png}
+    \caption{Llama evaluation loss for fine-tuning with concatenated increments of size 15.}
+    \label{fig:llama-inc-tot-15-eval}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-15-tot-test.png}
+    \caption{Llama test loss for fine-tuning with concatenated increments of size 15.}
+    \label{fig:llama-inc-tot-15-test}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-50-tot-eval.png}
+    \caption{Llama evaluation loss for fine-tuning with concatenated increments of size 50.}
+    \label{fig:llama-inc-tot-50-eval}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-50-tot-test.png}
+    \caption{Llama test loss for fine-tuning with concatenated increments of size 50.}
+    \label{fig:llama-inc-tot-50-test}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-100-tot-eval.png}
+    \caption{Llama evaluation loss for fine-tuning with concatenated increments of size 100.}
+    \label{fig:llama-inc-tot-100-eval}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-100-tot-test.png}
+    \caption{Llama test loss for fine-tuning with concatenated increments of size 100.}
+    \label{fig:llama-inc-tot-100-test}
+\end{figure}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-15-eval-prev.png}
+    \caption{Llama evaluation loss for previous increments for fine-tuning with increments of size 15.}
+    \label{fig:llama-inc-15-eval}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-50-eval-prev.png}
+    \caption{Llama evaluation loss for previous increments for fine-tuning with increments of size 50.}
+    \label{fig:llama-inc-50-eval}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-100-eval-prev.png}
+    \caption{Llama evaluation loss for previous increments for fine-tuning with increments of size 100.}
+    \label{fig:llama-inc-100-eval}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-15-test.png}
+    \caption{Llama test loss for fine-tuning with increments of size 15.}
+    \label{fig:llama-inc-15-test}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-50-test.png}
+    \caption{Llama test loss for fine-tuning with increments of size 50.}
+    \label{fig:llama-inc-50-test}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-100-test.png}
+    \caption{Llama test loss for fine-tuning with increments of size 100.}
+    \label{fig:llama-inc-100-test}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-15-tot-test-w.png}
+    \caption{Llama test loss for fine-tuning with concatenated increments of size 15.}
+    \label{fig:llama-inc-tot-15-test-w}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-50-tot-test-w.png}
+    \caption{Llama test loss for fine-tuning with concatenated increments of size 50.}
+    \label{fig:llama-inc-tot-50-test-w}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-100-tot-test-w.png}
+    \caption{Llama test loss for fine-tuning with concatenated increments of size 100.}
+    \label{fig:llama-inc-tot-100-test-w}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-10-test-w.png}
+    \caption{Llama test loss for fine-tuning with increments of size 10.}
+    \label{fig:llama-inc-10-test-w}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-50-test-w.png}
+    \caption{Llama test loss for fine-tuning with increments of size 50.}
+    \label{fig:llama-inc-50-test-w}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{bachelor_images/llama_ft/llama-inc-100-test-w.png}
+    \caption{Llama test loss for fine-tuning with increments of size 100.}
+    \label{fig:llama-inc-100-test-w}
 \end{figure}
 
 \end{appendices}
@@ -1828,6 +2049,46 @@ Understanding the Transformer Model: A Report on “Attention Is All You Need”
 \bibitem{llama-cpp-quantization}
 \textit{Georgi Gerganov and contributors: Quantization Methods in llama.cpp}
 \url{https://github.com/ggml-org/llama.cpp/blob/master/examples/quantize/README.md}
+
+
+\bibitem{llama-32-intro}
+\textit{Llama 3.2 introduced by Meta; Comparison of llama-3.2-1b with Gemma 2 2B IT}
+\url{https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/}
+[Accessed 04.05.2025]
+
+\bibitem{unsloth-model-support}
+\textit{The list of LLMs supported by the Unsloth tool}
+\url{https://docs.unsloth.ai/get-started/all-our-models}
+[Accessed 04.05.2025]
+
+\bibitem{hf-bnb}
+\textit{Documentation of the bitsandbytes library provided by the Hugging Face}
+\url{https://huggingface.co/docs/bitsandbytes/main/en/index}
+[Accessed 04.05.2025]
+
+\bibitem{mao2023crossentropylossfunctionstheoretical}
+\textit{Anqi Mao and Mehryar Mohri and Yutao Zhong (2023): Cross-Entropy Loss Functions: Theoretical Analysis and Applications}
+\url{https://arxiv.org/abs/2304.07288}
+
+\bibitem{gemma2}
+\textit{
+Gemma Team and Morgane Riviere and Shreya Pathak and Pier Giuseppe Sessa and Cassidy Hardin and Surya Bhupatiraju and Léonard Hussenot and Thomas Mesnard and Bobak Shahriari and Alexandre Ramé and Johan Ferret and Peter Liu and Pouya Tafti and Abe Friesen and Michelle Casbon and Sabela Ramos and Ravin Kumar and Charline Le Lan and Sammy Jerome and Anton Tsitsulin and Nino Vieillard and Piotr Stanczyk and Sertan Girgin and Nikola Momchev and Matt Hoffman and Shantanu Thakoor and Jean-Bastien Grill and Behnam Neyshabur and Olivier Bachem and Alanna Walton and Aliaksei Severyn and Alicia Parrish and Aliya Ahmad and Allen Hutchison and Alvin Abdagic and Amanda Carl and Amy Shen and Andy Brock and Andy Coenen and Anthony Laforge and Antonia Paterson and Ben Bastian and Bilal Piot and Bo Wu and Brandon Royal and Charlie Chen and Chintu Kumar and Chris Perry and Chris Welty and Christopher A. Choquette-Choo and Danila Sinopalnikov and David Weinberger and Dimple Vijaykumar and Dominika Rogozińska and Dustin Herbison and Elisa Bandy and Emma Wang and Eric Noland and Erica Moreira and Evan Senter and Evgenii Eltyshev and Francesco Visin and Gabriel Rasskin and Gary Wei and Glenn Cameron and Gus Martins and Hadi Hashemi and Hanna Klimczak-Plucińska and Harleen Batra and Harsh Dhand and Ivan Nardini and Jacinda Mein and Jack Zhou and James Svensson and Jeff Stanway and Jetha Chan and Jin Peng Zhou and Joana Carrasqueira and Joana Iljazi and Jocelyn Becker and Joe Fernandez and Joost van Amersfoort and Josh Gordon and Josh Lipschultz and Josh Newlan and Ju-yeong Ji and Kareem Mohamed and Kartikeya Badola and Kat Black and Katie Millican and Keelin McDonell and Kelvin Nguyen and Kiranbir Sodhia and Kish Greene and Lars Lowe Sjoesund and Lauren Usui and Laurent Sifre and Lena Heuermann and Leticia Lago and Lilly McNealus and Livio Baldini Soares and Logan Kilpatrick and Lucas Dixon and Luciano Martins and Machel Reid and Manvinder Singh and Mark Iverson and Martin Görner and Mat Velloso and Mateo Wirth and Matt Davidow and Matt Miller and Matthew Rahtz and Matthew Watson and Meg Risdal and Mehran Kazemi and Michael Moynihan and Ming Zhang and Minsuk Kahng and Minwoo Park and Mofi Rahman and Mohit Khatwani and Natalie Dao and Nenshad Bardoliwalla and Nesh Devanathan and Neta Dumai and Nilay Chauhan and Oscar Wahltinez and Pankil Botarda and Parker Barnes and Paul Barham and Paul Michel and Pengchong Jin and Petko Georgiev and Phil Culliton and Pradeep Kuppala and Ramona Comanescu and Ramona Merhej and Reena Jana and Reza Ardeshir Rokni and Rishabh Agarwal and Ryan Mullins and Samaneh Saadat and Sara Mc Carthy and Sarah Cogan and Sarah Perrin and Sébastien M. R. Arnold and Sebastian Krause and Shengyang Dai and Shruti Garg and Shruti Sheth and Sue Ronstrom and Susan Chan and Timothy Jordan and Ting Yu and Tom Eccles and Tom Hennigan and Tomas Kocisky and Tulsee Doshi and Vihan Jain and Vikas Yadav and Vilobh Meshram and Vishal Dharmadhikari and Warren Barkley and Wei Wei and Wenming Ye and Woohyun Han and Woosuk Kwon and Xiang Xu and Zhe Shen and Zhitao Gong and Zichuan Wei and Victor Cotruta and Phoebe Kirk and Anand Rao and Minh Giang and Ludovic Peran and Tris Warkentin and Eli Collins and Joelle Barral and Zoubin Ghahramani and Raia Hadsell and D. Sculley and Jeanine Banks and Anca Dragan and Slav Petrov and Oriol Vinyals and Jeff Dean and Demis Hassabis and Koray Kavukcuoglu and Clement Farabet and Elena Buchatskaya and Sebastian Borgeaud and Noah Fiedel and Armand Joulin and Kathleen Kenealy and Robert Dadashi and Alek Andreev (2024): Gemma 2: Improving Open Language Models at a Practical Size
+}
+\url{https://arxiv.org/abs/2408.00118}
+
+\bibitem{yang2024qwen2technicalreport}
+\textit{An Yang and Baosong Yang and Binyuan Hui and Bo Zheng and Bowen Yu and Chang Zhou and Chengpeng Li and Chengyuan Li and Dayiheng Liu and Fei Huang and Guanting Dong and Haoran Wei and Huan Lin and Jialong Tang and Jialin Wang and Jian Yang and Jianhong Tu and Jianwei Zhang and Jianxin Ma and Jianxin Yang and Jin Xu and Jingren Zhou and Jinze Bai and Jinzheng He and Junyang Lin and Kai Dang and Keming Lu and Keqin Chen and Kexin Yang and Mei Li and Mingfeng Xue and Na Ni and Pei Zhang and Peng Wang and Ru Peng and Rui Men and Ruize Gao and Runji Lin and Shijie Wang and Shuai Bai and Sinan Tan and Tianhang Zhu and Tianhao Li and Tianyu Liu and Wenbin Ge and Xiaodong Deng and Xiaohuan Zhou and Xingzhang Ren and Xinyu Zhang and Xipin Wei and Xuancheng Ren and Xuejing Liu and Yang Fan and Yang Yao and Yichang Zhang and Yu Wan and Yunfei Chu and Yuqiong Liu and Zeyu Cui and Zhenru Zhang and Zhifang Guo and Zhihao Fan (2024): Qwen2 Technical Report}
+\url{https://arxiv.org/abs/2407.10671}
+
+\bibitem{smollm2}
+\textit{SmolLM2 model on Hugging Face}
+\url{https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct}
+
+\bibitem{gpt-neo}
+\textit{Black, Sid and Leo, Gao and Wang, Phil and Leahy, Connor and Biderman, Stella (2021): GPT-Neo: Large Scale Autoregressive Language Modeling with Mesh-Tensorflow}
+\url{https://doi.org/10.5281/zenodo.5297715}
+
+
 
 \end{thebibliography}
 
