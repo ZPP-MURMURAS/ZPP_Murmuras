@@ -3,7 +3,6 @@ import sys
 import os
 import numpy as np
 import logging
-from unittest.mock import patch, mock_open
 
 from src.pipeline_benchmark.benchmark import Coupon, get_coupons, compare_coupons, compute_similarity_matrix, greedy_matching, compute_similarities
 
