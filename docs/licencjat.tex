@@ -285,7 +285,7 @@ However, Scrapepraph AI provides only Python and Node.js SDKs \cite{scapegraph_s
 Moreover, due to mobile devices typically having limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}, we cannot solely rely on the size of the model in order to improve performance. We believe that through fine-tuning LLMs, we are able to develop tools that are far more viable for edge device usage.
 
 
-\chapter{Description of datasets}
+\chapter{Description of datasets} \label{chap:datasets}
 \section{Raw datasets} 
 We received datasets corresponding to six different mobile applications: Edeka, Rossmann, DM, Rewe, Lidl, and Penny. Each dataset was provided as a CSV file containing XML representations of the data captured from the device interface during user interactions with the respective app. The selection of these applications, as well as the data collection and processing procedures, were carried out by Murmuras.
 
@@ -293,24 +293,25 @@ For each application, two key files were provided: the \textit{content\_generic}
 
 We have streamlined the tables by removing the columns that were deemed unnecessary for our project, as their inclusion would have added excessive complexity without providing relevant value.
 
+
 \begin{table}[h]
 \centering
-\begin{tabular}{llllll}
-\toprule
-id & time & i & view\_depth & text & description \\
-\midrule
-12240295656 & 2024-03-07T16:55:32.405 & 1 & 3 & Coupon Text &  \\
-\bottomrule
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{id} & \textbf{time} & \textbf{i} & \textbf{view\_depth} & \textbf{text} \\
+\hline
+12240295656 & 2024-03-07T16:55:32.405 & 1 & 3 & Coupon Text \\
+\hline
 \end{tabular}
 
 \vspace{1em}
 
-\begin{tabular}{llllll}
-\toprule
-seen\_timestamp & is\_visible & x\_1 & y\_1 & x\_2 & y\_2 \\
-\midrule
-1709826932091 & true & 0 & 81 & 1080 & 2188 \\
-\bottomrule
+\begin{tabular}{|l|l|l|l|l|l|l|}
+\hline
+\textbf{description} & \textbf{seen\_timestamp} & \textbf{is\_visible} & \textbf{x\_1} & \textbf{y\_1} & \textbf{x\_2} & \textbf{y\_2} \\
+\hline
+  & 1709826932091 & true & 0 & 81 & 1080 & 2188 \\
+\hline
 \end{tabular}
 
 \caption{Content generic file format (split view for readability)}
@@ -320,57 +321,104 @@ seen\_timestamp & is\_visible & x\_1 & y\_1 & x\_2 & y\_2 \\
 \begin{table}[h]
 \centering
 
-\begin{tabular}{lllll}
-\toprule
-id & time & coupon\_i & visible \\
-\midrule
+% First table
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{id} & \textbf{time} & \textbf{coupon\_i} & \textbf{visible} \\
+\hline
 12240296756 & 2024-03-07T16:55:51.831 & 2 & 1 \\
-\bottomrule
+\hline
 \end{tabular}
 
 \vspace{1em}
 
-\begin{tabular}{lll}
-\toprule
-discount\_details & validity\_text & activation\_text \\
-\midrule
-Vor Aktivierung bitte Hinweise lesen. & Gültig bis 31.03.2024   \\
-\bottomrule
+% Second table
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{discount\_details} & \textbf{validity\_text} & \textbf{activation\_text} \\
+\hline
+Vor Aktivierung bitte Hinweise lesen. & Gültig bis 31.03.2024 &  \\
+\hline
 \end{tabular}
 
 \vspace{1em}
 
-\begin{tabular}{l}
-\toprule
-content\_full \\
-\midrule
-"[Düfte ,  Vor Aktivierung bitte Hinweise lesen. ,  15\% ,  Gültig bis 31.03.2024]"  \\
-\bottomrule
+% Third table
+\begin{tabular}{|l|}
+\hline
+\textbf{content\_full} \\
+\hline
+"[Düfte ,  Vor Aktivierung bitte Hinweise lesen. ,  15\% ,  Gültig bis 31.03.2024]" \\
+\hline
 \end{tabular}
 
 \vspace{1em}
 
-\begin{tabular}{ll}
-\toprule
-content\_proper & product\_text \\
-\midrule
-"[Düfte]" & Düfte \\
-\bottomrule
+% Fourth table
+\begin{tabular}{|l|l|l|l|l|l|l|}
+\hline
+\textbf{content\_proper} & \textbf{product\_text} & \textbf{extra} & \textbf{discount\_text} \\
+\hline
+"[Düfte]" & Düfte & 15\% & Düfte \\
+\hline
 \end{tabular}
 
 \vspace{1em}
 
-\begin{tabular}{llllll}
-\toprule
-extra & discount\_text & product & limitation & validity\_date \\
-\midrule
- & 15\% & Düfte &  & 2024-03-31 \\
-\bottomrule
+\begin{tabular}{|l|l|l|l|l|l|l|}
+\hline
+\textbf{product} & \textbf{limitation} & \textbf{validity\_date} \\
+\hline
+  &  & 2024-03-31 \\
+\hline
 \end{tabular}
 
 \caption{Coupon file format (split for readability)}
 \label{tab:csv_raw_coupons}
+
 \end{table}
+
+% \begin{tabular}{lllll}
+% \toprule
+% id & time & coupon\_i & visible \\
+% \midrule
+% 12240296756 & 2024-03-07T16:55:51.831 & 2 & 1 \\
+% \bottomrule
+% \end{tabular}
+
+% \vspace{1em}
+
+% \begin{tabular}{lll}
+% \toprule
+% discount\_details & validity\_text & activation\_text \\
+% \midrule
+% Vor Aktivierung bitte Hinweise lesen. & Gültig bis 31.03.2024 & \\
+% \bottomrule
+% \end{tabular}
+
+% \vspace{1em}
+
+% \begin{tabular}{l}
+% \toprule
+% content\_full \\
+% \midrule
+% "[Düfte ,  Vor Aktivierung bitte Hinweise lesen. ,  15\% ,  Gültig bis 31.03.2024]"  \\
+% \bottomrule
+% \end{tabular}
+
+% \vspace{1em}
+
+% \begin{tabular}{llllllll}
+% \toprule
+% content\_proper & product\_text & extra & discount\_text & product & limitation & validity\_date \\
+% \midrule
+%  "[Düfte]" & Düfte & 15\% & Düfte &  & 2024-03-31 \\
+% \bottomrule
+% \end{tabular}
+
+% \caption{Coupon file format (split for readability)}
+% \label{tab:csv_raw_coupons}
+% \end{table}
 
 \section{Dataset Formats}
 We preprocess the raw data to ensure it is structured in a manner that can be effectively utilized by the models.
@@ -403,7 +451,7 @@ The BERT models accept two dataset formats:
 \label{fig:json_example_xml_tree}
 \end{figure}
 
-\subsection{Llama Datasets}
+\subsection{Llama Datasets}\label{llamaDsDesc}
 The Llama models take in the following dataset formats:
 
 \begin{enumerate}
@@ -418,15 +466,17 @@ The input format for the Llama models is as in ~\ref{fig:llama_ds_w} and ~\ref{f
 \begin{tcolorbox}[sharp corners, boxrule=0.5mm, colframe=black, colback=white, coltitle=black, width=0.9\textwidth] 
 \begin{BVerbatim}
 {
-   {prompt text}
-   +
-   ## Input: {coupon text extracted for one timestamp}
-   +
-   ## Response:{response text}
+   You are provided with text representing contents of the 
+   phone screen. Your task is to extract information about 
+   coupons from the text. The information should include 
+   the product name, the validity text, the discount text 
+   and the activation text.       
+   ### Input: {coupon text extracted for one timestamp}
+   ### Response: {response text}
 }
 \end{BVerbatim}
 \end{tcolorbox}
-\caption{Llama dataset format with a prompt}
+\caption{Llama input format with a prompt}
 \label{fig:llama_ds_w}
 \end{figure}
 
@@ -436,16 +486,136 @@ The input format for the Llama models is as in ~\ref{fig:llama_ds_w} and ~\ref{f
 \begin{BVerbatim}
 {
    ## Input: {coupon text extracted for one timestamp}
-   +
    ## Response:{response text}
 }
 \end{BVerbatim}
 \end{tcolorbox}
-\caption{Llama dataset format without a prompt}
+\caption{Llama input format without a prompt}
 \label{fig:llama_ds_wth}
 \end{figure}
 
-% \section{}
+\subsection{Dataset statistics}
+This section provides an overview of the dataset statistics along with a brief analysis.
+
+% może z tego zrobić appendix? 
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|r|r|}
+\hline
+\textbf{Store} & \textbf{Split} & \textbf{Bytes} & \textbf{Examples} \\
+\hline
+Edeka     & Train & 632,413  & 298 \\
+          & Test  & 208,987  & 75 \\
+DM        & Train & 6,863,888 & 2,317 \\
+          & Test  & 1,734,466 & 580 \\
+Lidl      & Train & 8,160,797 & 3,180 \\
+          & Test  & 2,194,200 & 796 \\
+Penny     & Train & 51,263   & 79 \\
+          & Test  & 11,724   & 20 \\
+Rewe      & Train & 4,210,545 & 1,724 \\
+          & Test  & 1,051,741 & 432 \\
+Rossmann  & Train & 3,806,354 & 1,476 \\
+          & Test  & 942,792  & 370 \\
+\hline
+\end{tabular}
+\caption{Dataset sizes and example counts per application and split for the coupon selection stage.}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|r|r|}
+\hline
+\textbf{Store} & \textbf{Split} & \textbf{Examples} & \textbf{Bytes} \\
+\hline
+Penny     & Train & 76  & 77,006 \\
+          & Test  & 20  & 15,834 \\
+Lidl      & Train & 3,183 & 10,186,116 \\
+          & Test  & 796  & 2,094,306 \\
+Rewe      & Train & 1,728 & 5,811,132 \\
+          & Test  & 432  & 2,223,958 \\
+Edeka     & Train & 295  & 762,506 \\
+          & Test  & 74   & 118,532 \\
+DM        & Train & 2,279 & 6,720,006 \\
+          & Test  & 570  & 2,739,686 \\
+Rossmann  & Train & 1,476 & 3,883,376 \\
+          & Test  & 370  & 1,220,512 \\
+\hline
+\end{tabular}
+\caption{Dataset size and example counts per application and split for the Llama models}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|r|r|}
+\hline
+\textbf{Store} & \textbf{Split} & \textbf{Examples} & \textbf{Bytes} \\
+\hline
+Edeka     & Train & 52  & 7,683 \\
+          & Test  & 14  & 1,345 \\
+DM        & Train & 748 & 106,284 \\
+          & Test  & 187 & 22,945 \\
+Lidl      & Train & 1,773 & 223,428 \\
+          & Test  & 444  & 55,066 \\
+Penny     & Train & 38  & 3,635 \\
+          & Test  & 10  & 823 \\
+Rewe      & Train & 668 & 126,634 \\
+          & Test  & 167 & 31,203 \\
+Rossmann  & Train & 366 & 57,919 \\
+          & Test  & 92  & 14,303 \\
+\hline
+\end{tabular}
+\caption{Dataset size and example counts per application and split for the BERT models}
+\end{table}
+
+\begin{table}[h!]
+\raggedright
+\setlength{\tabcolsep}{4pt} 
+\small % or \footnotesize or \scriptsize
+\begin{tabular}{|l|r|r|r|r|r|}
+\hline
+\textbf{Company} & \textbf{Discount Text} & \textbf{Product Name} & \textbf{Valid Until} & \textbf{Activation Text} & \textbf{Missing (\%)} \\
+\hline
+DM        & 1,497 & 1,614 & 1,530 & 2,095 & 50.15\% \\
+Edeka     & 58    & 17    & 338   & 336   & 92.68\% \\
+Lidl      & 235   & 104   & 242   & 258   & 3.01\% \\
+Penny     & 0     & 0     & 0     & 36    & 53.73\% \\
+Rewe      & 45    & 63    & 20    & 3     & 0.81\% \\
+Rossmann  & 0     & 0     & 7     & 18    & 0.68\% \\
+\hline
+\end{tabular}
+\caption{Missing feature counts and percentage of coupons missing at least one feature per company}
+\label{tab:missing_coupons}
+\end{table}
+
+As seen in ~\ref{tab:missing_coupons}, 92.68\% of Edeka coupons and ~50\% of DM and Penny coupons, are missing at least one feature. This missing data in coupon features presents clear challenges for building reliable extraction models as it makes it difficult for models to learn consistent patterns across sources.
+
+A major consequence is lower recall. When key fields such as discount text, product names, or validity dates are missing during training, the model lacks enough examples to learn how to identify them reliably. This often results in false negatives, especially for sources with frequent data gaps, while performance tends to improve on more complete datasets.
+
+Missing data also complicates evaluation. When ground truth labels are incomplete, it becomes unclear whether a model's "mistake" is truly incorrect or simply unannotated. This can skew metrics like recall and F1-score, making model performance harder to assess accurately.
+
+\subsubsection{Llama datasets}
+As observed in the results presented in Table \ref{tab:llama_token_processing}, JSON-encoded content is processed more efficiently than plain text format in terms of token processing speed and total token count. The higher throughput for JSON-encoded content (271.32 tokens/s compared to 169.66 tokens/s for plain text) indicates that the structure inherent in JSON inputs allows for more efficient tokenization and processing by the model. This likely stems from the consistency in token boundaries within the structured format, which reduces the computational complexity typically associated with free-form plain text inputs.
+
+Moreover, the total number of tokens processed during the same measurement duration (384 seconds) is higher for JSON, suggesting that JSON-encoded content either contains more tokens on average or has a higher token density. This result highlights that, although JSON inputs may include additional syntactic elements such as field names and brackets, these elements contribute to a greater number of tokens, potentially making the content richer in terms of token representation.
+
+The higher tokens per timestamp (289.41 for JSON vs. 180.98 for plain text) further emphasizes the improved efficiency of JSON-encoded content. This indicates that the model can process structured data at a faster rate, likely due to the more predictable and consistent token structure that JSON provides.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{Plain Text Format} & \textbf{JSON-Encoded Content} \\
+\midrule
+Incoming tokens/s         & 169.66   & 271.32 \\
+Total tokens              & 65,151   & 104,188 \\
+Measurement duration [s]  & 384      & 384 \\
+Tokens per timestamp      & 180.98   & 289.41 \\
+\bottomrule
+\end{tabular}
+\caption{Token processing performance for plain text vs. JSON-encoded content using a LLaMA model}
+\label{tab:llama_token_processing}
+\end{table}
+
 
 % \chapter{Technologies}
 % \chapter{Architecture design}
