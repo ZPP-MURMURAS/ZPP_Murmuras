@@ -12,7 +12,7 @@ from tqdm import tqdm
 from datasets import load_dataset, load_from_disk
 from datasets.dataset_dict import DatasetDict
 from dataclasses import dataclass, field
-from typing import Optional, List, Union, Dict, Tuple, Callable
+from typing import List, Union, Dict, Tuple, Callable
 
 
 @dataclass()
@@ -33,17 +33,10 @@ VALIDITY_WEIGHT = 0.2
 ACTIVATION_WEIGHT = 0.1
 
 # Column names for the output data
-OUT_COL_SIMP_PRODUCT = 'product_name'
-OUT_COL_SIMP_DISCOUNT = 'discount_text'
-OUT_COL_SIMP_VALIDITY = 'valid_until'
-OUT_COL_SIMP_ACTIVATION = 'activation_text'
-
-OUT_COL_EXT_PRODUCT = 'product_name'
-OUT_COL_EXT_NEW_PRICE = 'new_price'
-OUT_COL_EXT_OLD_PRICE = 'old_price'
-OUT_COL_EXT_PERCENTS = 'percents'
-OUT_COL_EXT_OTHER_DISCOUNTS = 'other_discounts'
-OUT_COL_EXT_DATES = 'dates'
+OUT_COL_PRODUCT = 'product_name'
+OUT_COL_DISCOUNT = 'discount_text'
+OUT_COL_VALIDITY = 'valid_until'
+OUT_COL_ACTIVATION = 'activation_text'
 
 # Columns of the dataset
 INPUT = 'Context'
@@ -57,6 +50,7 @@ def load_pipeline(config: Dict[str, any]) -> Tuple[Callable, List[any], Dict[str
     :param config: pipeline config
     :return: a tuple with the pipeline function, its positional arguments and its keyword arguments
     """
+
     module = importlib.import_module(config["module"])
     func = getattr(module, config["function"])
     args = config.get("args", [])
@@ -72,6 +66,7 @@ def get_coupons(json_str: str, source_name: str) -> List[Coupon]:
     :param source_name: The name of the source of the coupons (needed for logging)
     :return: A list of Coupon objects read from the file
     """
+
     source_info = f"{source_name} - "
 
     try:
@@ -86,30 +81,27 @@ def get_coupons(json_str: str, source_name: str) -> List[Coupon]:
 
     coupons = []
     for item in data:
-        expected_keys = [OUT_COL_SIMP_PRODUCT, OUT_COL_SIMP_DISCOUNT, OUT_COL_SIMP_VALIDITY, OUT_COL_SIMP_ACTIVATION]
+        expected_keys = [OUT_COL_PRODUCT, OUT_COL_DISCOUNT, OUT_COL_VALIDITY, OUT_COL_ACTIVATION]
 
         if not isinstance(item, dict):
             logging.warning(source_info + f"Item {item} is not a dictionary.")
             continue
 
-        if OUT_COL_SIMP_PRODUCT not in item or item[OUT_COL_SIMP_PRODUCT] is None:
-            logging.warning(source_info + f"Item {item} does not contain the product name.")
-            continue
-
         if set(item.keys()) - set(expected_keys):
             logging.warning(source_info + f"Item {item} contains unexpected keys.")
 
-        coupon = Coupon(product_name=item[OUT_COL_SIMP_PRODUCT],
-                        discount_text=item.get(OUT_COL_SIMP_DISCOUNT, ''),
-                        validity_text=item.get(OUT_COL_SIMP_VALIDITY, ''),
-                        activation_text=item.get(OUT_COL_SIMP_ACTIVATION, ''))
+        coupon = Coupon(product_name=item.get(OUT_COL_PRODUCT, ''),
+                        discount_text=item.get(OUT_COL_DISCOUNT, ''),
+                        validity_text=item.get(OUT_COL_VALIDITY, ''),
+                        activation_text=item.get(OUT_COL_ACTIVATION, ''))
 
+        coupon.product_name = coupon.product_name if coupon.product_name is not None else ''
         coupon.discount_text = coupon.discount_text if coupon.discount_text is not None else ''
         coupon.validity_text = coupon.validity_text if coupon.validity_text is not None else ''
         coupon.activation_text = coupon.activation_text if coupon.activation_text is not None else ''
 
         if type(coupon.product_name) is not str:
-            logging.warning(source_info + f"Product name is not a string in item {item}.")
+            logging.warning(source_info + f"Product name is not a string or null in item {item}.")
             coupon.product_name = ''
 
         if type(coupon.discount_text) is not str:
@@ -129,8 +121,8 @@ def get_coupons(json_str: str, source_name: str) -> List[Coupon]:
     return coupons
 
 
-def compare_coupons(coupon_1: Optional[Coupon],
-                    coupon_2: Optional[Coupon]) -> float:
+def compare_coupons(coupon_1: Coupon,
+                    coupon_2: Coupon) -> float:
     """
     Compares two coupons and return a float value that represents the similarity 
     between the two coupons. The higher the value, the more similar the coupons.
@@ -138,9 +130,6 @@ def compare_coupons(coupon_1: Optional[Coupon],
     :param coupon_1, coupon_2: The first and second coupons to compare
     :return: A float value that represents the similarity between the two coupons
     """
-
-    if coupon_1 is None or coupon_2 is None:
-        return 0.0
 
     name_ratio = diff.SequenceMatcher(a=coupon_1.product_name,
                                       b=coupon_2.product_name).ratio()
@@ -152,23 +141,35 @@ def compare_coupons(coupon_1: Optional[Coupon],
                                             b=coupon_2.activation_text).ratio()
 
     dead_weight = 0.0
+    num_empty = 0
+
+    if coupon_1.product_name == '' and coupon_2.product_name == '':
+        name_ratio = 0.0
+        dead_weight += NAME_WEIGHT
+        num_empty += 1
 
     if coupon_1.discount_text == '' and coupon_2.discount_text == '':
         discount_ratio = 0.0
         dead_weight += DISCOUNT_WEIGHT
+        num_empty += 1
 
     if coupon_1.validity_text == '' and coupon_2.validity_text == '':
         validity_ratio = 0.0
         dead_weight += VALIDITY_WEIGHT
+        num_empty += 1
 
     if coupon_1.activation_text == '' and coupon_2.activation_text == '':
         activation_ratio = 0.0
         dead_weight += ACTIVATION_WEIGHT
+        num_empty += 1
 
-    base_sim = (name_ratio * NAME_WEIGHT) + (discount_ratio * DISCOUNT_WEIGHT) + \
-               (validity_ratio * VALIDITY_WEIGHT) + (activation_ratio * ACTIVATION_WEIGHT)
+    if num_empty == 4:
+        rescaled_sim = 1.0
+    else:
+        base_sim = (name_ratio * NAME_WEIGHT) + (discount_ratio * DISCOUNT_WEIGHT) + \
+                   (validity_ratio * VALIDITY_WEIGHT) + (activation_ratio * ACTIVATION_WEIGHT)
 
-    rescaled_sim = base_sim / (1.0 - dead_weight)
+        rescaled_sim = base_sim / (1.0 - dead_weight)
     
     return np.clip(rescaled_sim, 0.0, 1.0)
 
@@ -258,6 +259,7 @@ def init_new_logger(log_file: str) -> None:
 
     :param log_file: path to the new log file
     """
+
     logger = logging.getLogger()
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
@@ -280,6 +282,7 @@ def benchmark_pipeline(pipeline_name: str, config: Dict[str, any], cache_dir: st
     :param log_dir: the directory to store the logs
     :return: a dictionary with the pipeline config and benchmarking results
     """
+
     dataset_name = config["dataset_name"]
     splits = config["splits"]
     threshold = config["threshold"]
@@ -348,6 +351,7 @@ def load_checkpoint(checkpoint_file: str) -> Dict[str, any]:
     :param checkpoint_file: the path to the checkpoint file
     :return: the checkpointed data
     """
+
     try: 
         with open(checkpoint_file, "r") as f:
             data = json.load(f)
@@ -364,6 +368,7 @@ def parse_args() -> argparse.Namespace:
 
     :return: The parsed input arguments
     """
+
     parser = argparse.ArgumentParser(description='Benchmarking script')
     parser.add_argument('-c',
                         '--config_path',

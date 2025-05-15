@@ -10,10 +10,17 @@ from src.pipeline_benchmark.benchmark import Coupon, get_coupons, compare_coupon
 class TestBenchmark:
 
     @pytest.mark.parametrize("input_string, expected_coupons", [
-        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', [Coupon("Product A", "-20%", "2025-01-01", "active")]),
-        ('[{"name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', []),
-        ('[{"product_name": "Product A", "valid_until": "2025-01-01", "activation_text": "active"}]', [Coupon("Product A", "", "2025-01-01", "active")]),
-        ('[{product_name: Product A, discount_text: -20%, valid_until: 2025-01-01, activation_text: active}]', []),
+        ('[{"product_name": "Product A", "discount_text": "-20%", "valid_until": "2025-01-01", "activation_text": "active"}]', 
+         [Coupon("Product A", "-20%", "2025-01-01", "active")]),
+        ('[{"product_name": "Product A"}, {"discount_text": "-20%"}, {"valid_until": "2025-01-01"}, {"activation_text": "active"}]', 
+         [Coupon("Product A", "", "", ""), 
+          Coupon("", "-20%", "", ""), 
+          Coupon("", "", "2025-01-01", ""), 
+          Coupon("", "", "", "active")]),
+        ('[{"product_name": "Product A", "valid_until": "2025-01-01", "activation_text": "active"}]', 
+         [Coupon("Product A", "", "2025-01-01", "active")]),
+        ('[{product_name: Product A, discount_text: -20%, valid_until: 2025-01-01, activation_text: active}]', 
+         []),
     ])
     def test_get_coupons(self, input_string, expected_coupons, caplog):
         with caplog.at_level(logging.INFO):
@@ -61,6 +68,10 @@ class TestBenchmark:
          Coupon("UNICORN", "b", "b", ""), 0.44),
         (Coupon("unicorn", "", "", ""),
          Coupon("UNICORN", "", "", ""), 0.0),
+        (Coupon("", "", "", ""),
+         Coupon("", "", "", ""), 1.0),
+        (Coupon("", "", "", "ab"),
+         Coupon("", "", "", "aa"), 0.5),
     ])
     def test_compare_coupons(self, coupon1, coupon2, expected_score):
         assert np.isclose(compare_coupons(coupon1, coupon2), expected_score, atol=0.01)
