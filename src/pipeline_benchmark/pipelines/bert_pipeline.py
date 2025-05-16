@@ -7,6 +7,7 @@ from transformers import pipeline, AutoModelForTokenClassification, AutoTokenize
 
 
 NER_ENTITY_GROUP = "entity_group"
+NER_SCORE = "score"
 NER_TEXT = "word"
 
 TAG_PRODUCT_NAME = "PRODUCT-NAME"
@@ -18,6 +19,13 @@ COUPON_PRODUCT_NAME = "product_name"
 COUPON_DISCOUNT_TEXT = "discount_text"
 COUPON_VALID_UNTIL = "valid_until"
 COUPON_ACTIVATION_TEXT = "activation_text"
+
+TAG_TO_COUPON_KEY = {
+    TAG_PRODUCT_NAME: COUPON_PRODUCT_NAME,
+    TAG_DISCOUNT_TEXT: COUPON_DISCOUNT_TEXT,
+    TAG_VALIDITY_TEXT: COUPON_VALID_UNTIL,
+    TAG_ACTIVATION_TEXT: COUPON_ACTIVATION_TEXT,
+}
 
 
 def _download_model(model_name: str, cache_dir: str) -> str:
@@ -63,20 +71,12 @@ def _labeled_text_to_coupon_first(labeled_text: List[Dict[str, any]]) -> Dict[st
     :param labeled_text: labeled text in the HuggingFace pipeline output format
     :return: coupon in the format expected from the BERT pipeline 
     """
-    coupon = {COUPON_PRODUCT_NAME: "", 
-              COUPON_DISCOUNT_TEXT: "", 
-              COUPON_VALID_UNTIL: "", 
-              COUPON_ACTIVATION_TEXT: ""}
+    coupon = {key: "" for key in TAG_TO_COUPON_KEY.values()}
 
     for entity in reversed(labeled_text):
-        if entity[NER_ENTITY_GROUP] == TAG_PRODUCT_NAME:
-            coupon[COUPON_PRODUCT_NAME] = entity[NER_TEXT]
-        elif entity[NER_ENTITY_GROUP] == TAG_DISCOUNT_TEXT:
-            coupon[COUPON_DISCOUNT_TEXT] = entity[NER_TEXT]
-        elif entity[NER_ENTITY_GROUP] == TAG_VALIDITY_TEXT:
-            coupon[COUPON_VALID_UNTIL] = entity[NER_TEXT]
-        elif entity[NER_ENTITY_GROUP] == TAG_ACTIVATION_TEXT:
-            coupon[COUPON_ACTIVATION_TEXT] = entity[NER_TEXT]
+        key = TAG_TO_COUPON_KEY.get(entity[NER_ENTITY_GROUP])
+        if key:
+            coupon[key] = entity[NER_TEXT]
 
     return coupon
 
@@ -89,23 +89,36 @@ def _labeled_text_to_coupon_concat(labeled_text: List[Dict[str, any]]) -> Dict[s
     :param labeled_text: labeled text in the HuggingFace pipeline output format
     :return: coupon in the format expected from the BERT pipeline 
     """
-    coupon = {COUPON_PRODUCT_NAME: "", 
-              COUPON_DISCOUNT_TEXT: "", 
-              COUPON_VALID_UNTIL: "", 
-              COUPON_ACTIVATION_TEXT: ""}
+    coupon = {key: "" for key in TAG_TO_COUPON_KEY.values()}
 
     for entity in labeled_text:
-        if entity[NER_ENTITY_GROUP] == TAG_PRODUCT_NAME:
-            coupon[COUPON_PRODUCT_NAME] += entity[NER_TEXT] + " "
-        elif entity[NER_ENTITY_GROUP] == TAG_DISCOUNT_TEXT:
-            coupon[COUPON_DISCOUNT_TEXT] += entity[NER_TEXT] + " "
-        elif entity[NER_ENTITY_GROUP] == TAG_VALIDITY_TEXT:
-            coupon[COUPON_VALID_UNTIL] += entity[NER_TEXT] + " "
-        elif entity[NER_ENTITY_GROUP] == TAG_ACTIVATION_TEXT:
-            coupon[COUPON_ACTIVATION_TEXT] += entity[NER_TEXT] + " "
+        key = TAG_TO_COUPON_KEY.get(entity[NER_ENTITY_GROUP])
+        if key:
+            if coupon[key]:
+                coupon[key] += " "
 
-    for key in coupon.keys():
-        coupon[key] = coupon[key].strip()
+            coupon[key] += entity[NER_TEXT]
+
+    return coupon
+
+
+def _labeled_text_to_coupon_top_score(labeled_text: List[Dict[str, any]]) -> Dict[str, str]:
+    """
+    Converts a text labeled by the model to a coupon in the format expected from the BERT pipeline. 
+    The entity with the highest score is chosen. Ties are resolved in favor of the entity that comes first.
+
+    :param labeled_text: labeled text in the HuggingFace pipeline output format
+    :return: coupon in the format expected from the BERT pipeline 
+    """
+    coupon = {key: "" for key in TAG_TO_COUPON_KEY.values()}
+    top_score = {key: 0. for key in TAG_TO_COUPON_KEY.values()}
+
+    for entity in labeled_text:
+        key = TAG_TO_COUPON_KEY.get(entity[NER_ENTITY_GROUP])
+        score = entity[NER_SCORE]
+        if key and score > top_score[key]:
+            coupon[key] = entity[NER_TEXT]
+            top_score[key] = score
 
     return coupon
 
@@ -122,6 +135,8 @@ def _labeled_text_to_coupon(labeled_text: List[Dict[str, any]], strategy: str) -
         return _labeled_text_to_coupon_first(labeled_text)
     elif strategy == "concat":
         return _labeled_text_to_coupon_concat(labeled_text)
+    elif strategy == "top_score":
+        return _labeled_text_to_coupon_top_score(labeled_text)
     else:
         raise ValueError(f"Invalid strategy: {strategy}")
 

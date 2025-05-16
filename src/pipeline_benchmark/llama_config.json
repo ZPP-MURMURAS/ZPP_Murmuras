@@ -171,7 +171,7 @@
         "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
         "splits": {
             "penny": "penny_train+penny_test",
-            "edeka": "edeka_train+edeka_test",
+            "edeka": "edeka_test",
             "dm": "dm_test",
             "lidl": "lidl_test",
             "rewe": "rewe_test",
