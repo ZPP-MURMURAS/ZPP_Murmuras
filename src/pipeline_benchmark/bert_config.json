@@ -1,0 +1,171 @@
+{
+    "bert-no-curr-first":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "first"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-no-curr-concat":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "concat"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-no-curr-top_score":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-no-curr-rev2-vol2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-curr-top_score":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-curr-nolr-rev2vol_2",
+            "extraction_model": "zpp-murmuras/bert_extraction_general",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-top_score-appwise-dm":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-dm",
+            "extraction_model": "zpp-murmuras/bert_extraction_single_app-dm",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "dm": "dm_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-top_score-appwise-lidl":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-lidl",
+            "extraction_model": "zpp-murmuras/bert_extraction_single_app-lidl",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "lidl": "lidl_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-top_score-appwise-rewe":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-rewe",
+            "extraction_model": "zpp-murmuras/bert_extraction_single_app-rewe",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "rewe": "rewe_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-top_score-appwise-rossmann":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-plain-rossmann",
+            "extraction_model": "zpp-murmuras/bert_extraction_single_app-rossmann",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "bert-top_score-with-edeka":
+    {
+        "module": "pipelines.bert_pipeline", 
+        "function": "run_bert_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "selection_model": "zpp-murmuras/bert-selection-all-plain-edeka",
+            "extraction_model": "zpp-murmuras/bert-extraction-all-plain-edeka",
+            "strategy": "top_score"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    }
+}

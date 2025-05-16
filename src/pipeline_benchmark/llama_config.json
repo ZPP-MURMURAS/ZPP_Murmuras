@@ -1,0 +1,182 @@
+{
+    "llama-wth-not_quantized": 
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth/unsloth.BF16.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-w-not_quantized":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-w/unsloth.BF16.gguf",
+            "prompt_type": "w"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-q8_0":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth/unsloth.Q8_0.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-q4_k_m":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth/unsloth.Q4_K_M.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-q4_0":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth/unsloth.Q4_0.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_train+edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-appwise-dm":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth-appwise-dm/unsloth.BF16.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "dm": "dm_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-appwise-lidl":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth-appwise-lidl/unsloth.BF16.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "lidl": "lidl_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-appwise-rewe":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth-appwise-rewe/unsloth.BF16.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "rewe": "rewe_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-appwise-rossmann":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth-appwise-rossmann/unsloth.BF16.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    },
+    "llama-wth-with-edeka":
+    {
+        "module": "pipelines.llama_pipeline", 
+        "function": "run_llama_pipeline", 
+        "args": [], 
+        "kwargs": {
+            "model_path": "llama-wth-all-edeka/unsloth.BF16.gguf",
+            "prompt_type": "wth"
+        },
+        "dataset_name": "zpp-murmuras/llama-ds-wth-rev3",
+        "splits": {
+            "penny": "penny_train+penny_test",
+            "edeka": "edeka_test",
+            "dm": "dm_test",
+            "lidl": "lidl_test",
+            "rewe": "rewe_test",
+            "rossmann": "rossmann_test"
+        },
+        "threshold": 0.8
+    }
+}
