@@ -461,8 +461,6 @@ However, Scrapepraph AI provides only Python and Node.js SDKs \cite{scapegraph_s
 
 Moreover, due to mobile devices typically having limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}, we cannot solely rely on the size of the model in order to improve performance. We believe that through fine-tuning LLMs, we are able to develop tools that are far more viable for edge device usage.
 
-
-
 \chapter{Description of datasets} \label{chap:datasets}
 \section{Raw datasets} 
 We received datasets corresponding to six different mobile applications: Edeka, Rossmann, DM, Rewe, Lidl, and Penny. Each dataset was provided as a CSV file containing XML representations of the data captured from the device interface during user interactions with the respective app. The selection of these applications, as well as the data collection and processing procedures, were carried out by Murmuras.
@@ -519,9 +517,6 @@ de.rewe.app.mobile:id/action\_bar\_root &  & 3 & 1704181453677 \\
 \label{tab:coupons_rev_2_content}
 \end{table}
 
-
-
-
 \section{Dataset Formats}
 We preprocess the raw data to ensure it is structured in a manner that can be effectively utilized by the models. The results of this preprocessing are described in the following sections.
 
@@ -563,10 +558,6 @@ Gustavo Gusto Pizza Margherita oder Salame & 1 \\
 \caption{Example of text and corresponding labels in the coupon information extraction dataset.}
 \label{tab:coupon_extraction_example}
 \end{table}
-
-
-
-
 
 \begin{figure}[ht]
 \centering
@@ -632,7 +623,6 @@ The input format for the Llama models is as in ~\ref{fig:llama_ds_w} and ~\ref{f
 \subsection{Dataset statistics}
 This section provides an overview of the dataset statistics along with a brief analysis.
 
-% może z tego zrobić appendix? 
 \begin{table}[h!]
 \centering
 \begin{tabular}{|l|l|r|r|}
@@ -705,7 +695,7 @@ Rossmann  & Train & 366 & 57,919 \\
 \begin{table}[h!]
 \raggedright
 \setlength{\tabcolsep}{4pt} 
-\small % or \footnotesize or \scriptsize
+\small 
 \begin{tabular}{|l|r|r|r|r|r|}
 \hline
 \textbf{Application} & \textbf{Discount Text} & \textbf{Product Name} & \textbf{Valid Until} & \textbf{Activation Text} & \textbf{Missing (\%)} \\
