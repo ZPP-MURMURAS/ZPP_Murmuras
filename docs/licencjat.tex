@@ -759,6 +759,8 @@ The selection stage employs a multilingual BERT model for coarse NER classificat
 
 In the extraction phase, another multilingual BERT model performs fine-grained NER, classifying coupon tokens into four specific fields according to our data model (\ref{lst:coupon_example}). The final output assembles these tokens into strings by field labels and packages them as JSON objects.
 
+Sometimes the extraction model finds multiple entities with the same label. We have tested multiple policies on handling this. Our primary choice leverages the fact that the BERT model returns probabilities alongside NER tags. We simply take the entity with the greatest value, breaking ties in favor of earlier occurrence - we will refer to pipeline equipped with this algorithm as BERT-top\_score. Additionally, we have tested concatenating all the entities with matching label (BERT-concat) and taking the first entity with given label in the text (BERT-first).
+
 \begin{figure}
     \centering
     \includegraphics[width=1.0\linewidth]{bachelor_images/zpp.png}
