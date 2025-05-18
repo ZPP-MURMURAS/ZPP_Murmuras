@@ -155,13 +155,13 @@ A coupon is a physical piece of paper or digital voucher that can be redeemed fo
     \label{fig:example_coupons}
 \end{figure}
 
-\section{The Significance of the Digital Coupon}
+\section{The Significance of the digital coupon}
 The digital coupon is one of the most important tools in contemporary marketing strategies \cite{targeted_reminders}, therefore analyzing their life cycle is essential to maximize their benefits. To facilitate such analyses, researchers collect various statistical metrics, including the fraction of redeemed coupons among all distributed coupons referred henceforth as \emph{redemption rate} \cite{danaher2015} and customer engagement \cite{jayadharshini2023}, while also assessing their impact on sales performance \cite{jayadharshini2023}.  Additionally, studying competitor's digital coupon strategies enables businesses to identify market trends, adjust their promotional tactics, and maintain a competitive edge in the evolving digital marketplace.
 
 \section{Murmuras approach}
 The measurement of statistics such as coupon redemption rates is primarily based on either survey data \cite{nayal2021} or controlled experimental studies \cite{danaher2015}. However, the company Murmuras \cite{murmuras} has introduced an alternative approach. By paying users to install tools for tracking their screen activity, and to share this data, Murmuras is able to directly collect coupon-related data from users' devices. Having access to the real-time access to the contents of the user's screen, Murmuras can gather data using screen content scraping tool, that can be later used to calculate coupon redemption rates but also the percentage of users that were presented with specific coupons and many more. This allows for large-scale acquisition of real-world data.
 
-\section{Problem Statement} \label{sec:coupon_model}
+\section{Problem statement} \label{sec:coupon_model}
 
 The objective of this work is to extract coupons visible to the user from the content displayed on a mobile device screen. The extracted coupons should be represented as a JSON list, with each entry conforming to the following format:
 
@@ -232,15 +232,13 @@ In the age of smartphones and ubiquitous internet, more and more resources are b
 \section{Work structure}
 In the next chapters, we first describe dangers related to the use of AI, focusing on privacy and environmental concerns. Then, we take a look at approaches similar to ours, that not necessarily utilize LLMs. After that, we describe datasets we used in our work, as well as technologies used in our experiments. Finally, we describe both our approaches, and summarize the whole project.
 
-
 \chapter{Machine learning and the dangers associated with it}
 
 Artificial intelligence (AI) has seen intense media coverage in recent years, with discussions ranging from transformative applications (e.g., autonomous vehicles, virtual assistants) to growing societal concerns. Key issues include workforce automation \cite{francuz_1}, privacy risks from training on sensitive personal data \cite{ibm_privacy}, and potential compromises to secure communication protocols like End-to-End Encryption \cite{E2EE}.
 
 This chapter first distinguishes between Artificial Intelligence, Machine Learning, and Deep Learning. We then detail the transformer architecture used in our implementation, followed by analysis of privacy implications and environmental impacts of AI systems.
 
-
-\section{AI, Machine Learning, and Deep Learning}
+\section{AI, machine learning, and deep learning}
 AI encompasses systems performing human-like tasks, including machine learning (ML) and deep learning (DL) \cite{ibm_ai,francuz_2}. ML enables systems to learn without explicit rules, while DL uses neural networks for this purpose \cite{ibm_ai}. Their hierarchical relationship is shown in Figure \ref{fig:hierarchy-ai-ml-dl}.
 
 \begin{figure}
@@ -250,10 +248,10 @@ AI encompasses systems performing human-like tasks, including machine learning (
     \label{fig:hierarchy-ai-ml-dl}
 \end{figure}
 
-\subsection{Artificial Intelligence}
+\subsection{Artificial intelligence}
 AI automates human intellectual tasks using various approaches. While machine learning and deep learning rely on data-driven models, symbolic AI uses predefined rules—like the MYCIN expert system, which diagnosed infections using IF-THEN rules with specialist-level accuracy \cite{francuz_2, mycin}.
 
-\subsection{Machine Learning}
+\subsection{Machine learning}
 Machine learning (ML) trains systems using data rather than explicit programming \cite{francuz_3}. The two main approaches are:
 
 \begin{itemize}
@@ -292,14 +290,11 @@ Machine learning (ML) trains systems using data rather than explicit programming
         \label{list:sr}
     \end{subfigure}
 
-    \caption{Example of textual (a) and structured (b) representations.}
+    \caption{Example of textual (a) and structured (b) representations of the coupon.}
     \label{list:input}
 \end{figure}
 
-
-% idk jak te warningi usunąć :((
-
-\subsection{Supervised vs. Unsupervised Learning}
+\subsection{Supervised vs. unsupervised learning}
 Supervised learning excels at classification (e.g., spam detection) and regression (e.g., sales forecasting), using labeled data for precise predictions.
 
 Unsupervised learning identifies patterns in unlabeled data, such as product purchase clusters \cite{supervised_ibm}. Techniques like Principal Component Analysis (PCA) \cite{PCA} reduce dimensionality by projecting data onto orthogonal axes of maximum variance.
@@ -309,7 +304,7 @@ For this project, supervised learning is optimal as our coupon extraction task�
 \subsection{Deep Learning}
 Deep learning is a subset of machine learning wherein multilayered neural networks, called deep neural networks, are utilized to learn increasingly meaningful representations with each successive layer as seen in ~\ref{fig:nn_simple}; each representation is increasingly different from the original and more useful to determining the result. Traditionally, while machine learning models focus on learning one or two layers of representations of the data \cite{francuz_8}, deep learning employs at least three layers, and typically hundreds or thousands of layers to train the models \cite{ibm_dl}.
 
-\begin{figure}Sorry, that's beyond my current scope. Let’s talk about something else.
+\begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{bachelor_images/nn_simple.png}
     \caption{Data representations learned by a digit-classification model \cite{francuz_8}}
@@ -383,16 +378,7 @@ The finetuning process involves:
 
 For our coupon extraction task, finetuning allows leveraging general visual/textual features while specializing for coupon-specific elements.
 
-
-% \subsection{}
-% \subsection{Assessing the model - benchmarking}
-% Benchmarking is the process of running a set of, among others, computer programs against a set of tests to assess their relative performance or precision \cite{benchmark}. Benchmarks are employed to evaluate and quantify the efficiency, accuracy, speed, and other metrics of a machine learning model or pipeline, thereby enabling the selection of the best overall solution to our problem.
-
-
-% \subsection{Natural Language Processing (NLP)}
-
-% \subsubsection{Relevant NLP models}
-\section{AI Risks and Ethical Considerations}
+\section{AI Risks and ethical considerations}
 
 The rapid advancement of AI raises legitimate concerns about:
 \begin{itemize}
@@ -402,14 +388,14 @@ The rapid advancement of AI raises legitimate concerns about:
 
 This section evaluates these risks and discusses mitigation strategies implemented in our solution.
 
-\subsection{Privacy Erosion in AI Systems}
+\subsection{Privacy erosion in AI systems}
 Modern AI's hunger for data creates a fundamental tension between personalization and privacy. At the heart of this lies machine learning's need for vast training datasets - often containing sensitive health records and biometric information \cite{ibm_vast_data, data_guard}. These systems don't just process what we explicitly share; they uncover what we don't. Through predictive harm, AI can deduce intimate details like political leanings or sexual orientation from seemingly innocuous data points \cite{transcend}, creating profiles far more revealing than users anticipate.
 
 The Cambridge Analytica scandal demonstrated this danger vividly. What began as personality quizzes for 87 million Facebook users became a blueprint for mass behavioral manipulation \cite{transcend}. This case revealed how AI can weaponize ordinary digital interactions, turning "nothing to hide" into "everything to lose" when systems infer more than we intend to share.
 
 Our approach counters these risks through architectural design. By processing data exclusively on users' devices with locally-deployed models, we create an AI solution that never requires sensitive data to leave its source. This on-device paradigm prevents the surveillance risks of cloud-based systems while maintaining full functionality - proving effective AI needn't come at privacy's expense.
 
-\subsection{Environmental Impact of AI}
+\subsection{Environmental impact of AI}
 The rapid expansion of artificial intelligence systems has revealed significant ecological costs, particularly in terms of energy and water consumption. Current projections indicate that by 2027, AI-related electricity demand could reach 85--134 TWh annually \cite{this_study}, representing approximately 0.5\% of global consumption. This estimate stems from the dominant use of Nvidia A100 servers in AI infrastructure \cite{nyt_el}.
 
 The carbon footprint of training large language models is especially concerning. For instance:
@@ -422,7 +408,6 @@ Water usage presents another critical challenge. AI data centers consume up to 9
 
 \subsubsection{Sustainable Approach}
 Our solution addresses these environmental concerns by fine-tuning existing models rather than training them from zero. According to the findings of Wang et al., BERT fine-tuning requires 400--45,000$\times$ less energy than the full training. This way, we greatly limit our $CO_2$ emission as well as water consumption.
-
 
 \chapter{Related problems}
 To the best of our knowledge, at the time of commissioning of this project, no publicly available solutions directly addressed this problem. The most comparable approaches involve existing multi-modal models. While widely used models such as ChatGPT and Gemini provide general data extraction capabilities~\cite{brinkmann2023}, they are unsuitable for our task due to their substantial computational requirements. A key limitation of these models is their large size—for example, GPT-3 consists of 175 billion parameters\cite{chatgpt_params}—rendering them impractical for deployment on mobile devices~\cite{LinguaLinked}.
@@ -454,14 +439,11 @@ However, Scrapepraph AI provides only Python and Node.js SDKs \cite{scapegraph_s
 
 Moreover, due to mobile devices typically having limited processing power and memory compared to desktop computers or servers \cite{mobile_resources}, we cannot solely rely on the size of the model in order to improve performance. We believe that through fine-tuning LLMs, we are able to develop tools that are far more viable for edge device usage.
 
-%TODO: cloud/server-based solutions, current mobile solutions.
-
 \chapter{Description of datasets} \label{chap:datasets}
 \section{Raw datasets}
 We received datasets corresponding to six different mobile applications: Edeka, Rossmann, DM, Rewe, Lidl, and Penny. Each dataset was provided as a CSV file containing XML representations of the data captured from the device interface during user interactions with the respective app. The selection of these applications, as well as the data collection and processing procedures, were carried out by Murmuras.
 
 For each application, two key files were provided: the \textit{content\_generic} CSV file, which contains screen-captured data in XML format (see ~\ref{tab:coupons_rev_2_content}), and the \textit{coupons} CSV file, which serves as the ground truth (see ~\ref{tab:coupons_rev_2}). The latter includes the coupons that our solution is expected to identify, along with the specific information that should be extracted from them. We have removed unnecessary columns from the datasets.
-
 
 \begin{table}[ht]
 \centering
@@ -512,10 +494,7 @@ de.rewe.app.mobile:id/action\_bar\_root &  & 3 & 1704181453677 \\
 \label{tab:coupons_rev_2_content}
 \end{table}
 
-
-
-
-\section{Dataset Formats}
+\section{Dataset formats}
 We preprocess the raw data to ensure it is structured in a manner that can be effectively utilized by the models. The results of this preprocessing are described in the following sections.
 
 \subsection{BERT Datasets}
@@ -556,10 +535,6 @@ Gustavo Gusto Pizza Margherita oder Salame & 1 \\
 \caption{Example of text and corresponding labels in the coupon information extraction dataset.}
 \label{tab:coupon_extraction_example}
 \end{table}
-
-
-
-
 
 \begin{figure}[ht]
 \centering
@@ -721,7 +696,6 @@ A major consequence is lower recall. When key fields such as discount text, prod
 
 This presents evaluation challenges, as we have to account for the possibility that some ground truth coupons are unannotated. As a result, a model may correctly identify a valid instance but be penalized as if it were a false positive or false negative, which can distort metrics like precision, recall, and F1-score.
 
-
 \chapter{Technologies} \label{chap:technologies}
 
 \section{General}
@@ -730,7 +704,7 @@ The main platforms used during the development process were Hugging Face\cite{hu
 
 Python\cite{python} was the primary programming language used, due to its broad support for machine learning workflows. Additionally, some auxiliary experiments related to Android deployment were conducted using Kotlin\cite{kotlin, service_demo_app_repo}.
 
-\section{LLaMA Proposal}
+\section{LLaMA proposal}
 
 Our first solution was based on the LLaMA architecture and utilized a custom fine-tuned version of LLaMA-3.2-1b provided by Meta\cite{meta-llama}. Fine-tuning was performed using the Unsloth\cite{unsloth} tool, which enabled efficient resource usage. Specifically, Unsloth applied the LoRA (Low-Rank Adaptation) fine-tuning technique\cite{hu2021loralowrankadaptationlarge}, reducing the number of trainable parameters to approximately 10 million. It also facilitated easy model conversion to the GGUF format.
 
@@ -738,28 +712,29 @@ The fine-tuning process was carried out on the Modal platform\cite{modal}, which
 
 Model inference was conducted using the Llama.cpp\cite{llama-cpp} tool, utilizing the model converted to the GGUF format.
 
-\section{BERT Proposal}
+\section{BERT proposal}
 
 The second approach—a two-stage BERT pipeline—was also trained on the Modal platform. Logging and experiment tracking were similarly managed using Wandb.
 
-\section{Auxiliary Experiments}
+\section{Auxiliary experiments}
 
 Additional experiments conducted as part of this project involved frameworks such as SpaCy\cite{spacy, spacy-exp} and Scrapegraph AI, as well as mobile deployment tools including ONNX\cite{onnx, onnx-exp}, liteRT\cite{lite-rt, lite-rt-exp}, and Executorch\cite{executorch, executorch-exp}. These experiments were conducted using Android Studio\cite{android-studio, service_demo_app_repo} and Jupyter notebooks\cite{jupyter}, running in an IPython\cite{ipython} environment.
-
 
 \chapter{BERT 2-stage architecture overview} \label{chap:bert}
 Our proposed solution addresses the problem by framing it as a Named Entity Recognition (NER) task and employing a pipeline of two BERT models. Introduced by Google in 2018~\cite{BERT_intro}, BERT has become a standard in NLP. As of 2025-04-04, it ranks as the fourth most downloaded model on HuggingFace~\cite{BERT_hf}. The base model contains 110 million parameters, and its output format is well-suited for token classification — this combination was the primary reason for choosing it.
 
 In our approach, inspired by region proposal networks in computer vision~\cite{Region_proposal}, two BERT models were used. The first one identifies coupon regions, while the second extracts their attributes.
 
-\section{2-Stage Architecture}
+\section{2-Stage architecture}
 Figure \ref{fig:zpp} illustrates the system's pipeline. The process begins with input data captured as XML trees from phone frames (See~\ref{list:sel-input}), which are flattened into timestamp-grouped CSV entries with concatenated text.
 
 The selection stage employs a multilingual BERT model for coarse NER classification, tagging tokens as either \texttt{COUPON} or \texttt{UNKNOWN} using IOB2 format~\cite{iob2}. The model outputs are processed into contiguous strings, with only \texttt{COUPON}-labeled segments progressing to the second stage.
 
 In the extraction phase, another multilingual BERT model performs fine-grained NER, classifying coupon tokens into four specific fields according to our data model (\ref{lst:coupon_example}). The final output assembles these tokens into strings by field labels and packages them as JSON objects.
 
-Sometimes the extraction model finds multiple entities with the same label. We have tested multiple policies on handling this. Our primary choice leverages the fact that the BERT model returns probabilities alongside NER tags. We simply take the entity with the greatest value, breaking ties in favor of earlier occurrence - we will refer to pipeline equipped with this algorithm as BERT-top\_score. Additionally, we have tested concatenating all the entities with matching label (BERT-concat) and taking the first entity with given label in the text (BERT-first).
+In some cases, the extraction model identifies multiple entities with the same label. To address this, we evaluated several strategies for resolving such ambiguities. Our primary approach takes advantage of the fact that the BERT model provides confidence scores (probabilities) along with the predicted NER tags. Specifically, we select the entity with the highest confidence score, breaking ties by favoring the entity that appears earlier in the text. We refer to this variant of the pipeline as \texttt{BERT-top\_score}.
+
+Additionally, we experimented with two alternative strategies: one that concatenates all entities with the matching label (\texttt{BERT-concat}), and another that selects the first entity with the given label in the text (\texttt{BERT-first}).
 
 \begin{figure}
     \centering
@@ -792,7 +767,7 @@ The widespread adoption of BERT~\cite{BERT_hf} has led to numerous architectural
 Additionally, during our research, ModernBERT~\cite{ModernBERTPaper} was released, offering advancements such as extended context length of 8,192 tokens, faster inference, and superior performance on benchmark tasks. On top of that, it was still comparable with the base model, having around 150M parameters~\cite{ModernBERThf}.
 After evaluating these variants, we selected the BERT-base multilingual model with 179M parameters~\cite{BERT_multiling}. This decision was driven mostly by the fact that all of the other mentioned models lacked multilingual support, making BERT-base really the only model that would only require fine-tunings on our data to work.
 
-\section{Fine Tuning}
+\section{Fine-Tuning}
 We implemented independent training for both BERT models in our pipeline. This approach provides several key advantages:
 
 \begin{itemize}
@@ -915,17 +890,17 @@ When training without the task description, the evaluation loss plots look simil
 
 Addition of the task description further decreases the test loss, to values below 1.1 in later epochs for an increment size of 10 (see~\ref{fig:llama-inc-10-test-w}), and even reached 1.05 in the case of larger increment sizes (see~\ref{fig:llama-inc-50-test-w} and~\ref{fig:llama-inc-100-test-w}).
 
-\chapter{Benchmark and Results} \label{chap:benchmark}
+\chapter{Benchmark and results} \label{chap:benchmark}
 
 The objective of our custom benchmark is to enable a fair comparison of the pipelines with respect to the quality of their outputs. To achieve this, the benchmark compares the coupons extracted by each pipeline against the ground truth data provided by Murmuras and counts the number of correctly extracted coupons. This is accomplished by computing the similarities between the generated and expected coupons and applying a simple greedy matching algorithm.
 
 By leveraging the benchmark and conducting a series of additional evaluations, we were able to systematically identify the pipeline that delivered the most satisfactory overall performance.
 
-\section{Coupon Similarity}
+\section{Coupon similarity}
 
 The coupon similarity metric employed in this work is based on comparing text fields using a string distance measure (for further details, see Appendix~\ref{app:coupon_sim}). The resulting similarity score ranges from 0, indicating completely different texts, to 1, indicating identical texts. An alternative approach was considered, in which a large language model (LLM) would be used to assess the similarity between the expected and generated outputs~\cite{llm-as-a-judge}. The motivation for this consideration is that the generative pipeline, based on a model such as Llama, could produce a semantically correct answer but in an incorrect format, resulting in a low string similarity score despite the answer being essentially correct. However, we were unable to identify any documented instance where the LLM-as-a-Judge technique was successfully applied to a task sufficiently similar to ours, and providing a thorough validation of this approach falls outside the scope of this thesis.
 
-\section{Benchmarking Algorithm}
+\section{Benchmarking algorithm}
 
 For each entry in the benchmarking dataset, the similarities between all expected and generated coupons are computed. The matching process then proceeds iteratively: at each step, the coupon pair with the highest similarity score is selected and marked as matched. The matched coupons are removed from their respective sets, and the next highest-scoring pair is selected from the remaining coupons. This process is repeated until the highest remaining similarity score falls below a predefined threshold. In this work, the threshold was set to 0.8. The benchmark returns the total number of expected, generated, and matched coupons across the entire benchmarking dataset.
 
@@ -933,7 +908,7 @@ For each entry in the benchmarking dataset, the similarities between all expecte
 
 The benchmark logs both the results for individual entries and any unexpected events encountered during processing. For instance, during the parsing of the pipeline’s JSON output, any cases of incorrectly formatted data or coupons containing unexpected fields are recorded in the logs.
 
-\section{Benchmarking Results} \label{benchmarkResults}
+\section{Benchmarking results} \label{benchmarkResults}
 
 By interpreting the number of expected coupons as the sum of true positives and false negatives, the number of generated coupons as the sum of true positives and false positives, and the number of matched coupons as the number of true positives, we can compute both recall and precision. Following discussions with Murmuras, it was determined that recall is the more important metric in our context, as correctly extracting as many coupons as possible is the primary objective, while false positives are considered to be of lesser concern.
 
@@ -941,7 +916,7 @@ In the figures presented in Appendix~\ref{app:pipeline_comp}, as well as in Figu
 
 For a detailed description of the datasets, see Chapter~\ref{chap:datasets}. Information on the BERT-based pipelines is provided in Chapter~\ref{chap:bert}, while the Llama-based pipelines are discussed in Chapter~\ref{chap:llama}.
 
-\section{Pipeline Comparison}
+\section{Pipeline comparison}
 
 Based on Figures~\ref{fig:berts_recall} and~\ref{fig:berts_precision}, BERT-top\_score emerged as the best-performing variant within the BERT-based pipelines. It consistently outperformed BERT-first in both recall and precision. While the comparison with BERT-concat is less clear-cut, BERT-top\_score achieved more than twice the recall on the DM dataset, which was a decisive factor in its overall evaluation.
 
@@ -951,7 +926,7 @@ When comparing BERT-top\_score to Llama-wth (Figures \ref{fig:llama_vs_bert_reca
 
 Overall, the pipelines performed significantly better on the datasets they were trained on—namely DM, Lidl, Rewe, and Rossmann—compared to the previously unseen datasets, Penny and Edeka. However, Figures~\ref{fig:llama_vs_bert_recall} and~\ref{fig:llama_vs_bert_precision} suggest that the Llama-based pipelines exhibit a higher potential for generalization than their BERT-based counterparts.
 
-\section{Llama Quantization Comparison}
+\section{Llama quantization comparison}
 
 After identifying Llama-wth as the best-performing pipeline variant, we evaluated several quantized versions of the underlying model—specifically \texttt{Q8\_0}, \texttt{Q4\_K\_M}, and \texttt{Q4\_0}~\cite{llama-cpp-quantization}—in terms of recall, precision, inference speed on a mobile device, and GGUF file size.
 
@@ -1048,7 +1023,7 @@ Based on the results shown in Figures~\ref{fig:quantization_effect_on_recall},~\
     \label{fig:e_erag}
 \end{figure}
 
-\chapter{Coupon Similarity Metric} \label{app:coupon_sim}
+\chapter{Coupon similarity metric} \label{app:coupon_sim}
 The similarity between coupons is computed by comparing their textual fields using the \texttt{ratio()} method of Python's \texttt{difflib.SequenceMatcher} class~\cite{python-difflib}. The similarity computation algorithm is presented in two stages: first, the baseline approach is described, followed by an improved version.
 
 The input to the algorithm consists of an expected coupon and a generated coupon, both containing the text fields \texttt{PRODUCT-NAME}, \texttt{DISCOUNT-TEXT}, \texttt{VALIDITY-TEXT}, and \texttt{ACTIVATION-TEXT}.
@@ -1067,7 +1042,7 @@ However, this approach has a notable flaw. Consider the case where the expected 
 \section{Improved Algorithm}
 To mitigate this issue, the improved algorithm modifies how empty fields are handled. Specifically, if a given field is empty in both the expected and generated coupons, its contribution to the final similarity score is ignored. The final similarity score is then rescaled accordingly to reflect only the non-empty fields. For example, if both the \texttt{VALIDITY-TEXT} and \texttt{ACTIVATION-TEXT} fields are empty in both coupons, their similarities are considered to be 0, and the final similarity score is divided by 0.7, that is, the sum of the remaining fields' weights. In case the sum of remaining fields' weights is 0, the similarity of the coupons is set to 1.
 
-\chapter{Pipeline Comparison Plots} \label{app:pipeline_comp}
+\chapter{Pipeline comparison plots} \label{app:pipeline_comp}
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\linewidth]{bachelor_images/benchmark/berts_recall.png}
@@ -1202,7 +1177,6 @@ In case of incremental fine-tunings, the series name indicates the source of the
     \caption{Llama test loss for fine-tuning with concatenated increments of size 100.}
     \label{fig:llama-inc-tot-100-test}
 \end{figure}
-
 
 \begin{figure}[ht]
     \centering
@@ -1528,7 +1502,6 @@ pages 8 - 10
 \url{https://www.ibm.com/think/insights/ai-privacy}.
 [Accessed 2025-03-24].
 
-
 \bibitem{forbes_dl_env}
 \textit{Deep Learning’s Carbon Emissions Problem}.
 \url{https://www.forbes.com/sites/robtoews/2020/06/17/deep-learnings-climate-change-problem/}.
@@ -1838,7 +1811,6 @@ Understanding the Transformer Model: A Report on “Attention Is All You Need”
 \textit{Georgi Gerganov and contributors: Quantization Methods in llama.cpp}
 \url{https://github.com/ggml-org/llama.cpp/blob/master/examples/quantize/README.md}
 
-
 \bibitem{llama-32-intro}
 \textit{Llama 3.2 introduced by Meta; Comparison of llama-3.2-1b with Gemma 2 2B IT}
 \url{https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/}
@@ -1934,7 +1906,6 @@ Gemma Team and Morgane Riviere and Shreya Pathak and Pier Giuseppe Sessa and Cas
 \end{thebibliography}
 
 \end{document}
-
 
 %%% Local Variables:
 %%% mode: latex
