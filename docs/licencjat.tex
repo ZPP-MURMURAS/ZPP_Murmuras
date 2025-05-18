@@ -362,21 +362,21 @@ This type of quantization is more complicated as an INT8 can only represent 256 
 	\item $ Z $ is the zero-point, which is the int8 value that corresponds to 0 in the float32 range \cite{quant_hf}.
 \end{enumerate}
 
-\subsection{Finetuning}
-Finetuning adapts pre-trained models to specific tasks (e.g., coupon extraction) using task-specific datasets. This transfer learning approach is particularly valuable for deep learning models (LLMs, CNNs) as it:
+\subsection{fine-tuning}
+fine-tuning adapts pre-trained models to specific tasks (e.g., coupon extraction) using task-specific datasets. This transfer learning approach is particularly valuable for deep learning models (LLMs, CNNs) as it:
 \begin{itemize}
     \item Prevents overfitting common when training large models on small datasets
-    \item Reduces computational resources and data requirements \cite{ibm_finetuning}
+    \item Reduces computational resources and data requirements \cite{ibm_fine-tuning}
 \end{itemize}
 
-The finetuning process involves:
+The fine-tuning process involves:
 \begin{enumerate}
     \item Starting with a model pre-trained on a large general dataset
     \item Replacing the final output layer with task-specific architecture
     \item Training on target data while adjusting pre-trained weights \cite{finetune_cool_image}
 \end{enumerate}
 
-For our coupon extraction task, finetuning allows leveraging general visual/textual features while specializing for coupon-specific elements.
+For our coupon extraction task, fine-tuning allows leveraging general visual/textual features while specializing for coupon-specific elements.
 
 \section{AI Risks and ethical considerations}
 
@@ -497,7 +497,7 @@ de.rewe.app.mobile:id/action\_bar\_root &  & 3 & 1704181453677 \\
 \section{Dataset formats}
 We preprocess the raw data to ensure it is structured in a manner that can be effectively utilized by the models. The results of this preprocessing are described in the following sections.
 
-\subsection{BERT Datasets}
+\subsection{BERT datasets}
 The BERT models accept two dataset formats during the coupon selection phase in which the model identifies where a coupon begins and ends:
 
 \begin{enumerate}
@@ -554,7 +554,7 @@ Gustavo Gusto Pizza Margherita oder Salame & 1 \\
 \label{fig:json_example_xml_tree}
 \end{figure}
 
-\subsection{Llama Datasets}\label{llamaDsDesc}
+\subsection{Llama datasets}\label{llamaDsDesc}
 The Llama models take in the following dataset formats:
 
 \begin{enumerate}
@@ -1114,7 +1114,7 @@ To mitigate this issue, the improved algorithm modifies how empty fields are han
     \label{fig:quantization_effect_on_gguf_file_size}
 \end{figure}
 
-\chapter{Llama finetuning plots} \label{AppH}
+\chapter{Llama fine-tuning plots} \label{AppH}
 Note that the epoch numbering starts from 0. That means the leftmost value on the plots is the value after the first epoch.
 In case of incremental fine-tunings, the series name indicates the source of the data in increment that was added recently.
 \begin{figure}[ht]
@@ -1594,7 +1594,7 @@ pages 8 - 10
 [Accessed 2025-04-04]
 
 \bibitem{ModernBERTPaper}
-\textit{Smarter, Better, Faster, Longer: A Modern Bidirectional Encoder for Fast, Memory Efficient, and Long Context Finetuning and Inference}
+\textit{Smarter, Better, Faster, Longer: A Modern Bidirectional Encoder for Fast, Memory Efficient, and Long Context fine-tuning and Inference}
 \url{https://arxiv.org/abs/2412.13663}
 [Accessed 2025-04-05]
 
@@ -1613,12 +1613,12 @@ The echo chamber effect on social media
 \url{https://pubmed.ncbi.nlm.nih.gov/33622786/}
 [Accessed 2025-04-09]
 
-\bibitem{finetuning_env_good}
+\bibitem{fine-tuning_env_good}
 Energy and Carbon Considerations of Fine-Tuning BERT
 \url{https://arxiv.org/html/2311.10267}
 [Accessed 2025-04-09]
 
-\bibitem{ibm_finetuning}
+\bibitem{ibm_fine-tuning}
 What is fine-tuning?
 \url{https://www.ibm.com/think/topics/fine-tuning}
 [Accessed 2025-04-09]
@@ -1895,7 +1895,7 @@ Gemma Team and Morgane Riviere and Shreya Pathak and Pier Giuseppe Sessa and Cas
 
 \bibitem{Curriculer}
 \text{Curriculum learning implementation}
-\url{https://github.com/ZPP-MURMURAS/ZPP_Murmuras/blob/main/src/bert_finetuning/curriculer.py}
+\url{https://github.com/ZPP-MURMURAS/ZPP_Murmuras/blob/main/src/bert_fine-tuning/curriculer.py}
 [Accessed 15.05.2025]
 
 \bibitem{JSON_code}
