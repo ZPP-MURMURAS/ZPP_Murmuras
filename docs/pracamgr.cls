@@ -35,7 +35,7 @@
 }
 %\DeclareOption{licencjacka}{}
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{\@baseclass}}
-\PassOptionsToClass{a4paper,twoside,openright,11pt}{\@baseclass}
+\PassOptionsToClass{a4paper,openright,11pt}{\@baseclass}
 \ProcessOptions
 
 \LoadClass{\@baseclass}
