@@ -935,7 +935,18 @@ The model speed was evaluated by running the Llama-wth model with various quanti
 Based on the results shown in Figures~\ref{fig:quantization_effect_on_recall},~\ref{fig:quantization_effect_on_precision},~\ref{fig:quantization_effect_on_model_speed}, and~\ref{fig:quantization_effect_on_gguf_file_size}, we found that quantization introduced no substantial degradation in output quality while offering clear improvements in inference speed and reduced model size. The latter also contributes to lower memory (RAM) usage during execution.
 
 \chapter{Conclusion} \label{chap:conclusion}
-\section{TODO}
+In this thesis, we have introduced two approaches for structured content retrieval from mobile device screen content.
+
+To measure the alignment of the models' outputs with the learning target we have designed a benchmark that compares the sets of coupons using a similarity metric between strings computed on coupons' attributes.
+
+We have fine-tuned a \texttt{Llama} model and tested it on a smartphone. We have tested fine-tuning with and without the description of the task. The results of the experiments suggest that the pipeline retrieves most of the coupons. The model fine-tuned without the task description performs better than its counterpart with it. However, the generalization to unseen applications remains an open problem.
+
+We have presented our second proposal, the pipeline consisting of two fine-tuned \texttt{BERT} models. We tested vanilla fine-tuning, fine-tuning with \texttt{JSON}-encoded content, and an approach inspired by curriculum learning. We have also measured the performance of different token combining policies in the extraction pass. The training process without enhancements proved to be the most efficient approach, resulting in a pipeline that performs nearly as well as the \texttt{Llama}-based one when combined with the \texttt{top-score} token combination rule.
+\section{Possible extensions}
+\subsection{The \texttt{Llama}'s input in \texttt{JSON} format}
+We have tried providing the \texttt{BERT} model the content of the text fields organized into a \texttt{JSON} tree to preserve the information about the layout. This did not improve the model's performance. However, it is possible that a larger model could take advantage of this information and yield better results. More specifically, organizing the \texttt{Llama} pipeline input this way during training could produce interesting results. The challenge here would be to keep the layout processing speed at a reasonable rate as wrapping text fields into \texttt{JSON} tree would require longer prompts.
+\subsection{Benchmarking with the help of language models}
+Currently, our benchmarking procedure relies on a deterministic algorithm that matches coupons if their attributes have similar spelling. This approach has a weakness in case of benchmarking a generative pipeline, especially our \texttt{Llama}-based proposal. If the model's output is semantically correct but differs in spelling, i.e. the returned validity date is in a different format, the benchmark can possibly treat this as complete or a near-complete mismatch (see \ref{tab:json-comparison}). This problem could be addressed by employing LLM-as-a-judge and skilfully prompting a significantly more powerful language model than \texttt{Llama}.
 
 \let\cleardoublepage\clearpage
 
