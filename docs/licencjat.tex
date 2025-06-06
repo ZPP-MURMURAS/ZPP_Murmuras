@@ -307,7 +307,7 @@ Unsupervised learning identifies patterns in unlabeled data, such as product pur
 For this project, supervised learning is optimal as our coupon extraction task, identifying and classifying elements in XML trees, requires labeled training data rather than pattern discovery. This approach ensures accurate recognition and data extraction.
 
 \subsection{Deep learning}
-Deep learning is a subset of machine learning where multilayered neural networks, called deep neural networks, are utilized to learn increasingly meaningful representations with each successive layer as seen in Figure~\ref{fig:nn_simple}. Each representation is increasingly different from the original and more useful for determining the result. Traditionally, while machine learning models focus on learning one or two layers of representations of the data~\cite{francuz_8}, deep learning employs at least three layers, and typically hundreds or thousands of layers to train the models~\cite{ibm_dl}.
+Deep learning is a subset of machine learning where multilayered neural networks, called deep neural networks, are utilized to learn increasingly meaningful representations with each successive layer, as seen in Figure~\ref{fig:nn_simple}. Each representation is increasingly different from the original and more useful for determining the result. Traditionally, while machine learning models focus on learning one or two layers of representations of the data~\cite{francuz_8}, deep learning employs at least three layers, and typically hundreds or thousands of layers to train the models~\cite{ibm_dl}.
 
 \begin{figure}
     \centering
@@ -328,10 +328,10 @@ The transformation implemented by a layer is parametrized by its \textit{weights
 The advancement of deep learning contributed to the development of generative AI such as ChatGPT, which enables machines to understand and generate text and speech. This is useful for translations and extracting meaning from large quantities of data~\cite{ibm_dl}.
 
 \subsection{Transformers}
-Transformers are deep learning models introduced in the 2017 paper "Attention Is All You Need"~\cite{attention} by Vaswani et al., which have significantly impacted natural language processing and other sequential data tasks. Unlike traditional recurrent neural networks~\cite{RNN}, transformers utilise self-attention mechanisms to process input data in parallel, enhancing efficiency and scalability. This architecture has become foundational in models like BERT, and GPT~\cite{medium_t}. An example overview of this architecture can be seen in Figure~\ref{fig:transformers_fig}. For more technical details, please refer to Chapter 3 of the aforementioned paper.
+Transformers are deep learning models introduced in the 2017 paper "Attention Is All You Need"~\cite{attention} by Vaswani et al., which have significantly impacted natural language processing and other sequential data tasks. Unlike traditional recurrent neural networks~\cite{RNN}, transformers utilise self-attention mechanisms to process input data in parallel, enhancing efficiency and scalability. This architecture has become foundational in models like BERT and GPT~\cite{medium_t}. An example overview of this architecture can be seen in Figure~\ref{fig:transformers_fig}. For more technical details, please refer to the third chapter of the aforementioned paper.
 
 In our project, we used two transformer-based models. The first solution was based on the Llama architecture and utilised a custom fine-tuned version of Llama-3.2-1b provided by Meta~\cite{meta-llama}.
-The second solution utilized two separately dine-tuned BERT models connected into a pipeline. More on both approaches can be find in respectively \ref{chap:llama} and \ref{chap:bert}.
+The second solution utilized two separately fine-tuned BERT models connected into a pipeline. More on both approaches can be found in respectively \ref{chap:llama} and \ref{chap:bert}.
 
 
 \begin{figure}
@@ -347,7 +347,7 @@ The two most common quantization techniques are float32 $\rightarrow$ float16 an
 \subsubsection{float32 $\rightarrow$ float16}
 Performing quantization from float32 to float16 is relatively straightforward as both data types are represented in the same manner. Float32 has the following format:
 \begin{enumerate}
-	\item the most significant bit (MBS) represents the sign of the number, i.e., whether it is negative or positive.
+	\item The most significant bit (MBS) represents the sign of the number, i.e., whether it is negative or positive.
 	\item The next 8 bits represent the exponent.
 	\item The remaining 23 bits, are the mantissa, i.e., the decimal.
 \end{enumerate}
@@ -371,7 +371,7 @@ This type of quantization is more complicated as an INT8 can only represent 256 
 	\item $ Z $ is the zero-point, which is the int8 value that corresponds to 0 in the float32 range~\cite{quant_hf}.
 \end{enumerate}
 
-In our case, we used llama.cpp~\cite{llama-cpp} framework, which used models converted to the GGUF format in order to run local inference. Converting models to this format involved choosing if we want to quantize the model, and if so, what type of quantization was performed. Results of those quantizations are described more in chapter \ref{chap:benchmark}.
+In our case, we used llama.cpp~\cite{llama-cpp} framework, which used models converted to the GGUF format in order to run local inference. Converting models to this format involved choosing what type of quantization we wan to perform. We opted for Q8\_0, Q4\_K\_M, Q4 and no quantization. Results of experiments with them are described more in chapter \ref{chap:benchmark}.
 
 \subsection{Fine-tuning}
 Fine-tuning adapts pre-trained models to specific tasks, e.g., coupon extraction, using task-specific datasets. This transfer learning approach is particularly valuable for deep learning models such as LLMs abd CNNs as it prevents overfitting when training large models on small datasets and reduces computational resources and data requirements~\cite{ibm_fine-tuning}. The fine-tuning process involves:
@@ -387,7 +387,7 @@ For our coupon extraction task, fine-tuning allows leveraging general visual or 
 
 The rapid advancement of AI raises legitimate concerns about:
 \begin{itemize}
-    \item privacy and surveillance risks from pervasive monitoring systems~\cite{not_sroka_vid, ai_scare2, ai_scare3}.
+    \item Privacy and surveillance risks from pervasive monitoring systems~\cite{not_sroka_vid, ai_scare2, ai_scare3}.
     \item Environmental impact due to high energy/water consumption and rare material requirements~\cite{ai_env_concerns}.
 \end{itemize}
 
@@ -407,7 +407,7 @@ The rapid expansion of artificial intelligence systems has revealed significant 
 
 The carbon footprint of training large language models is especially concerning. For instance:
 \begin{itemize}
-    \item training BERT consumed energy equivalent to a transatlantic flight.
+    \item Training BERT consumed energy equivalent to a transatlantic flight.
     \item GPT-3's training emitted 552 metric tons of CO$_2$, comparable to annual emissions from 123 gasoline-powered vehicles~\cite{sci_am_co2}.
 \end{itemize}
 
