@@ -371,7 +371,7 @@ This type of quantization is more complicated as an INT8 can only represent 256 
 	\item $ Z $ is the zero-point, which is the int8 value that corresponds to 0 in the float32 range~\cite{quant_hf}.
 \end{enumerate}
 
-In our case, we used llama.cpp~\cite{llama-cpp} framework, which used models converted to the GGUF format in order to run local inference. Converting models to this format involved choosing what type of quantization we wan to perform. We opted for Q8\_0, Q4\_K\_M, Q4 and no quantization. Results of experiments with them are described more in chapter \ref{chap:benchmark}.
+In our case, we used llama.cpp~\cite{llama-cpp} framework, which used models converted to the GGUF format in order to run local inference. Converting models to this format involved choosing what type of quantization we wan to perform. We opted Q8\_0, Q4\_K\_M, and Q4\_0~\cite{llama-cpp-quantization}, as well as a control experiment with no quantization. Results of experiments with them are described more in chapter \ref{chap:benchmark}.
 
 \subsection{Fine-tuning}
 Fine-tuning adapts pre-trained models to specific tasks, e.g., coupon extraction, using task-specific datasets. This transfer learning approach is particularly valuable for deep learning models such as LLMs abd CNNs as it prevents overfitting when training large models on small datasets and reduces computational resources and data requirements~\cite{ibm_fine-tuning}. The fine-tuning process involves:
@@ -1218,7 +1218,7 @@ Overall, the pipelines performed significantly better on the datasets they were 
 
 \section{Llama quantization comparison}
 
-After identifying Llama-wth as the best-performing pipeline variant, we evaluated several quantized versions of the underlying model, specifically Q8\_0, Q4\_K\_M, and Q4\_0~\cite{llama-cpp-quantization}, in terms of recall, precision, inference speed on a mobile device, and GGUF file size.
+After identifying Llama-wth as the best-performing pipeline variant, we evaluated several quantized versions of the underlying model, specifically Q8\_0, Q4\_K\_M, and Q4\_0, in terms of recall, precision, inference speed on a mobile device, and GGUF file size.
 
 The model speed was evaluated by running the Llama-wth model with various quantization schemes using the llama.cpp framework (see Chapter~\ref{chap:machine_learning}) with the default CPU backend on a Samsung A25 device equipped with 6~GB of RAM. An initial warm-up run was performed using a short prompt of approximately 10 tokens, during which 16 tokens were generated. For the actual measurement, a prompt of around 300 tokens,sampled from one of the datasets, was used, and the model generated 64 tokens.
 
