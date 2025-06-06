@@ -139,7 +139,7 @@ Large Language Models (LLMs) have become a fundamental technique in contemporary
 In light of these trends, the company Murmuras has tasked us with developing a solution based on a machine learning model that can be deployed as a mobile application. In response, we proposed two solutions: one utilizing two BERT~\cite{BERT_intro} models, and the second one using one Llama model. Both approaches will process input representing the user's onscreen view and extract digital coupons along with their relevant data. These solutions must be capable of running locally on the device, ensuring efficient processing without relying on external servers. By leveraging advanced machine learning techniques, the app will handle the diverse formats and layouts of digital coupons, thus facilitating the collection of data regarding coupons.
 
 \section{Definition of a coupon}
-A coupon is a physical piece of paper or digital voucher that can be redeemed for a financial discount when purchasing a product~\cite{coupon_definition}. A coupon is characterized by a name, expiration date, and a discount type, e.g. \emph{20\% off}, \emph{buy 1 get 1 free}, etc. However, not every coupon contains each of these features. Furthermore, coupons may contain numerous other features such as images and eligibility requirements. Henceforth, the term \emph{coupon} will refer exclusively to a digital coupon. The term \emph{conventional coupon} will refer to the traditional physical coupon. Examples of digital coupons encountered in mobile applications are presented in ~\ref{fig:example_coupons}
+A coupon is a physical piece of paper or digital voucher that can be redeemed for a financial discount when purchasing a product~\cite{coupon_definition}. A coupon is characterized by a name, expiration date, and a discount type, e.g., \emph{20\% off}, \emph{buy 1 get 1 free}, etc. However, not every coupon contains each of these features. Furthermore, coupons may contain numerous other features such as images and eligibility requirements. Henceforth, the term \emph{coupon} will refer exclusively to a digital coupon. The term \emph{conventional coupon} will refer to the traditional physical coupon. Examples of digital coupons encountered in mobile applications are presented in ~\ref{fig:example_coupons}
 
 \begin{figure}[htbp]
     \centering
@@ -179,7 +179,7 @@ The objective of this work is to extract coupons visible to the user from the co
 \end{enumerate}
 We allow for special \textit{null} value in the above fields in case no data is available. An example of a digital coupon represented in JSON format is shown in listing~\ref{lst:coupon_example}.
 
-\begin{lstlisting}[language=json, caption={Example of a digital coupon in JSON format}, label={lst:coupon_example}]
+\begin{lstlisting}[language=json, caption={Example of a digital coupon in JSON format.}, label={lst:coupon_example}]
 {
     "PRODUCT-NAME": "Shampoo X",
     "ACTIVATION-TEXT": "Coupon activated",
@@ -219,7 +219,7 @@ An example of the dataset to illustrate the described format is provided in Tabl
 The system will leverage machine learning to identify and structure relevant information while ensuring compatibility with mobile devices for enhanced accessibility and data privacy. The key goals of the project are as follows:
 
 \begin{enumerate}
-    \item a tool to process the data extracted from the device into a format suitable for use by the model.
+    \item A tool to process the data extracted from the device into a format suitable for use by the model.
     \item A machine learning tool for extracting the data that is of interest to us, such as the coupon name, expiration dates, prices, etc. This tool should be capable of handling various coupon formats and layouts with high accuracy.
     \item A pipeline for preparing the input data for the previously mentioned tool, and for post-processing its output into a common format.
     \item A key requirement is that the machine learning model must be deployable on the mobile device itself. By performing the inference locally, and sending only results of this inference to the server, we guarantee data privacy.
@@ -235,7 +235,7 @@ The aforementioned gathering of data about displayed coupons can be utilised in 
 In the age of smartphones and ubiquitous internet, more and more resources are being invested in research regarding social impacts of those technologies. One of many aspects of our social life is shopping. With a tool that can collect data about the presence and popularity of different coupons without depending on the publisher of those, it will be much easier and faster for researchers to gather real-world data regarding, e.g., customer habits or the percentage of coupons that an average user clicks.
 
 \section{Work structure}
-In the next chapters, we first describe dangers related to the use of AI, focusing on privacy and environmental concerns \ref{chap:machine_learning}. Then, we take a look at approaches similar to ours, that not necessarily utilize LLMs \ref{chap:existing_solutions}. After that, we describe datasets we used in our work \ref{chap:datasets}. Finally, we describe both our approaches \ref{chap:bert} \ref{chap:llama} and summarize the whole project \ref{chap:conclusion}.
+In the next chapters, we first describe dangers related to the use of AI, tools used by us in the project, as well as privacy and environmental concerns related to training LLMs \ref{chap:machine_learning}. Then, we take a look at approaches similar to ours, that not necessarily utilize LLMs \ref{chap:existing_solutions}. After that, we describe datasets we used in our work \ref{chap:datasets}. Finally, we describe both our approaches \ref{chap:bert} \ref{chap:llama} and summarize the whole project \ref{chap:conclusion}.
 
 \chapter{Machine learning, tools and the dangers associated with it} \label{chap:machine_learning}
 
@@ -304,7 +304,7 @@ Supervised learning excels at classification of, e.g., spam detection, and regre
 
 Unsupervised learning identifies patterns in unlabeled data, such as product purchase clusters~\cite{supervised_ibm}. Techniques like Principal Component Analysis (PCA)~\cite{PCA} reduce dimensionality by projecting data onto orthogonal axes of maximum variance.
 
-For this project, supervised learning is optimal as our coupon extraction task, identifying and classifying elements in XML trees requires labeled training data rather than pattern discovery. This approach ensures accurate recognition and data extraction.
+For this project, supervised learning is optimal as our coupon extraction task, identifying and classifying elements in XML trees, requires labeled training data rather than pattern discovery. This approach ensures accurate recognition and data extraction.
 
 \subsection{Deep learning}
 Deep learning is a subset of machine learning where multilayered neural networks, called deep neural networks, are utilized to learn increasingly meaningful representations with each successive layer as seen in Figure~\ref{fig:nn_simple}. Each representation is increasingly different from the original and more useful for determining the result. Traditionally, while machine learning models focus on learning one or two layers of representations of the data~\cite{francuz_8}, deep learning employs at least three layers, and typically hundreds or thousands of layers to train the models~\cite{ibm_dl}.
@@ -345,11 +345,11 @@ Performing quantization from float32 to float16 is relatively straightforward as
 \begin{enumerate}
 	\item the most significant bit (MBS) represents the sign of the number, i.e., whether it is negative or positive.
 	\item The next 8 bits represent the exponent.
-	\item The remaining 23 bits, are the mantissa, i.e. the decimal.
+	\item The remaining 23 bits, are the mantissa, i.e., the decimal.
 \end{enumerate}
 
 According to the IEEE Standard for Floating-Point Arithmetic (IEEE 754)~\cite{IEEE754}, for 32 bits this format can represent numbers of which the absolute value lies between $1.18 * 10^{-38}$ and $3.40 * 10^{38}$. An example representation can be seen in Figure~\ref{fig:float}.
-When converting from float32 to float16, we just remove the last 13 bits of the mantissa, creating a rounding error, and “shrinks” the exponent to fit into 5 bits. This may create a float overflow error if the float32 number is greater than $ 6.55 * e^4$~\cite{quant_explained}.
+When converting from float32 to float16, we just remove the last 13 bits of the mantissa, creating a rounding error, and “shrinks” the exponent to fit into 5 bits. This may create a float overflow error if the float32 number is greater than $ 6.55 * 10^4$~\cite{quant_explained}.
 
 \begin{figure}
     \centering
@@ -431,7 +431,7 @@ Water usage presents another critical challenge. AI data centers consume up to 9
 Our solution addresses these environmental concerns by fine-tuning existing models rather than training them from zero. According to the findings of Wang et al., BERT fine-tuning requires between 400 and 45,000 times less energy than the full training. This way, we greatly limit our $CO_2$ emissions as well as water consumption.
 
 \chapter{Existing solutions} \label{chap:existing_solutions}
-To the best of our knowledge, at the time of commissioning of this project, no publicly available solutions directly addressed this problem. The most comparable approaches involve existing multi-modal models. While widely used models such as ChatGPT and Gemini provide general data extraction capabilities~\cite{brinkmann2023}, they are unsuitable for our task due to their substantial computational requirements. A key limitation of these models is their large size, e.g. GPT-3 consists of 175 billion parameters~\cite{chatgpt_params}, rendering them impractical for deployment on mobile devices~\cite{LinguaLinked}.
+To the best of our knowledge, at the time of commissioning of this project, no publicly available solutions directly addressed this problem. The most comparable approaches involve existing multi-modal models. While widely used models such as ChatGPT and Gemini provide general data extraction capabilities~\cite{brinkmann2023}, they are unsuitable for our task due to their substantial computational requirements. A key limitation of these models is their large size, e.g., GPT-3 consists of 175 billion parameters~\cite{chatgpt_params}, rendering them impractical for deployment on mobile devices~\cite{LinguaLinked}.
 
 Alternatively, computer vision models can be used to extract text and bounding boxes from screen images. Microsoft’s OmniParser~\cite{omniparser_intro}, for instance, has demonstrated strong performance on the ScreenSpot dataset~\cite{omniparser_intro, cheng2024}. However, the challenge of organizing extracted text into structured coupon data renders this approach unsuitable for our study. Furthermore, our experiments with running OmniParser locally on example images indicate that it relies on CUDA technology, making it impractical for deployment on mobile devices.
 
@@ -449,7 +449,7 @@ A common approach to this problem would be writing code that would first downloa
 \subsection{AI-based scraping}
 Since the public release of ChatGPT-3.5 in 2022, chat-based models have come a long way. From the scraping perspective, one of the most useful additions is an option to attach files to the conversation, instead of having to copy-paste them into the chat. This functionality is supported by, e.g., ChatGPT and DeepSeek~\cite{DS}. However, from the perspective of our problem, this solution has a drawback of not being automatable.
 
-ChatGPT seems to counter this issue. With OpenAI API~\cite{OAPI} available, programmers can easily write Python code that will request LLM responses to their queries. It also provides much more customizability of the query than the chat, having e.g. an option to specify the model role, response length, etc. This service was used in, e.g., Murmuras' proof of concept solution. The main problem with this approach is its price. Requests performed through the API require OpenAI credits, which have to be purchased with real money. So while it's a cheap option for testing ideas, production usage would prove to be too costly for a company such as Murmuras.
+ChatGPT seems to counter this issue. With OpenAI API~\cite{OAPI} available, programmers can easily write Python code that will request LLM responses to their queries. It also provides much more customizability of the query than the chat, having e.g., an option to specify the model role, response length, etc. This service was used in, e.g., Murmuras' proof of concept solution. The main problem with this approach is its price. Requests performed through the API require OpenAI credits, which have to be purchased with real money. So while it's a cheap option for testing ideas, production usage would prove to be too costly for a company such as Murmuras.
 
 To reiterate, it is important to note that even without the described issues, this approach would not be suitable for us, because those mentioned models are running on outside servers. Sending them data to analyze would compromise data privacy, which is one of our main concerns.
 
@@ -579,8 +579,8 @@ Gustavo Gusto Pizza Margherita oder Salame & 1 \\
 The Llama models take in the following dataset formats:
 
 \begin{enumerate}
-    \item \textbf{one\_input\_multiple\_outputs\_wrequest}: the dataset includes a task description to the Llama model.
-    \item \textbf{one\_input\_multiple\_outputs\_wthrequest}: the dataset does not include a task description.
+    \item \textbf{one\_input\_multiple\_outputs\_wrequest}: The dataset includes a task description to the Llama model.
+    \item \textbf{one\_input\_multiple\_outputs\_wthrequest}: The dataset does not include a task description.
 \end{enumerate}
 
 The input format for the Llama models is as in Figures~\ref{fig:llama_ds_w} and \ref{fig:llama_ds_wth}.
@@ -707,7 +707,7 @@ Rewe      & 45    & 63    & 20    & 3     & 0.81\% \\
 Rossmann  & 0     & 0     & 7     & 18    & 0.68\% \\
 \hline
 \end{tabular}
-\caption{Missing feature counts and percentage of coupons missing at least one feature per company (test and train sets combined).}
+\caption{Missing feature counts and percentage of coupons missing at least one feature per company. Test and train sets combined.}
 \label{tab:missing_coupons}
 \end{table}
 
@@ -1288,7 +1288,7 @@ As a part of experiments with the BERT pipeline, we have tried providing the mod
 
 \subsection{Benchmarking with the help of language models}
 
-Currently, our benchmarking procedure relies on an algorithm that matches coupons if their attributes have similar spelling. This approach has a weakness in the case of benchmarking a generative pipeline, especially our Llama-based proposal. If the model's output is semantically correct but differs in spelling, e.g. the returned validity date is in a different format, the benchmark can possibly treat this as a complete or a near-complete mismatch (see Table~\ref{tab:json-comparison}). This problem could be addressed by employing LLM-as-a-judge and skillfully prompting a significantly more powerful language model than Llama.
+Currently, our benchmarking procedure relies on an algorithm that matches coupons if their attributes have similar spelling. This approach has a weakness in the case of benchmarking a generative pipeline, especially our Llama-based proposal. If the model's output is semantically correct but differs in spelling, e.g., the returned validity date is in a different format, the benchmark can possibly treat this as a complete or a near-complete mismatch (see Table~\ref{tab:json-comparison}). This problem could be addressed by employing LLM-as-a-judge and skillfully prompting a significantly more powerful language model than Llama.
 
 \subsection{Other generative models}
 
