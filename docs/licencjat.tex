@@ -367,7 +367,7 @@ This type of quantization is more complicated as an INT8 can only represent 256 
 \begin{enumerate}
 	\item $ x $ is the float32 value to be quantized.
 	\item  $ x_q $ is the quantized int8 value associated with $ x $. It can be computed as follows $ x_q = round(x/S + Z) $.
-	\item $ S \in float32$ is the scale.
+	\item $ S \in float32$ represents the step between two consecutive float32 values in the newly constructed domain.
 	\item $ Z $ is the zero-point, which is the int8 value that corresponds to 0 in the float32 range~\cite{quant_hf}.
 \end{enumerate}
 
